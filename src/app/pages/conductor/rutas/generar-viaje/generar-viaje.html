@@ -1,0 +1,78 @@
+<section class="page">
+  <nav class="breadcrumb">
+    <a routerLink="/conductor/rutas/viajes">
+      <mat-icon>arrow_back</mat-icon>
+      Viajes de la ruta
+    </a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Generar viaje</span>
+  </nav>
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Generar viaje programado</h1>
+      <p class="page-subtitle">Selecciona la fecha y hora de salida para crear un viaje de esta ruta</p>
+    </div>
+  </header>
+
+  <mat-card class="uni-card">
+    <mat-card-content>
+      <div class="summary-box route-summary">
+        <div class="summary-main">
+          <mat-icon class="summary-icon is-plain">route</mat-icon>
+          <div>
+            <div class="summary-name">San Borja → UPC</div>
+            <div class="summary-detail">Av. Arequipa 1234 · Capacidad: 3 pasajeros</div>
+          </div>
+        </div>
+      </div>
+
+      <form class="route-form" [formGroup]="form">
+        <div class="form-row">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Fecha *</mat-label>
+            <input
+              matInput
+              formControlName="fecha"
+              [matDatepicker]="picker"
+              [min]="hoy"
+              readonly
+            />
+            <mat-hint>No puede ser una fecha en el pasado</mat-hint>
+            <mat-datepicker-toggle matSuffix [for]="picker" />
+            <mat-datepicker #picker />
+            <mat-error>Selecciona una fecha válida</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Hora *</mat-label>
+            <input matInput formControlName="hora" placeholder="07:30" />
+            <mat-icon matSuffix>schedule</mat-icon>
+            <mat-hint>Formato 24 horas (HH:mm)</mat-hint>
+            <mat-error>La hora es obligatoria</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="banner">
+          <mat-icon>info</mat-icon>
+          <div>
+            El viaje se creará en estado PROGRAMADO. Deberás confirmarlo al menos 12 horas antes de la salida.
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <a mat-stroked-button routerLink="/conductor/rutas/viajes">Cancelar</a>
+          <button
+            mat-flat-button
+            type="button"
+            [routerLink]="['/conductor/rutas/viajes']"
+            [disabled]="form.invalid"
+          >
+            <mat-icon>add</mat-icon>
+            Generar viaje
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</section>

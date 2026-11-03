@@ -3,10 +3,18 @@ import { ConductorLayout } from '../../layouts/conductor-layout/conductor-layout
 
 export const CONDUCTOR_ROUTES: Routes = [{
   path: '', component: ConductorLayout, children: [
+    // Módulo 2 — Rutas
+    { path: '', pathMatch: 'full', redirectTo: 'rutas' },
+    { path: 'rutas', title: 'Mis rutas · UniRide', loadComponent: () => import('./rutas/mis-rutas/mis-rutas').then(m => m.MisRutas) },
+    { path: 'rutas/publicar', title: 'Publicar ruta · UniRide', loadComponent: () => import('./rutas/publicar-ruta/publicar-ruta').then(m => m.PublicarRuta) },
+    { path: 'rutas/editar', title: 'Editar ruta · UniRide', loadComponent: () => import('./rutas/editar-ruta/editar-ruta').then(m => m.EditarRuta) },
+    { path: 'rutas/viajes', title: 'Viajes de la ruta · UniRide', loadComponent: () => import('./rutas/viajes-ruta/viajes-ruta').then(m => m.ViajesRuta) },
+    { path: 'rutas/generar-viaje', title: 'Generar viaje · UniRide', loadComponent: () => import('./rutas/generar-viaje/generar-viaje').then(m => m.GenerarViaje) },
+    // Módulo 4 — Solicitudes
     { path: 'viajes/:viajeId/solicitudes', title: 'Solicitudes recibidas · UniRide', loadComponent: () => import('./viajes/solicitudes/solicitudes').then(m => m.Solicitudes) },
     { path: 'viajes/:viajeId/solicitudes/:solicitudId', title: 'Detalle de solicitud · UniRide', loadComponent: () => import('./viajes/detalle-solicitud/detalle-solicitud').then(m => m.DetalleSolicitud) },
     { path: 'viajes/:viajeId', title: 'Gestionar viaje · UniRide', loadComponent: () => import('./viajes/gestionar-viaje/gestionar-viaje').then(m => m.GestionarViaje) },
-    { path: '', pathMatch: 'full', redirectTo: 'viajes/1/solicitudes' },
     { path: 'viajes', pathMatch: 'full', redirectTo: 'viajes/1/solicitudes' },
+    { path: '**', redirectTo: 'rutas' },
   ],
 }];

@@ -1,0 +1,46 @@
+/* ---------------------------------------------------------------------------
+   Tarjeta de resumen de la ruta
+   --------------------------------------------------------------------------- */
+
+.summary-card {
+  margin-bottom: 18px;
+}
+
+/* ---------------------------------------------------------------------------
+   Acciones de fila
+   --------------------------------------------------------------------------- */
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.row-actions .mat-mdc-button {
+  --mat-button-text-container-shape: 6px;
+  font-size: 13px;
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+.row-actions .mat-mdc-outlined-button {
+  --mat-button-outlined-container-shape: 6px;
+  font-size: 13px;
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   Responsivo: la tabla se desplaza horizontalmente en pantallas angostas
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .uni-table-card {
+    overflow-x: auto;
+  }
+
+  .uni-table table {
+    min-width: 720px;
+  }
+}
