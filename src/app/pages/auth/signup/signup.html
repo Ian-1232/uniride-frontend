@@ -1,0 +1,330 @@
+<div class="signup-page-wrapper">
+  <!-- STEPPER SUPERIOR -->
+  <header class="stepper-header-card">
+    <div class="stepper-brand">
+      <div class="brand-mini-icon">
+        <mat-icon>school</mat-icon>
+      </div>
+      <div class="brand-mini-text">
+        <span class="stepper-title">UniRide Onboarding</span>
+        <span class="stepper-subtitle">Registro institucional</span>
+      </div>
+    </div>
+
+    <div class="stepper-track-block">
+      <div class="stepper-progress-bar">
+        <div class="progress-fill step-1"></div>
+      </div>
+      <span class="stepper-label">Paso 1 de 2: Crea tu cuenta</span>
+    </div>
+
+    <div class="stepper-login-link">
+      <span>¿Ya tienes cuenta?</span>
+      <a routerLink="/auth/login" class="link-bold">Inicia sesión</a>
+    </div>
+  </header>
+
+  <!-- GRID PRINCIPAL DE REGISTRO -->
+  <div class="signup-layout-grid">
+    <!-- COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO (US01) -->
+    <section class="signup-form-column">
+      <div class="column-title-block">
+        <div class="campus-badge">
+          <mat-icon>lock</mat-icon>
+          <span>ACCESO EXCLUSIVO UNIVERSITARIO</span>
+        </div>
+        <h1 class="signup-h1">Crea tu cuenta en UniRide</h1>
+        <p class="signup-desc">
+          Únete a la red colaborativa de estudiantes de tu sede universitaria para coordinar viajes diarios seguros.
+        </p>
+      </div>
+
+      <mat-card class="form-card">
+        <form [formGroup]="signupForm" class="signup-form">
+          <!-- FILA NOMBRES Y APELLIDOS -->
+          <div class="two-column-row">
+            <div class="field-item">
+              <label class="field-label" for="signup-name">Nombre</label>
+              <mat-form-field appearance="outline">
+                <mat-icon matPrefix class="input-icon">person</mat-icon>
+                <input
+                  id="signup-name"
+                  matInput
+                  type="text"
+                  formControlName="nombre"
+                  placeholder="Juan"
+                />
+                @if (signupForm.get('nombre')?.hasError('required') && signupForm.get('nombre')?.touched) {
+                  <mat-error>El nombre es obligatorio.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="field-item">
+              <label class="field-label" for="signup-lastname">Apellidos</label>
+              <mat-form-field appearance="outline">
+                <mat-icon matPrefix class="input-icon">person_outline</mat-icon>
+                <input
+                  id="signup-lastname"
+                  matInput
+                  type="text"
+                  formControlName="apellidos"
+                  placeholder="Pérez"
+                />
+                @if (signupForm.get('apellidos')?.hasError('required') && signupForm.get('apellidos')?.touched) {
+                  <mat-error>Los apellidos son obligatorios.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- TELÉFONO CON PREFIJO PERÚ -->
+          <div class="field-item">
+            <label class="field-label" for="signup-phone">Teléfono móvil</label>
+            <mat-form-field appearance="outline">
+              <span matPrefix class="peru-prefix-badge">🇵🇪 +51</span>
+              <input
+                id="signup-phone"
+                matInput
+                type="tel"
+                formControlName="telefono"
+                placeholder="987 654 321"
+              />
+              @if (signupForm.get('telefono')?.hasError('required') && signupForm.get('telefono')?.touched) {
+                <mat-error>El teléfono es obligatorio.</mat-error>
+              }
+              @if (signupForm.get('telefono')?.hasError('pattern') && signupForm.get('telefono')?.touched) {
+                <mat-error>Ingresa un número de celular peruano válido (9 dígitos).</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- CORREO INSTITUCIONAL -->
+          <div class="field-item">
+            <div class="field-label-between">
+              <label class="field-label" for="signup-email">Correo institucional</label>
+              <span class="field-edu-badge">&#64;*.edu.pe</span>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-icon matPrefix class="input-icon">email</mat-icon>
+              <input
+                id="signup-email"
+                matInput
+                type="email"
+                formControlName="correo"
+                placeholder="juan.perez@upc.edu.pe"
+              />
+              <span matSuffix class="edu-suffix-badge">.edu.pe</span>
+
+              @if (signupForm.get('correo')?.hasError('required') && signupForm.get('correo')?.touched) {
+                <mat-error>El correo institucional es obligatorio.</mat-error>
+              }
+              @if (signupForm.get('correo')?.hasError('pattern') && signupForm.get('correo')?.touched) {
+                <mat-error>Debes utilizar tu correo universitario terminado en .edu o .edu.pe.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- CONTRASEÑA CON CHECKLIST DE SEGURIDAD -->
+          <div class="field-item">
+            <label class="field-label" for="signup-password">Contraseña segura</label>
+            <mat-form-field appearance="outline">
+              <mat-icon matPrefix class="input-icon">lock</mat-icon>
+              <input
+                id="signup-password"
+                matInput
+                [type]="hidePassword ? 'password' : 'text'"
+                formControlName="contrasena"
+                placeholder="MoviUni2026!"
+              />
+              <button
+                type="button"
+                mat-icon-button
+                matSuffix
+                (click)="togglePasswordVisibility()"
+              >
+                <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+
+              @if (signupForm.get('contrasena')?.hasError('required') && signupForm.get('contrasena')?.touched) {
+                <mat-error>La contraseña es obligatoria.</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- CHECKLIST DE SEGURIDAD EN TIEMPO REAL -->
+            <div class="password-criteria-box">
+              <div class="criteria-row" [class.valid]="hasMinLength()">
+                <mat-icon>{{ hasMinLength() ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                <span>Mínimo 8 caracteres</span>
+              </div>
+              <div class="criteria-row" [class.valid]="hasUppercase()">
+                <mat-icon>{{ hasUppercase() ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                <span>Al menos una mayúscula</span>
+              </div>
+              <div class="criteria-row" [class.valid]="hasLowercase()">
+                <mat-icon>{{ hasLowercase() ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                <span>Al menos una minúscula</span>
+              </div>
+              <div class="criteria-row" [class.valid]="hasNumberOrSymbol()">
+                <mat-icon>{{ hasNumberOrSymbol() ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                <span>Al menos un número o símbolo</span>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div class="bento-trust-banner">
+          <mat-icon>shield_with_heart</mat-icon>
+          <div class="bento-text">
+            <strong>Garantía de Comunidad Verificada 100% UPC</strong>
+            <p>Tus datos institucionales solo se usan para validar tu membresía universitaria.</p>
+          </div>
+        </div>
+      </mat-card>
+    </section>
+
+    <!-- COLUMNA DERECHA: SELECCIÓN DE ROL (US03) -->
+    <section class="signup-role-column">
+      <mat-card class="role-selection-card">
+        <div class="role-card-header">
+          <div class="pill-step">ROL PRINCIPAL</div>
+          <h2 class="role-card-title">¿Cómo deseas viajar en UniRide?</h2>
+          <p class="role-card-desc">Selecciona tu rol inicial. Podrás alternarlo más adelante en cualquier momento sin crear otra cuenta.</p>
+        </div>
+
+        <!-- TARJETAS DE ROL -->
+        <div class="role-cards-stack">
+          <!-- TARJETA A: CONDUCTOR -->
+          <div
+            class="role-option-card"
+            [class.active]="selectedRole === 'CONDUCTOR'"
+            (click)="selectRole('CONDUCTOR')"
+          >
+            <div class="role-top-row">
+              <div class="role-icon-box car">
+                <mat-icon>directions_car</mat-icon>
+              </div>
+              <div class="role-badge-check">
+                <mat-icon>{{ selectedRole === 'CONDUCTOR' ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              </div>
+            </div>
+
+            <div class="role-body">
+              <h3 class="role-name">Conductor Universitario</h3>
+              <p class="role-explanation">
+                Tengo vehículo propio y quiero compartir asientos vacíos con compañeros de mi universidad para compartir gastos de gasolina.
+              </p>
+            </div>
+
+            <div class="role-perks-row">
+              <span class="role-perk-chip">Publicar rutas fijas</span>
+              <span class="role-perk-chip">Compensación justa</span>
+              <span class="role-perk-chip">Control de pasajeros</span>
+            </div>
+          </div>
+
+          <!-- TARJETA B: PASAJERO -->
+          <div
+            class="role-option-card"
+            [class.active]="selectedRole === 'PASAJERO'"
+            (click)="selectRole('PASAJERO')"
+          >
+            <div class="role-top-row">
+              <div class="role-icon-box passenger">
+                <mat-icon>backpack</mat-icon>
+              </div>
+              <div class="role-badge-check">
+                <mat-icon>{{ selectedRole === 'PASAJERO' ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              </div>
+            </div>
+
+            <div class="role-body">
+              <h3 class="role-name">Pasajero Universitario</h3>
+              <p class="role-explanation">
+                Busco viajar cómodo, seguro y puntual hacia mi campus solicitando un asiento en las rutas de conductores verificados.
+              </p>
+            </div>
+
+            <div class="role-perks-row">
+              <span class="role-perk-chip">Ahorro hasta 70%</span>
+              <span class="role-perk-chip">Compañeros de clase</span>
+              <span class="role-perk-chip">Viaje seguro</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TÉRMINOS Y CONDICIONES -->
+        <div class="terms-block">
+          <mat-checkbox [formControl]="$any(signupForm.get('aceptaTerminos'))" color="primary">
+            <span class="terms-text">
+              He leído y acepto los <a href="#terminos" class="link-terms">Términos y Condiciones</a> y la
+              <a href="#privacidad" class="link-terms">Política de Privacidad</a> de la red UniRide.
+            </span>
+          </mat-checkbox>
+
+          @if (signupForm.get('aceptaTerminos')?.hasError('required') && signupForm.get('aceptaTerminos')?.touched) {
+            <mat-error class="terms-error">Debes aceptar los términos para continuar.</mat-error>
+          }
+        </div>
+
+        <!-- BOTÓN DE AVANCE A VERIFICACIÓN OTP -->
+        <button
+          mat-flat-button
+          type="button"
+          class="btn-primary btn-submit-role"
+          [disabled]="signupForm.invalid"
+          (click)="openOtpModal()"
+        >
+          <span>Continuar a Verificación</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </mat-card>
+    </section>
+  </div>
+
+  <!-- MODAL / OVERLAY DE VERIFICACIÓN OTP DE 6 DÍGITOS -->
+  @if (showOtpModal) {
+    <div class="otp-modal-backdrop">
+      <div class="otp-modal-card">
+        <div class="otp-icon-header">
+          <mat-icon>mark_email_read</mat-icon>
+        </div>
+
+        <h3 class="otp-title">Verifica tu correo institucional</h3>
+        <p class="otp-desc">
+          Hemos enviado un código de seguridad de 6 dígitos a:
+          <br /><strong>{{ signupForm.get('correo')?.value }}</strong>
+        </p>
+
+        <!-- INPUTS OTP -->
+        <div class="otp-inputs-row">
+          <input type="text" maxlength="1" class="otp-box" value="1" />
+          <input type="text" maxlength="1" class="otp-box" value="2" />
+          <input type="text" maxlength="1" class="otp-box" value="3" />
+          <input type="text" maxlength="1" class="otp-box" value="4" />
+          <input type="text" maxlength="1" class="otp-box" value="5" />
+          <input type="text" maxlength="1" class="otp-box" value="6" />
+        </div>
+
+        <div class="otp-resend-row">
+          <span>¿No recibiste el código?</span>
+          <button type="button" class="btn-resend">Reenviar código (00:45)</button>
+        </div>
+
+        <div class="otp-actions-row">
+          <button type="button" mat-stroked-button (click)="closeOtpModal()">
+            Modificar datos
+          </button>
+          <a
+            mat-flat-button
+            class="btn-primary"
+            routerLink="/auth/perfil"
+          >
+            <span>Verificar y Continuar a Perfil</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </a>
+        </div>
+      </div>
+    </div>
+  }
+</div>
