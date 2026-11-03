@@ -1,0 +1,17 @@
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<aside class="sidebar" aria-label="Panel del conductor">
+  <a class="brand" routerLink="/conductor/viajes/1/solicitudes" queryParamsHandling="merge"><img src="assets/uniride/brand-dot.svg" alt="" />UniRide</a>
+  <p class="panel-label">Panel del conductor</p>
+  <mat-nav-list aria-label="Navegación principal">
+    @for (item of menu; track item.icono) {
+      @if (item.icono === 'viajes') {
+        <a mat-list-item class="active" routerLink="/conductor/viajes/1/solicitudes" queryParamsHandling="merge" aria-current="page"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></a>
+      } @else {
+        <mat-list-item disabled [title]="item.nombre + ': módulo de otro integrante'"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></mat-list-item>
+      }
+    }
+  </mat-nav-list>
+  <div class="sidebar-user"><span class="avatar">JP</span><div>Juan Pérez<small>CONDUCTOR</small></div></div>
+</aside>
+<mat-toolbar class="mobile-toolbar"><a class="brand" routerLink="/conductor/viajes/1/solicitudes" queryParamsHandling="merge"><img src="assets/uniride/brand-dot.svg" alt="" />UniRide</a><span class="role-label">Conductor</span></mat-toolbar>
+<main class="workspace" id="contenido"><router-outlet /></main>
