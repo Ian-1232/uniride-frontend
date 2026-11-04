@@ -78,4 +78,20 @@ export const routes: Routes = [
       },
     ],
   },
+  {
+    path: 'contribucion',
+    loadComponent: () =>
+      import('./pages/contribucion/contribucion-shell/contribucion-shell').then(
+        (component) => component.ContribucionShell,
+      ),
+    children: [
+      {
+        path: 'sugerencia/:viajeId',
+        loadComponent: () =>
+          import(
+            './pages/contribucion/sugerencia-contribucion/sugerencia-contribucion'
+          ).then((component) => component.SugerenciaContribucion),
+      },
+    ],
+  },
 ];
