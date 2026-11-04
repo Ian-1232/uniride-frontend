@@ -1,6 +1,6 @@
 <section class="page">
   <nav class="breadcrumb">
-    <a [routerLink]="['/conductor/rutas', rutaId, 'viajes']" [state]="{ ruta: ruta() }">
+    <a [routerLink]="['/conductor/viajes', rutaId]" [state]="{ ruta: ruta() }">
       <mat-icon>arrow_back</mat-icon>
       Viajes de la ruta
     </a>
@@ -79,7 +79,7 @@
         </div>
 
         <div class="form-actions">
-          <a mat-stroked-button [routerLink]="['/conductor/rutas', rutaId, 'viajes']">
+          <a mat-stroked-button [routerLink]="['/conductor/viajes', rutaId]">
             Cancelar
           </a>
           <button mat-flat-button type="submit" [disabled]="form.invalid || guardando()">

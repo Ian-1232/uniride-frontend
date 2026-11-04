@@ -21,7 +21,7 @@
     </div>
     <a
       mat-flat-button
-      [routerLink]="['/conductor/rutas', rutaId, 'generar-viaje']"
+      [routerLink]="['/conductor/viajes', rutaId, 'generar']"
       [state]="{ ruta: ruta() }"
     >
       <mat-icon>add</mat-icon>
@@ -140,7 +140,7 @@
                   <button
                     mat-flat-button
                     type="button"
-                    [routerLink]="['/conductor/rutas', rutaId, 'viajes']"
+                    [routerLink]="['/conductor/viajes', rutaId]"
                   >
                     Confirmar
                   </button>
@@ -150,7 +150,7 @@
                     mat-flat-button
                     class="btn-accent"
                     type="button"
-                    [routerLink]="['/conductor/rutas', rutaId, 'viajes']"
+                    [routerLink]="['/conductor/viajes', rutaId]"
                   >
                     Completar
                   </button>
@@ -159,7 +159,7 @@
               <a
                 mat-stroked-button
                 class="btn-outline-primary"
-                [routerLink]="['/conductor/rutas', rutaId, 'viajes']"
+                [routerLink]="['/conductor/viajes', rutaId]"
               >
                 Ver solicitudes
               </a>

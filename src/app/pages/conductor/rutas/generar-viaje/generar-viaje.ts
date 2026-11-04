@@ -76,7 +76,7 @@ export class GenerarViaje {
       .subscribe({
         next: () => {
           this.guardando.set(false);
-          void this.router.navigate(['/conductor/rutas', this.rutaId, 'viajes']);
+          void this.router.navigate(['/conductor/viajes', this.rutaId]);
         },
         error: (error: unknown) => {
           this.guardando.set(false);

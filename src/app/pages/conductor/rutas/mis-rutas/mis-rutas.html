@@ -59,7 +59,7 @@
               <div class="route-actions">
                 <a
                   mat-button
-                  [routerLink]="['/conductor/rutas', ruta.id, 'generar-viaje']"
+                  [routerLink]="['/conductor/viajes', ruta.id, 'generar']"
                   [state]="{ ruta }"
                 >
                   <mat-icon>event</mat-icon>
@@ -67,7 +67,7 @@
                 </a>
                 <a
                   mat-button
-                  [routerLink]="['/conductor/rutas', ruta.id, 'viajes']"
+                  [routerLink]="['/conductor/viajes', ruta.id]"
                   [state]="{ ruta }"
                 >
                   <mat-icon>directions_bus</mat-icon>

@@ -5,7 +5,7 @@
   <mat-nav-list aria-label="Navegación principal">
     @for (item of menu; track item.icono) {
       @if (item.icono === 'viajes') {
-        <a mat-list-item class="active" routerLink="/conductor/viajes/1/solicitudes" queryParamsHandling="merge" aria-current="page"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></a>
+        <a mat-list-item class="active" routerLink="/conductor/viajes" queryParamsHandling="merge" aria-current="page"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></a>
       } @else if (item.ruta) {
         <a mat-list-item [routerLink]="item.ruta"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></a>
       } @else {
