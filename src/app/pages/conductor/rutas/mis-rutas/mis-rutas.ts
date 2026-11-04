@@ -1,38 +1,73 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule } from '@angular/material/paginator';
-
-interface Ruta {
-  id: number;
-  origen: string;
-  puntos: string;
-  zonas: string;
-  nota: string;
-}
+import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { Ruta } from '../../../../models/ruta.model';
+import { crearPaginatorIntl } from '../../../../services/paginator-intl';
+import { RutasService, mensajeError } from '../../../../services/rutas.service';
 
 @Component({
   selector: 'app-mis-rutas',
   templateUrl: './mis-rutas.html',
   styleUrl: './mis-rutas.css',
   imports: [RouterLink, MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatPaginatorModule],
+  providers: [{ provide: MatPaginatorIntl, useValue: crearPaginatorIntl('rutas') }],
 })
 export class MisRutas {
-  readonly rutas: Ruta[] = [
-    { id: 1, origen: 'San Borja', puntos: 'Av. Arequipa 1234', zonas: 'Centro de Lima', nota: 'S/ 10 sugeridos por pasajero' },
-    { id: 2, origen: 'Surco', puntos: 'Caminos del Inca 155', zonas: 'Centro de Lima', nota: 'S/ 8 sugeridos por pasajero' },
-    { id: 3, origen: 'Los Olivos', puntos: 'Av. Tupac Amaru 4500', zonas: 'Centro de Lima', nota: 'S/ 12 sugeridos por pasajero' },
-    { id: 4, origen: 'Callao', puntos: 'Av. Argentina 2800', zonas: 'Centro de Lima', nota: 'S/ 9 sugeridos por pasajero' },
-  ];
+  private readonly rutasService = inject(RutasService);
 
+  readonly rutas = signal<Ruta[]>([]);
+  readonly total = signal(0);
+  readonly pagina = signal(0);
   readonly pageSize = 4;
-  pagina = 0;
+  readonly cargando = signal(true);
+  readonly error = signal<string | null>(null);
+  readonly eliminandoId = signal<number | null>(null);
 
-  get rutasVisibles(): Ruta[] {
-    const inicio = this.pagina * this.pageSize;
-    return this.rutas.slice(inicio, inicio + this.pageSize);
+  constructor() {
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.cargando.set(true);
+    this.error.set(null);
+    this.rutasService.listarRutas(this.pagina(), this.pageSize).subscribe({
+      next: (respuesta) => {
+        this.rutas.set(respuesta.content);
+        this.total.set(respuesta.totalElements);
+        this.cargando.set(false);
+        if (respuesta.content.length === 0 && this.pagina() > 0) {
+          this.pagina.set(Math.max(respuesta.totalPages - 1, 0));
+          this.cargar();
+        }
+      },
+      error: (error: unknown) => {
+        this.error.set(mensajeError(error));
+        this.cargando.set(false);
+      },
+    });
+  }
+
+  cambiarPagina(evento: PageEvent): void {
+    this.pagina.set(evento.pageIndex);
+    this.cargar();
+  }
+
+  eliminar(id: number): void {
+    this.eliminandoId.set(id);
+    this.error.set(null);
+    this.rutasService.eliminarRuta(id).subscribe({
+      next: () => {
+        this.eliminandoId.set(null);
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.eliminandoId.set(null);
+        this.error.set(mensajeError(error));
+      },
+    });
   }
 }

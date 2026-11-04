@@ -5,7 +5,13 @@
       Mis rutas
     </a>
     <span class="breadcrumb-sep">/</span>
-    <span class="breadcrumb-current">San Borja → UPC</span>
+    <span class="breadcrumb-current">
+      @if (ruta(); as actual) {
+        {{ actual.origen }} → {{ actual.destino }}
+      } @else {
+        Ruta
+      }
+    </span>
   </nav>
 
   <header class="page-header">
@@ -13,133 +19,168 @@
       <h1 class="page-title">Viajes de la ruta</h1>
       <p class="page-subtitle">Genera y consulta los viajes programados de esta ruta</p>
     </div>
-    <a mat-flat-button routerLink="/conductor/rutas/generar-viaje">
+    <a
+      mat-flat-button
+      [routerLink]="['/conductor/rutas', rutaId, 'generar-viaje']"
+      [state]="{ ruta: ruta() }"
+    >
       <mat-icon>add</mat-icon>
       Generar viaje
     </a>
   </header>
 
-  <mat-card class="uni-card summary-card">
-    <mat-card-content>
-      <div class="route-summary">
-        <div class="summary-main">
-          <mat-icon class="summary-icon">route</mat-icon>
-          <div>
-            <div class="summary-name">San Borja → UPC</div>
-            <div class="summary-detail">Av. Arequipa 1234 · Capacidad: 3 pasajeros</div>
-          </div>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-value is-primario">2</span>
-            <span class="stat-label">Programados</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value is-acento">1</span>
-            <span class="stat-label">En curso</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value is-alerta">4</span>
-            <span class="stat-label">Completados</span>
-          </div>
-        </div>
+  @if (error(); as mensaje) {
+    <div class="banner banner-error">
+      <mat-icon>error</mat-icon>
+      <div>
+        <strong>No se pudieron cargar los viajes</strong>
+        {{ mensaje }}
       </div>
-    </mat-card-content>
-  </mat-card>
+    </div>
+  }
 
-  <div class="uni-table-card uni-table">
-    <table mat-table [dataSource]="viajesVisibles">
-      <ng-container matColumnDef="fecha">
-        <th mat-header-cell *matHeaderCellDef>Fecha</th>
-        <td mat-cell *matCellDef="let viaje">
-          <span class="cell-with-icon">
-            <mat-icon>calendar_month</mat-icon>
-            {{ viaje.fecha }}
-          </span>
-        </td>
-      </ng-container>
+  @if (ruta(); as actual) {
+    <mat-card class="uni-card summary-card">
+      <mat-card-content>
+        <div class="route-summary">
+          <div class="summary-main">
+            <mat-icon class="summary-icon">route</mat-icon>
+            <div>
+              <div class="summary-name">{{ actual.origen }} → {{ actual.destino }}</div>
+              <div class="summary-detail">
+                {{ actual.puntosReferencia }} · Capacidad: {{ actual.capacidadMaxima }} pasajeros
+              </div>
+            </div>
+          </div>
 
-      <ng-container matColumnDef="hora">
-        <th mat-header-cell *matHeaderCellDef>Hora</th>
-        <td mat-cell *matCellDef="let viaje">
-          <span class="cell-with-icon">
-            <mat-icon>schedule</mat-icon>
-            {{ viaje.hora }}
-          </span>
-        </td>
-      </ng-container>
+          <div class="stats">
+            <div class="stat">
+              <span class="stat-value is-primario">{{ programados() }}</span>
+              <span class="stat-label">Programados</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value is-acento">{{ enCurso() }}</span>
+              <span class="stat-label">En curso</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value is-alerta">{{ completados() }}</span>
+              <span class="stat-label">Completados</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
 
-      <ng-container matColumnDef="estado">
-        <th mat-header-cell *matHeaderCellDef>Estado</th>
-        <td mat-cell *matCellDef="let viaje">
-          @switch (viaje.estado) {
-            @case ('PROGRAMADO') {
-              <mat-chip class="estado-chip chip-programado">PROGRAMADO</mat-chip>
-            }
-            @case ('EN_PROGRESO') {
-              <mat-chip class="estado-chip chip-en-progreso">EN_PROGRESO</mat-chip>
-            }
-            @case ('COMPLETADO') {
-              <mat-chip class="estado-chip chip-completado">COMPLETADO</mat-chip>
-            }
-            @case ('CANCELADO') {
-              <mat-chip class="estado-chip chip-cancelado">CANCELADO</mat-chip>
-            }
-          }
-        </td>
-      </ng-container>
+  @if (cargando()) {
+    <p class="state-note">Cargando los viajes de la ruta…</p>
+  } @else if (viajes().length === 0) {
+    <p class="state-note">
+      Esta ruta todavía no tiene viajes programados. Genera el primero con «Generar viaje».
+    </p>
+  } @else {
+    <div class="uni-table-card uni-table">
+      <table mat-table [dataSource]="viajes()">
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let viaje">
+            <span class="cell-with-icon">
+              <mat-icon>calendar_month</mat-icon>
+              {{ formatearFecha(viaje.fecha) }}
+            </span>
+          </td>
+        </ng-container>
 
-      <ng-container matColumnDef="pasajeros">
-        <th mat-header-cell *matHeaderCellDef>Pasajeros</th>
-        <td mat-cell *matCellDef="let viaje">{{ viaje.pasajeros }} / {{ viaje.capacidad }}</td>
-      </ng-container>
+        <ng-container matColumnDef="hora">
+          <th mat-header-cell *matHeaderCellDef>Hora</th>
+          <td mat-cell *matCellDef="let viaje">
+            <span class="cell-with-icon">
+              <mat-icon>schedule</mat-icon>
+              {{ formatearHora(viaje.hora) }}
+            </span>
+          </td>
+        </ng-container>
 
-      <ng-container matColumnDef="acciones">
-        <th mat-header-cell *matHeaderCellDef>Acciones</th>
-        <td mat-cell *matCellDef="let viaje">
-          <div class="row-actions">
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let viaje">
             @switch (viaje.estado) {
               @case ('PROGRAMADO') {
-                <button mat-flat-button type="button" [routerLink]="['/conductor/rutas/viajes']">
-                  Confirmar
-                </button>
+                <mat-chip class="estado-chip chip-programado">PROGRAMADO</mat-chip>
               }
               @case ('EN_PROGRESO') {
-                <button
-                  mat-flat-button
-                  class="btn-accent"
-                  type="button"
-                  [routerLink]="['/conductor/rutas/viajes']"
-                >
-                  Completar
-                </button>
+                <mat-chip class="estado-chip chip-en-progreso">EN_PROGRESO</mat-chip>
+              }
+              @case ('COMPLETADO') {
+                <mat-chip class="estado-chip chip-completado">COMPLETADO</mat-chip>
+              }
+              @case ('CANCELADO') {
+                <mat-chip class="estado-chip chip-cancelado">CANCELADO</mat-chip>
+              }
+              @case ('VENCIDO') {
+                <mat-chip class="estado-chip chip-vencido">VENCIDO</mat-chip>
               }
             }
-            <a
-              mat-stroked-button
-              class="btn-outline-primary"
-              [routerLink]="['/conductor/rutas/viajes']"
-            >
-              Ver solicitudes
-            </a>
-          </div>
-        </td>
-      </ng-container>
+          </td>
+        </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-      <tr mat-row *matRowDef="let row; columns: columnas"></tr>
-    </table>
-  </div>
+        <ng-container matColumnDef="pasajeros">
+          <th mat-header-cell *matHeaderCellDef>Pasajeros</th>
+          <td mat-cell *matCellDef="let viaje">
+            {{ pasajeros(viaje) }} / {{ capacidad(viaje) }}
+          </td>
+        </ng-container>
 
-  <mat-paginator
-    class="uni-paginator"
-    [length]="viajes.length"
-    [pageSize]="pageSize"
-    [pageIndex]="pagina"
-    [showFirstLastButtons]="false"
-    [pageSizeOptions]="[]"
-    (page)="pagina = $event.pageIndex"
-    aria-label="Seleccionar página de viajes"
-  />
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let viaje">
+            <div class="row-actions">
+              @switch (viaje.estado) {
+                @case ('PROGRAMADO') {
+                  <button
+                    mat-flat-button
+                    type="button"
+                    [routerLink]="['/conductor/rutas', rutaId, 'viajes']"
+                  >
+                    Confirmar
+                  </button>
+                }
+                @case ('EN_PROGRESO') {
+                  <button
+                    mat-flat-button
+                    class="btn-accent"
+                    type="button"
+                    [routerLink]="['/conductor/rutas', rutaId, 'viajes']"
+                  >
+                    Completar
+                  </button>
+                }
+              }
+              <a
+                mat-stroked-button
+                class="btn-outline-primary"
+                [routerLink]="['/conductor/rutas', rutaId, 'viajes']"
+              >
+                Ver solicitudes
+              </a>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+        <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="uni-paginator"
+      [length]="total()"
+      [pageSize]="pageSize"
+      [pageIndex]="pagina()"
+      [showFirstLastButtons]="false"
+      [pageSizeOptions]="[]"
+      (page)="cambiarPagina($event)"
+      aria-label="Seleccionar página de viajes"
+    />
+  }
 </section>

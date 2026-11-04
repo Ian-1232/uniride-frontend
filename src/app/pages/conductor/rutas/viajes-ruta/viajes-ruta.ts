@@ -1,37 +1,14 @@
-import { Component, Provider } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
-
-interface Viaje {
-  id: number;
-  fecha: string;
-  hora: string;
-  estado: 'PROGRAMADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO';
-  pasajeros: number;
-  capacidad: number;
-}
-
-export function uniPaginatorIntl(): MatPaginatorIntl {
-  const intl = new MatPaginatorIntl();
-  intl.itemsPerPageLabel = 'Viajes por página:';
-  intl.firstPageLabel = 'Primera página';
-  intl.previousPageLabel = 'Página anterior';
-  intl.nextPageLabel = 'Página siguiente';
-  intl.lastPageLabel = 'Última página';
-  intl.getRangeLabel = (from: number, to: number, total: number) =>
-    total === 0 ? `0 – 0 de ${total} viajes` : `${from + 1} – ${to} de ${total} viajes`;
-  return intl;
-}
-
-const PAGINATOR_INTL_PROVIDER: Provider = {
-  provide: MatPaginatorIntl,
-  useFactory: uniPaginatorIntl,
-};
+import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
+import { Ruta, Viaje } from '../../../../models/ruta.model';
+import { crearPaginatorIntl } from '../../../../services/paginator-intl';
+import { RutasService, mensajeError } from '../../../../services/rutas.service';
 
 @Component({
   selector: 'app-viajes-ruta',
@@ -46,75 +23,116 @@ const PAGINATOR_INTL_PROVIDER: Provider = {
     MatIconModule,
     MatPaginatorModule,
   ],
-  providers: [PAGINATOR_INTL_PROVIDER],
+  providers: [{ provide: MatPaginatorIntl, useValue: crearPaginatorIntl('viajes') }],
 })
 export class ViajesRuta {
+  private readonly route = inject(ActivatedRoute);
+  private readonly rutasService = inject(RutasService);
+
+  readonly rutaId = Number(this.route.snapshot.paramMap.get('id'));
   readonly columnas: string[] = ['fecha', 'hora', 'estado', 'pasajeros', 'acciones'];
 
-  readonly viajes: Viaje[] = [
-    {
-      id: 1,
-      fecha: 'Lunes, 13 oct 2026',
-      hora: '07:30',
-      estado: 'PROGRAMADO',
-      pasajeros: 2,
-      capacidad: 3,
-    },
-    {
-      id: 2,
-      fecha: 'Miércoles, 15 oct 2026',
-      hora: '07:30',
-      estado: 'PROGRAMADO',
-      pasajeros: 1,
-      capacidad: 3,
-    },
-    {
-      id: 3,
-      fecha: 'Viernes, 10 oct 2026',
-      hora: '07:30',
-      estado: 'EN_PROGRESO',
-      pasajeros: 3,
-      capacidad: 3,
-    },
-    {
-      id: 4,
-      fecha: 'Lunes, 6 oct 2026',
-      hora: '07:30',
-      estado: 'COMPLETADO',
-      pasajeros: 3,
-      capacidad: 3,
-    },
-    {
-      id: 5,
-      fecha: 'Viernes, 3 oct 2026',
-      hora: '07:30',
-      estado: 'CANCELADO',
-      pasajeros: 0,
-      capacidad: 3,
-    },
-    {
-      id: 6,
-      fecha: 'Jueves, 1 oct 2026',
-      hora: '07:30',
-      estado: 'COMPLETADO',
-      pasajeros: 3,
-      capacidad: 3,
-    },
-    {
-      id: 7,
-      fecha: 'Martes, 29 sep 2026',
-      hora: '07:30',
-      estado: 'CANCELADO',
-      pasajeros: 2,
-      capacidad: 3,
-    },
-  ];
-
+  readonly ruta = signal<Ruta | null>(null);
+  readonly viajes = signal<Viaje[]>([]);
+  readonly todos = signal<Viaje[]>([]);
+  readonly total = signal(0);
+  readonly pagina = signal(0);
   readonly pageSize = 5;
-  pagina = 0;
+  readonly cargando = signal(true);
+  readonly error = signal<string | null>(null);
 
-  get viajesVisibles(): Viaje[] {
-    const inicio = this.pagina * this.pageSize;
-    return this.viajes.slice(inicio, inicio + this.pageSize);
+  readonly programados = computed(
+    () => this.todos().filter((viaje) => viaje.estado === 'PROGRAMADO').length,
+  );
+  readonly enCurso = computed(
+    () => this.todos().filter((viaje) => viaje.estado === 'EN_PROGRESO').length,
+  );
+  readonly completados = computed(
+    () => this.todos().filter((viaje) => viaje.estado === 'COMPLETADO').length,
+  );
+
+  constructor() {
+    if (!Number.isFinite(this.rutaId)) {
+      this.error.set('No se indicó la ruta cuyos viajes deseas ver.');
+      this.cargando.set(false);
+      return;
+    }
+
+    const rutaNavegada = history.state?.ruta as Ruta | undefined;
+    if (rutaNavegada && rutaNavegada.id === this.rutaId) {
+      this.ruta.set(rutaNavegada);
+    } else {
+      this.cargarRuta();
+    }
+
+    this.cargarViajes();
+    this.cargarResumen();
+  }
+
+  cargarRuta(): void {
+    this.rutasService.obtenerRuta(this.rutaId).subscribe({
+      next: (ruta) => this.ruta.set(ruta),
+      error: () => this.ruta.set(null),
+    });
+  }
+
+  cargarViajes(): void {
+    this.cargando.set(true);
+    this.error.set(null);
+    this.rutasService.listarViajes(this.rutaId, this.pagina(), this.pageSize).subscribe({
+      next: (respuesta) => {
+        this.viajes.set(respuesta.content);
+        this.total.set(respuesta.totalElements);
+        this.cargando.set(false);
+        if (respuesta.content.length === 0 && this.pagina() > 0) {
+          this.pagina.set(Math.max(respuesta.totalPages - 1, 0));
+          this.cargarViajes();
+        }
+      },
+      error: (error: unknown) => {
+        this.error.set(mensajeError(error));
+        this.cargando.set(false);
+      },
+    });
+  }
+
+  cargarResumen(): void {
+    this.rutasService.listarViajes(this.rutaId, 0, 100).subscribe({
+      next: (respuesta) => this.todos.set(respuesta.content),
+      error: () => this.todos.set([]),
+    });
+  }
+
+  cambiarPagina(evento: PageEvent): void {
+    this.pagina.set(evento.pageIndex);
+    this.cargarViajes();
+  }
+
+  formatearFecha(fecha: string): string {
+    const partes = fecha.split('-').map(Number);
+    if (partes.length !== 3 || partes.some((parte) => Number.isNaN(parte))) {
+      return fecha;
+    }
+    const [anio, mes, dia] = partes;
+    const valor = new Date(anio, mes - 1, dia);
+    const texto = new Intl.DateTimeFormat('es-PE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(valor);
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+
+  formatearHora(hora: string): string {
+    return hora.slice(0, 5);
+  }
+
+  pasajeros(viaje: Viaje): number {
+    return viaje.pasajerosConfirmados ?? viaje.pasajeros ?? 0;
+  }
+
+  capacidad(viaje: Viaje): number {
+    return viaje.capacidadMaxima ?? this.ruta()?.capacidadMaxima ?? 0;
   }
 }

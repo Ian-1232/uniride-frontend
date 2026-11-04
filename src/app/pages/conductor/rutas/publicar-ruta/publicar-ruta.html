@@ -16,7 +16,17 @@
         </div>
       </div>
 
-      <form class="route-form" [formGroup]="form">
+      @if (error(); as mensaje) {
+        <div class="banner banner-error">
+          <mat-icon>error</mat-icon>
+          <div>
+            <strong>No se pudo publicar la ruta</strong>
+            {{ mensaje }}
+          </div>
+        </div>
+      }
+
+      <form class="route-form" [formGroup]="form" (ngSubmit)="enviar()">
         <div class="form-row">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Origen *</mat-label>
@@ -72,14 +82,9 @@
 
         <div class="form-actions">
           <a mat-stroked-button routerLink="/conductor/rutas">Cancelar</a>
-          <button
-            mat-flat-button
-            type="button"
-            [routerLink]="['/conductor/rutas']"
-            [disabled]="form.invalid"
-          >
+          <button mat-flat-button type="submit" [disabled]="form.invalid || guardando()">
             <mat-icon>add</mat-icon>
-            Publicar ruta
+            {{ guardando() ? 'Publicando…' : 'Publicar ruta' }}
           </button>
         </div>
       </form>

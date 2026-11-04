@@ -1,6 +1,6 @@
 <section class="page">
   <nav class="breadcrumb">
-    <a routerLink="/conductor/rutas/viajes">
+    <a [routerLink]="['/conductor/rutas', rutaId, 'viajes']" [state]="{ ruta: ruta() }">
       <mat-icon>arrow_back</mat-icon>
       Viajes de la ruta
     </a>
@@ -17,17 +17,31 @@
 
   <mat-card class="uni-card">
     <mat-card-content>
-      <div class="summary-box route-summary">
-        <div class="summary-main">
-          <mat-icon class="summary-icon is-plain">route</mat-icon>
-          <div>
-            <div class="summary-name">San Borja → UPC</div>
-            <div class="summary-detail">Av. Arequipa 1234 · Capacidad: 3 pasajeros</div>
+      @if (ruta(); as actual) {
+        <div class="summary-box route-summary">
+          <div class="summary-main">
+            <mat-icon class="summary-icon is-plain">route</mat-icon>
+            <div>
+              <div class="summary-name">{{ actual.origen }} → {{ actual.destino }}</div>
+              <div class="summary-detail">
+                {{ actual.puntosReferencia }} · Capacidad: {{ actual.capacidadMaxima }} pasajeros
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      }
 
-      <form class="route-form" [formGroup]="form">
+      @if (error(); as mensaje) {
+        <div class="banner banner-error">
+          <mat-icon>error</mat-icon>
+          <div>
+            <strong>No se pudo generar el viaje</strong>
+            {{ mensaje }}
+          </div>
+        </div>
+      }
+
+      <form class="route-form" [formGroup]="form" (ngSubmit)="enviar()">
         <div class="form-row">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Fecha *</mat-label>
@@ -49,7 +63,11 @@
             <input matInput formControlName="hora" placeholder="07:30" />
             <mat-icon matSuffix>schedule</mat-icon>
             <mat-hint>Formato 24 horas (HH:mm)</mat-hint>
-            <mat-error>La hora es obligatoria</mat-error>
+            @if (form.controls.hora.hasError('pattern')) {
+              <mat-error>Usa el formato HH:mm (24 horas)</mat-error>
+            } @else {
+              <mat-error>La hora es obligatoria</mat-error>
+            }
           </mat-form-field>
         </div>
 
@@ -61,15 +79,12 @@
         </div>
 
         <div class="form-actions">
-          <a mat-stroked-button routerLink="/conductor/rutas/viajes">Cancelar</a>
-          <button
-            mat-flat-button
-            type="button"
-            [routerLink]="['/conductor/rutas/viajes']"
-            [disabled]="form.invalid"
-          >
+          <a mat-stroked-button [routerLink]="['/conductor/rutas', rutaId, 'viajes']">
+            Cancelar
+          </a>
+          <button mat-flat-button type="submit" [disabled]="form.invalid || guardando()">
             <mat-icon>add</mat-icon>
-            Generar viaje
+            {{ guardando() ? 'Generando…' : 'Generar viaje' }}
           </button>
         </div>
       </form>
