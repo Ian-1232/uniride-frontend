@@ -43,4 +43,39 @@ export const routes: Routes = [
       },
     ],
   },
+  {
+    path: 'compensaciones',
+    loadComponent: () =>
+      import('./pages/compensaciones/compensaciones-shell/compensaciones-shell').then(
+        (component) => component.CompensacionesShell,
+      ),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'metodos',
+      },
+      {
+        path: 'metodos/nuevo',
+        loadComponent: () =>
+          import('./pages/compensaciones/metodo-formulario/metodo-formulario').then(
+            (component) => component.MetodoFormulario,
+          ),
+      },
+      {
+        path: 'metodos/:id/editar',
+        loadComponent: () =>
+          import('./pages/compensaciones/metodo-formulario/metodo-formulario').then(
+            (component) => component.MetodoFormulario,
+          ),
+      },
+      {
+        path: 'metodos',
+        loadComponent: () =>
+          import('./pages/compensaciones/metodos-listado/metodos-listado').then(
+            (component) => component.MetodosListado,
+          ),
+      },
+    ],
+  },
 ];

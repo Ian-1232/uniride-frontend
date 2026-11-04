@@ -1,0 +1,56 @@
+<div class="compensaciones-shell">
+  <header class="feature-header">
+    <a class="brand" routerLink="/compensaciones/metodos" aria-label="Ir a métodos de compensación">
+      UniRide
+    </a>
+    <div class="header-actions">
+      <span class="ur-status ur-status--info">Conductor</span>
+      <button
+        class="mobile-menu-button"
+        mat-icon-button
+        type="button"
+        aria-label="Abrir navegación de compensaciones"
+        [matMenuTriggerFor]="compensacionesMenu"
+      >
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">menu</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <mat-menu #compensacionesMenu="matMenu">
+    <a mat-menu-item routerLink="/compensaciones/metodos">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">handshake</mat-icon>
+      <span>Mis métodos</span>
+    </a>
+    <a mat-menu-item routerLink="/reportes/resumen">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
+      <span>Reportes</span>
+    </a>
+  </mat-menu>
+
+  <div class="compensaciones-layout">
+    <nav class="compensaciones-navigation" aria-label="Navegación de compensaciones">
+      <div class="navigation-heading">
+        <p class="ur-label">UNIRIDE</p>
+        <p class="navigation-title">Conductor</p>
+      </div>
+
+      <a routerLink="/reportes/resumen">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
+        <span>Reportes</span>
+      </a>
+      <a routerLink="/compensaciones/metodos" routerLinkActive="is-active">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">handshake</mat-icon>
+        <span>Compensaciones</span>
+      </a>
+
+      <p class="integration-note ur-caption">
+        Navegación provisional hasta integrar el layout compartido del equipo.
+      </p>
+    </nav>
+
+    <main id="contenido-principal" class="compensaciones-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
