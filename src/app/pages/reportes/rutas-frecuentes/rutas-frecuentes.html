@@ -1,0 +1,118 @@
+<article class="report-page">
+  <header class="page-heading">
+    <div>
+      <span class="role-label">Vista de conductor</span>
+      <h1>Rutas frecuentes</h1>
+      <p>Ranking de tus rutas completadas con mayor frecuencia.</p>
+    </div>
+  </header>
+
+  @if (showRanking()) {
+    <mat-card class="ranking-card" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Rutas más utilizadas</mat-card-title>
+        <mat-card-subtitle>Ordenadas por cantidad de viajes completados</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="desktop-ranking">
+          <table>
+            <caption class="sr-only">Ranking de rutas frecuentes como conductor</caption>
+            <thead>
+              <tr>
+                <th scope="col">Posición</th>
+                <th scope="col">Origen</th>
+                <th scope="col">Destino</th>
+                <th scope="col" class="numeric">Viajes</th>
+                <th scope="col" class="numeric">Penalidades</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (route of routes; track route.position) {
+                <tr>
+                  <td><span class="position">{{ route.position }}</span></td>
+                  <td>{{ route.origin }}</td>
+                  <td>{{ route.destination }}</td>
+                  <td class="numeric"><strong>{{ route.completedTrips }}</strong></td>
+                  <td class="numeric">
+                    <span
+                      class="penalty-badge"
+                      [class.penalty-badge--clear]="route.penalties === 0"
+                    >
+                      {{ route.penalties }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mobile-ranking" aria-label="Ranking de rutas frecuentes como conductor">
+          @for (route of routes; track route.position) {
+            <article class="route-card">
+              <div class="route-card__heading">
+                <span class="position">{{ route.position }}</span>
+                <div>
+                  <span class="route-card__eyebrow">Ruta {{ route.position }}</span>
+                  <h2>{{ route.origin }} <span aria-hidden="true">→</span> {{ route.destination }}</h2>
+                </div>
+              </div>
+              <dl>
+                <div>
+                  <dt>Viajes completados</dt>
+                  <dd>{{ route.completedTrips }}</dd>
+                </div>
+                <div>
+                  <dt>Penalidades</dt>
+                  <dd>
+                    <span
+                      class="penalty-badge"
+                      [class.penalty-badge--clear]="route.penalties === 0"
+                    >
+                      {{ route.penalties }}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    @if (state() === 'penalidades') {
+      <app-reportes-state-panel
+        title="Penalidades por ruta"
+        message="Las penalidades se muestran separadas de la cantidad de viajes y no alteran el orden del ranking."
+        tone="warning"
+      />
+    }
+  } @else {
+    @switch (state()) {
+      @case ('insuficiente') {
+        <app-reportes-state-panel
+          title="Información insuficiente"
+          message="Completa al menos cinco viajes como conductor para consultar tus rutas frecuentes."
+          tone="info"
+        />
+      }
+      @case ('restringido') {
+        <app-reportes-state-panel
+          title="Acceso exclusivo para conductores"
+          message="Este ranking solo está disponible para estudiantes con el rol de conductor."
+          tone="warning"
+        />
+      }
+      @case ('error') {
+        <app-reportes-state-panel
+          title="No pudimos cargar las rutas"
+          message="Ocurrió un problema al consultar el ranking. Intenta nuevamente."
+          tone="danger"
+          actionLabel="Reintentar"
+          (action)="restoreDefaultState()"
+        />
+      }
+    }
+  }
+</article>
