@@ -34,6 +34,13 @@ export const routes: Routes = [
             (component) => component.RutasFrecuentes,
           ),
       },
+      {
+        path: 'exportar',
+        loadComponent: () =>
+          import('./pages/reportes/exportar-historial/exportar-historial').then(
+            (component) => component.ExportarHistorial,
+          ),
+      },
     ],
   },
 ];

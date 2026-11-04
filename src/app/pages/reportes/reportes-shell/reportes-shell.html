@@ -20,16 +20,20 @@
 
   <mat-menu #reportsMenu="matMenu">
     <a mat-menu-item routerLink="/reportes/resumen">
-      <mat-icon aria-hidden="true">dashboard</mat-icon>
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
       <span>Resumen</span>
     </a>
     <a mat-menu-item routerLink="/reportes/frecuencia">
-      <mat-icon aria-hidden="true">bar_chart</mat-icon>
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
       <span>Frecuencia semanal</span>
     </a>
     <a mat-menu-item routerLink="/reportes/rutas">
-      <mat-icon aria-hidden="true">route</mat-icon>
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">route</mat-icon>
       <span>Rutas frecuentes</span>
+    </a>
+    <a mat-menu-item routerLink="/reportes/exportar">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">picture_as_pdf</mat-icon>
+      <span>Exportar historial</span>
     </a>
   </mat-menu>
 
@@ -41,22 +45,21 @@
       </div>
 
       <a routerLink="/reportes/resumen" routerLinkActive="is-active">
-        <mat-icon aria-hidden="true">dashboard</mat-icon>
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
         <span>Resumen</span>
       </a>
       <a routerLink="/reportes/frecuencia" routerLinkActive="is-active">
-        <mat-icon aria-hidden="true">bar_chart</mat-icon>
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
         <span>Frecuencia semanal</span>
       </a>
       <a routerLink="/reportes/rutas" routerLinkActive="is-active">
-        <mat-icon aria-hidden="true">route</mat-icon>
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">route</mat-icon>
         <span>Rutas frecuentes</span>
       </a>
-      <span class="navigation-pending" aria-disabled="true">
-        <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+      <a routerLink="/reportes/exportar" routerLinkActive="is-active">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">picture_as_pdf</mat-icon>
         <span>Exportar historial</span>
-        <small>Próximamente</small>
-      </span>
+      </a>
     </nav>
 
     <section class="reportes-content" aria-live="polite">
