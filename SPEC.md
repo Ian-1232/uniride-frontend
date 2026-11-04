@@ -153,60 +153,180 @@ Reglas de estructura:
 
 UniRide debe utilizar una guía de estilos compartida para asegurar la consistencia visual de todas las pantallas.
 
-La guía global se documentará dentro del archivo oficial de Figma.
+La guía global está documentada en la página `00 · Design System — UniRide` del archivo oficial de Figma.
 
 También deberá tener una implementación equivalente en los archivos globales de Angular.
 
-### 6.1. Colores existentes
+Figma es la fuente de verdad para los valores visuales. La implementación en Angular debe reproducir sus variables, estilos, variantes y criterios responsivos sin crear una paleta o escala paralela.
 
-La paleta identificada actualmente en Figma incluye:
+### 6.1. Colección de variables
 
-- Primario: #4F46E5
-- Secundario: #1E293B
-- Acento: #10B981
-- Fondo general: #F8FAFC
-- Superficie: #FFFFFF
-- Bordes: #E2E8F0
+La colección local utilizada por el Design System es `Sebastián / Coordinación UI` y actualmente contiene un único modo: `Light`.
+
+No existe todavía un modo oscuro. No simularlo ni implementarlo hasta que se defina en Figma.
+
+La colección contiene variables primitivas y alias semánticos. En la implementación deben utilizarse los nombres semánticos siempre que sea posible.
+
+### 6.2. Colores
+
+| Variable semántica | Valor | Aplicación principal |
+|---|---:|---|
+| `color/primary` | `#4F46E5` | Acciones principales, selección y foco |
+| `color/ink` | `#1E293B` | Texto y contenido principal |
+| `color/accent` | `#10B981` | Acentos positivos |
+| `color/background` | `#F8FAFC` | Fondo general de la aplicación |
+| `color/surface` | `#FFFFFF` | Tarjetas, campos y superficies elevadas |
+| `color/muted` | `#64748B` | Texto secundario |
+| `color/border` | `#E2E8F0` | Bordes y divisores |
+| `color/primarySoft` | `#EEF2FF` | Fondos seleccionados o informativos |
+| `color/successSoft` | `#ECFDF5` | Fondo de estado exitoso |
+| `color/successText` | `#047857` | Texto de estado exitoso |
+| `color/warningSoft` | `#FFFBEB` | Fondo de advertencia |
+| `color/warningText` | `#92400E` | Texto de advertencia |
+| `color/danger` | `#DC2626` | Error y acciones destructivas |
+| `color/dangerSoft` | `#FEF2F2` | Fondo de error |
 
 Estos colores constituyen la base visual existente.
 
-No cambiar ni ampliar la paleta arbitrariamente.
+No cambiar, duplicar ni ampliar la paleta arbitrariamente. Valores cercanos presentes en frames anteriores deben mapearse al token semántico correspondiente al implementar pantallas nuevas.
 
-Los colores adicionales, sus nombres definitivos y sus aplicaciones se documentarán durante la consolidación del Design System.
+### 6.3. Tipografía
 
-### 6.2. Tipografía
+La familia tipográfica global definida en el Design System es `Roboto`.
 
-Las pantallas existentes utilizan principalmente Roboto e Inter.
+Los frames antiguos de autenticación que todavía utilizan Inter se consideran una diferencia heredada del archivo y no una segunda escala global. No se deben modificar esos frames sin coordinación, pero las implementaciones nuevas deben emplear la escala global de Roboto.
 
-La tipografía global definitiva todavía debe ser acordada por el equipo y documentada en Figma.
+| Estilo de Figma | Fuente | Tamaño | Interlineado |
+|---|---|---:|---:|
+| `Typography/Display` | Roboto Bold | 36 px | 44 px |
+| `Typography/Page title` | Roboto Bold | 28 px | 39 px |
+| `Typography/Section title` | Roboto Bold | 22 px | 31 px |
+| `Typography/Card title` | Roboto Bold | 18 px | 25 px |
+| `Typography/Body` | Roboto Regular | 14 px | 20 px |
+| `Typography/Body strong` | Roboto Medium | 14 px | 20 px |
+| `Typography/Body small` | Roboto Regular | 13 px | 18 px |
+| `Typography/Label` | Roboto Medium | 12 px | 17 px |
+| `Typography/Caption` | Roboto Regular | 12 px | 17 px |
 
-Hasta entonces, no introducir nuevas familias tipográficas.
+No introducir nuevas familias ni combinaciones tipográficas sin incorporarlas primero al Design System de Figma.
 
-No sustituir masivamente las fuentes existentes sin aprobación.
+### 6.4. Espaciados, radios y tamaños
 
-### 6.3. Componentes visuales
+Escala de espaciado:
 
-La guía global deberá documentar:
+- `spacing/4`: 4 px.
+- `spacing/8`: 8 px.
+- `spacing/12`: 12 px.
+- `spacing/16`: 16 px.
+- `spacing/20`: 20 px.
+- `spacing/24`: 24 px.
+- `spacing/32`: 32 px.
+- `spacing/48`: 48 px.
 
-- Botones y sus estados.
-- Campos de formulario.
+Escala de radios:
+
+- `radius/6`: 6 px.
+- `radius/8`: 8 px.
+- `radius/12`: 12 px.
+- `radius/16`: 16 px.
+- `radius/24`: 24 px.
+- `radius/pill`: 9999 px.
+
+Tamaños funcionales:
+
+- `size/control/compact`: 40 px.
+- `size/control/default`: 48 px.
+- `size/layout/sidebar`: 240 px.
+- `size/icon/sm`: 16 px.
+- `size/icon/md`: 20 px.
+- `size/icon/lg`: 24 px.
+
+Los valores de altura de control, iconografía y layout no deben reutilizarse como espaciados por el solo hecho de compartir el mismo valor numérico.
+
+### 6.5. Elevaciones
+
+Los estilos de efecto definidos en Figma son:
+
+- `Elevation/Subtle`: separación ligera para superficies y tarjetas discretas.
+- `Elevation/Card`: elevación estándar de tarjetas destacadas.
+- `Elevation/Modal`: elevación de diálogos sobre contenido bloqueado.
+
+No crear sombras diferentes por pantalla. Se debe utilizar el nivel semántico que corresponda.
+
+### 6.6. Componentes globales existentes
+
+#### Button
+
+Variantes:
+
+- Style: `Primary`, `Secondary`, `Destructive`.
+- State: `Default`, `Hover`, `Disabled`.
+- Size: `Compact` de 40 px y `Default` de 48 px.
+
+Debe existir como máximo una acción primaria por región. `Destructive` se reserva para acciones con consecuencias reales.
+
+#### Text Field
+
+Estados:
+
+- `Default`.
+- `Focus`.
+- `Error`.
+- `Disabled`.
+
+La etiqueta debe permanecer visible. Los errores deben incluir un mensaje textual y no depender únicamente del color.
+
+#### Badge
+
+Tonos:
+
+- `Neutral`.
+- `Info`.
+- `Success`.
+- `Warning`.
+- `Danger`.
+
+Los badges comunican estado; no deben utilizarse como botones o enlaces.
+
+#### Card
+
+Variantes:
+
+- `Standard`: contenido general.
+- `Route`: rutas publicadas.
+- `Trip`: coordinación y resumen de viajes.
+
+#### Dialog
+
+Variantes:
+
+- `Confirmation`.
+- `Success`.
+- `Destructive`.
+
+En móvil, el diálogo debe ocupar el ancho disponible dejando un margen lateral de 16 px.
+
+#### Navegación
+
+El componente existente `Layout/Sidebar Conductor` se conserva y no debe duplicarse. El ancho de referencia del sidebar es 240 px.
+
+Los componentes globales se deben reutilizar antes de crear estructuras manuales equivalentes. Card y Dialog reutilizan Button y Badge internamente.
+
+### 6.7. Elementos todavía no consolidados como componentes
+
+Los siguientes patrones aparecen en las pantallas, pero todavía no forman parte de la biblioteca global creada:
+
 - Selectores.
-- Tarjetas.
-- Tablas y listas.
-- Chips e indicadores.
-- Modales y diálogos.
-- Mensajes de error y confirmación.
-- Barras de navegación.
-- Sidebars.
+- Checkbox y radio.
+- Tablas y listas completas.
+- Paginación.
 - Estados vacíos.
-- Espaciados.
-- Bordes redondeados.
-- Sombras.
-- Adaptaciones responsivas.
+- Navegación móvil.
+- Sidebar de pasajero como componente local documentado.
 
-Reutilizar los componentes y variables existentes en Figma antes de crear nuevos.
+Cuando una tarea necesite uno de estos elementos, se debe revisar primero el frame correspondiente y coordinar su incorporación al Design System. No asumir que ya existe una variante global.
 
-### 6.4. Implementación en Angular
+### 6.8. Implementación en Angular
 
 Los estilos globales deberán centralizarse principalmente en:
 
@@ -216,6 +336,8 @@ Los estilos globales deberán centralizarse principalmente en:
 No crear sistemas de colores independientes por pantalla.
 
 No sobrescribir el tema global para resolver necesidades particulares de un módulo.
+
+Los nombres de tokens implementados en CSS o SCSS deben mantener una correspondencia explícita con las variables semánticas de Figma. Angular Material puede adaptarse mediante el tema global, pero no debe introducir colores, tipografías, radios o elevaciones incompatibles con esta especificación.
 
 La implementación de la base visual se realizará mediante un Pull Request específico hacia develop.
 
@@ -311,7 +433,33 @@ Representarlos como variantes o estados de la pantalla correspondiente cuando se
 
 ## 9. Diseño responsivo
 
-Cada pantalla debe verificarse en:
+Los criterios definidos en la página del Design System son:
+
+### Escritorio
+
+- Breakpoint de referencia: 1024 px o más.
+- Frame de referencia: 1440 × 1024 px.
+- Sidebar: 240 px.
+- Área principal: 1200 px.
+- Contenido interior habitual: 1136 px.
+
+### Tablet
+
+- Rango de referencia: 768–1023 px.
+- Sidebar colapsable.
+- Columnas adaptativas.
+- Formularios de una o dos columnas según el espacio disponible.
+
+### Móvil
+
+- Rango de referencia: 320–767 px.
+- Frame utilizado en Figma: 390 px de ancho.
+- Padding lateral habitual: 16 px.
+- Flujo principal vertical.
+- Controles táctiles de al menos 48 px.
+- Acciones principales de ancho completo cuando corresponda.
+
+Cada pantalla debe verificarse al menos en:
 
 - Escritorio.
 - Dispositivos móviles.
