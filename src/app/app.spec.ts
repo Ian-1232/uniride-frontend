@@ -233,6 +233,8 @@ describe('Coordinación de viajes', () => {
     ).not.toBe('Iniciar viaje');
   });
 
+  // La lógica de penalidad por antelación vive en gestionar-viaje (conductor);
+  // el detalle de pasajero de módulo 3 no la replica todavía.
   it.each([
     [25, 'Sin penalidad'],
     [24, 'Penalidad leve'],
@@ -242,7 +244,7 @@ describe('Coordinación de viajes', () => {
     'muestra la penalidad correcta a %s horas',
     async (horas, penalidad) => {
       const h = await RouterTestingHarness.create(
-        `/pasajero/viajes/1?horas=${horas}`,
+        `/conductor/viajes/1?horas=${horas}`,
       );
 
       await pulsar(h, 'Cancelar viaje');
