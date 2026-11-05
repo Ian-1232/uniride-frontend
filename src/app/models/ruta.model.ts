@@ -22,29 +22,3 @@ export interface Viaje {
   pasajerosConfirmados?: number;
   capacidadMaxima?: number;
 }
-
-export interface Pagina<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-}
-
-export interface CrearRutaRequest {
-  origen: string;
-  capacidadMaxima: number;
-  puntosReferencia: string;
-  zonasSinParada?: string;
-  notaContribucion?: string;
-}
-
-export interface CrearViajeRequest {
-  fecha: string;
-  hora: string;
-}
-
-export interface ErrorApi {
-  mensaje: string;
-  campos?: Record<string, string>;
-}

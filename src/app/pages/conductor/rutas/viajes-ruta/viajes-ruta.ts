@@ -8,7 +8,28 @@ import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/materi
 import { MatTableModule } from '@angular/material/table';
 import { Ruta, Viaje } from '../../../../models/ruta.model';
 import { crearPaginatorIntl } from '../../../../services/paginator-intl';
-import { RutasService, mensajeError } from '../../../../services/rutas.service';
+
+// shortcut: datos hardcodeados del Figma M2.4; sustituir por RutasService cuando haya backend
+const RUTA: Ruta = {
+  id: 1,
+  origen: 'San Borja',
+  destino: 'UPC',
+  capacidadMaxima: 3,
+  puntosReferencia: 'Av. Arequipa 1234',
+  zonasSinParada: 'Centro de Lima',
+  notaContribucion: 'S/ 10 sugeridos por pasajero',
+  estado: 'ACTIVA',
+};
+
+const VIAJES: Viaje[] = [
+  { id: 1, fecha: '2026-10-13', hora: '07:30', estado: 'PROGRAMADO', pasajerosConfirmados: 2, capacidadMaxima: 3 },
+  { id: 2, fecha: '2026-10-15', hora: '07:30', estado: 'PROGRAMADO', pasajerosConfirmados: 1, capacidadMaxima: 3 },
+  { id: 3, fecha: '2026-10-10', hora: '07:30', estado: 'EN_PROGRESO', pasajerosConfirmados: 3, capacidadMaxima: 3 },
+  { id: 4, fecha: '2026-10-06', hora: '07:30', estado: 'COMPLETADO', pasajerosConfirmados: 3, capacidadMaxima: 3 },
+  { id: 5, fecha: '2026-10-03', hora: '07:30', estado: 'CANCELADO', pasajerosConfirmados: 0, capacidadMaxima: 3 },
+  { id: 6, fecha: '2026-10-01', hora: '07:30', estado: 'COMPLETADO', pasajerosConfirmados: 3, capacidadMaxima: 3 },
+  { id: 7, fecha: '2026-09-29', hora: '07:30', estado: 'COMPLETADO', pasajerosConfirmados: 3, capacidadMaxima: 3 },
+];
 
 @Component({
   selector: 'app-viajes-ruta',
@@ -27,85 +48,27 @@ import { RutasService, mensajeError } from '../../../../services/rutas.service';
 })
 export class ViajesRuta {
   private readonly route = inject(ActivatedRoute);
-  private readonly rutasService = inject(RutasService);
 
   readonly rutaId = Number(this.route.snapshot.paramMap.get('id'));
   readonly columnas: string[] = ['fecha', 'hora', 'estado', 'pasajeros', 'acciones'];
 
-  readonly ruta = signal<Ruta | null>(null);
-  readonly viajes = signal<Viaje[]>([]);
-  readonly todos = signal<Viaje[]>([]);
-  readonly total = signal(0);
+  readonly ruta = signal<Ruta>(RUTA);
   readonly pagina = signal(0);
   readonly pageSize = 5;
-  readonly cargando = signal(true);
-  readonly error = signal<string | null>(null);
 
-  readonly programados = computed(
-    () => this.todos().filter((viaje) => viaje.estado === 'PROGRAMADO').length,
-  );
-  readonly enCurso = computed(
-    () => this.todos().filter((viaje) => viaje.estado === 'EN_PROGRESO').length,
-  );
-  readonly completados = computed(
-    () => this.todos().filter((viaje) => viaje.estado === 'COMPLETADO').length,
-  );
+  readonly viajes = computed(() => {
+    const inicio = this.pagina() * this.pageSize;
+    return VIAJES.slice(inicio, inicio + this.pageSize);
+  });
+  readonly total = VIAJES.length;
 
-  constructor() {
-    if (!Number.isFinite(this.rutaId)) {
-      this.error.set('No se indicó la ruta cuyos viajes deseas ver.');
-      this.cargando.set(false);
-      return;
-    }
-
-    const rutaNavegada = history.state?.ruta as Ruta | undefined;
-    if (rutaNavegada && rutaNavegada.id === this.rutaId) {
-      this.ruta.set(rutaNavegada);
-    } else {
-      this.cargarRuta();
-    }
-
-    this.cargarViajes();
-    this.cargarResumen();
-  }
-
-  cargarRuta(): void {
-    this.rutasService.obtenerRuta(this.rutaId).subscribe({
-      next: (ruta) => this.ruta.set(ruta),
-      error: () => this.ruta.set(null),
-    });
-  }
-
-  cargarViajes(): void {
-    this.cargando.set(true);
-    this.error.set(null);
-    this.rutasService.listarViajes(this.rutaId, this.pagina(), this.pageSize).subscribe({
-      next: (respuesta) => {
-        this.viajes.set(respuesta.content);
-        this.total.set(respuesta.totalElements);
-        this.cargando.set(false);
-        if (respuesta.content.length === 0 && this.pagina() > 0) {
-          this.pagina.set(Math.max(respuesta.totalPages - 1, 0));
-          this.cargarViajes();
-        }
-      },
-      error: (error: unknown) => {
-        this.error.set(mensajeError(error));
-        this.cargando.set(false);
-      },
-    });
-  }
-
-  cargarResumen(): void {
-    this.rutasService.listarViajes(this.rutaId, 0, 100).subscribe({
-      next: (respuesta) => this.todos.set(respuesta.content),
-      error: () => this.todos.set([]),
-    });
-  }
+  // El resumen del Figma (2/1/4) no cuadra con su propia tabla; se replica tal cual.
+  readonly programados = signal(2);
+  readonly enCurso = signal(1);
+  readonly completados = signal(4);
 
   cambiarPagina(evento: PageEvent): void {
     this.pagina.set(evento.pageIndex);
-    this.cargarViajes();
   }
 
   formatearFecha(fecha: string): string {
@@ -133,6 +96,6 @@ export class ViajesRuta {
   }
 
   capacidad(viaje: Viaje): number {
-    return viaje.capacidadMaxima ?? this.ruta()?.capacidadMaxima ?? 0;
+    return viaje.capacidadMaxima ?? this.ruta().capacidadMaxima;
   }
 }

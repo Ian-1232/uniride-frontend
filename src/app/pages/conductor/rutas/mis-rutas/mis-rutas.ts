@@ -1,13 +1,12 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { Ruta } from '../../../../models/ruta.model';
 import { crearPaginatorIntl } from '../../../../services/paginator-intl';
-import { RutasService, mensajeError } from '../../../../services/rutas.service';
 
 @Component({
   selector: 'app-mis-rutas',
@@ -17,57 +16,18 @@ import { RutasService, mensajeError } from '../../../../services/rutas.service';
   providers: [{ provide: MatPaginatorIntl, useValue: crearPaginatorIntl('rutas') }],
 })
 export class MisRutas {
-  private readonly rutasService = inject(RutasService);
+  // shortcut: datos hardcodeados del Figma M2.1; sustituir por RutasService cuando haya backend
+  readonly rutas = signal<Ruta[]>([
+    { id: 1, origen: 'San Borja', destino: 'UPC', capacidadMaxima: 3, puntosReferencia: 'Av. Arequipa 1234', zonasSinParada: 'Centro de Lima', notaContribucion: 'S/ 10 sugeridos por pasajero', estado: 'ACTIVA' },
+    { id: 2, origen: 'Surco', destino: 'UPC', capacidadMaxima: 3, puntosReferencia: 'Caminos del Inca 155', zonasSinParada: 'Centro de Lima', notaContribucion: 'S/ 8 sugeridos por pasajero', estado: 'ACTIVA' },
+    { id: 3, origen: 'Los Olivos', destino: 'UPC', capacidadMaxima: 3, puntosReferencia: 'Av. Tupac Amaru 4500', zonasSinParada: 'Centro de Lima', notaContribucion: 'S/ 12 sugeridos por pasajero', estado: 'ACTIVA' },
+    { id: 4, origen: 'Callao', destino: 'UPC', capacidadMaxima: 3, puntosReferencia: 'Av. Argentina 2800', zonasSinParada: 'Centro de Lima', notaContribucion: 'S/ 9 sugeridos por pasajero', estado: 'ACTIVA' },
+  ]);
 
-  readonly rutas = signal<Ruta[]>([]);
-  readonly total = signal(0);
-  readonly pagina = signal(0);
   readonly pageSize = 4;
-  readonly cargando = signal(true);
-  readonly error = signal<string | null>(null);
   readonly eliminandoId = signal<number | null>(null);
 
-  constructor() {
-    this.cargar();
-  }
-
-  cargar(): void {
-    this.cargando.set(true);
-    this.error.set(null);
-    this.rutasService.listarRutas(this.pagina(), this.pageSize).subscribe({
-      next: (respuesta) => {
-        this.rutas.set(respuesta.content);
-        this.total.set(respuesta.totalElements);
-        this.cargando.set(false);
-        if (respuesta.content.length === 0 && this.pagina() > 0) {
-          this.pagina.set(Math.max(respuesta.totalPages - 1, 0));
-          this.cargar();
-        }
-      },
-      error: (error: unknown) => {
-        this.error.set(mensajeError(error));
-        this.cargando.set(false);
-      },
-    });
-  }
-
-  cambiarPagina(evento: PageEvent): void {
-    this.pagina.set(evento.pageIndex);
-    this.cargar();
-  }
-
   eliminar(id: number): void {
-    this.eliminandoId.set(id);
-    this.error.set(null);
-    this.rutasService.eliminarRuta(id).subscribe({
-      next: () => {
-        this.eliminandoId.set(null);
-        this.cargar();
-      },
-      error: (error: unknown) => {
-        this.eliminandoId.set(null);
-        this.error.set(mensajeError(error));
-      },
-    });
+    this.rutas.update((lista) => lista.filter((ruta) => ruta.id !== id));
   }
 }

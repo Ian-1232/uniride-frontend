@@ -29,16 +29,6 @@
     </a>
   </header>
 
-  @if (error(); as mensaje) {
-    <div class="banner banner-error">
-      <mat-icon>error</mat-icon>
-      <div>
-        <strong>No se pudieron cargar los viajes</strong>
-        {{ mensaje }}
-      </div>
-    </div>
-  }
-
   @if (ruta(); as actual) {
     <mat-card class="uni-card summary-card">
       <mat-card-content>
@@ -72,9 +62,7 @@
     </mat-card>
   }
 
-  @if (cargando()) {
-    <p class="state-note">Cargando los viajes de la ruta…</p>
-  } @else if (viajes().length === 0) {
+  @if (viajes().length === 0) {
     <p class="state-note">
       Esta ruta todavía no tiene viajes programados. Genera el primero con «Generar viaje».
     </p>
@@ -174,7 +162,7 @@
 
     <mat-paginator
       class="uni-paginator"
-      [length]="total()"
+      [length]="total"
       [pageSize]="pageSize"
       [pageIndex]="pagina()"
       [showFirstLastButtons]="false"

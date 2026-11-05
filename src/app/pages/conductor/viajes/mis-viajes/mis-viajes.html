@@ -10,27 +10,7 @@
     </a>
   </header>
 
-  @if (error(); as mensaje) {
-    <div class="banner banner-error">
-      <mat-icon>error</mat-icon>
-      <div>
-        <strong>No se pudieron cargar los viajes</strong>
-        {{ mensaje }}
-      </div>
-    </div>
-  }
-
-  @if (cargando()) {
-    <p class="state-note">Cargando todos tus viajes…</p>
-  } @else if (viajes().length === 0) {
-    @if (!error()) {
-      <div class="state-note empty-state">
-        <p>Aún no tienes viajes publicados. Genera el primero desde una de tus rutas.</p>
-        <a mat-flat-button routerLink="/conductor/rutas">Ir a mis rutas</a>
-      </div>
-    }
-  } @else {
-    <mat-card class="uni-card summary-card">
+  <mat-card class="uni-card summary-card">
       <mat-card-content>
         <div class="route-summary">
           <div class="summary-main">
@@ -147,5 +127,4 @@
         <tr mat-row *matRowDef="let row; columns: columnas"></tr>
       </table>
     </div>
-  }
 </section>

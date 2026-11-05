@@ -31,16 +31,6 @@
         </div>
       }
 
-      @if (error(); as mensaje) {
-        <div class="banner banner-error">
-          <mat-icon>error</mat-icon>
-          <div>
-            <strong>No se pudo generar el viaje</strong>
-            {{ mensaje }}
-          </div>
-        </div>
-      }
-
       <form class="route-form" [formGroup]="form" (ngSubmit)="enviar()">
         <div class="form-row">
           <mat-form-field appearance="outline" floatLabel="always">

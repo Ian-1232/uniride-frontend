@@ -9,7 +9,18 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Ruta } from '../../../../models/ruta.model';
-import { RutasService, mensajeError } from '../../../../services/rutas.service';
+
+// shortcut: datos hardcodeados del Figma M2.5; sustituir por RutasService cuando haya backend
+const RUTA: Ruta = {
+  id: 1,
+  origen: 'San Borja',
+  destino: 'UPC',
+  capacidadMaxima: 3,
+  puntosReferencia: 'Av. Arequipa 1234',
+  zonasSinParada: 'Centro de Lima',
+  notaContribucion: 'S/ 10 sugeridos por pasajero',
+  estado: 'ACTIVA',
+};
 
 @Component({
   selector: 'app-generar-viaje',
@@ -20,15 +31,13 @@ import { RutasService, mensajeError } from '../../../../services/rutas.service';
 })
 export class GenerarViaje {
   private readonly fb = inject(FormBuilder);
-  private readonly rutasService = inject(RutasService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   readonly rutaId = Number(this.route.snapshot.paramMap.get('id'));
   readonly hoy = new Date();
-  readonly ruta = signal<Ruta | null>(null);
+  readonly ruta = signal<Ruta>(RUTA);
   readonly guardando = signal(false);
-  readonly error = signal<string | null>(null);
 
   readonly form = this.fb.group({
     fecha: new FormControl<Date | null>(null, [Validators.required]),
@@ -41,54 +50,11 @@ export class GenerarViaje {
     }),
   });
 
-  constructor() {
-    if (!Number.isFinite(this.rutaId)) {
-      this.error.set('No se indicó la ruta para la que deseas generar el viaje.');
-      return;
-    }
-
-    const rutaNavegada = history.state?.ruta as Ruta | undefined;
-    if (rutaNavegada && rutaNavegada.id === this.rutaId) {
-      this.ruta.set(rutaNavegada);
-    } else {
-      this.rutasService.obtenerRuta(this.rutaId).subscribe({
-        next: (ruta) => this.ruta.set(ruta),
-        error: (error: unknown) => this.error.set(mensajeError(error)),
-      });
-    }
-  }
-
   enviar(): void {
-    if (this.form.invalid || this.guardando() || !Number.isFinite(this.rutaId)) {
+    if (this.form.invalid) {
       return;
     }
-
-    const { fecha, hora } = this.form.getRawValue();
-    if (!fecha) {
-      return;
-    }
-
-    this.guardando.set(true);
-    this.error.set(null);
-
-    this.rutasService
-      .crearViaje(this.rutaId, { fecha: this.formatearFecha(fecha), hora })
-      .subscribe({
-        next: () => {
-          this.guardando.set(false);
-          void this.router.navigate(['/conductor/viajes', this.rutaId]);
-        },
-        error: (error: unknown) => {
-          this.guardando.set(false);
-          this.error.set(mensajeError(error));
-        },
-      });
-  }
-
-  private formatearFecha(fecha: Date): string {
-    const anio = fecha.getFullYear();
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-    const dia = String(fecha.getDate()).padStart(2, '0');
-    return `${anio}-${mes}-${dia}`;
+    // shortcut: sin backend, solo navega; crearViaje real pendiente (US06/POST rutas/{id}/viajes)
+    void this.router.navigate(['/conductor/viajes', this.rutaId]);
   }
 }

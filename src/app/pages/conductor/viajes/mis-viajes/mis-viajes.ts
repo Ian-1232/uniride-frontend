@@ -1,17 +1,37 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
-import { Pagina, Ruta, Viaje } from '../../../../models/ruta.model';
-import { RutasService, mensajeError } from '../../../../services/rutas.service';
+import { Ruta, Viaje } from '../../../../models/ruta.model';
 
 interface ViajeConRuta extends Viaje {
   ruta: Ruta;
 }
+
+// shortcut: datos hardcodeados del Figma M2.4; sustituir por RutasService cuando haya backend
+const RUTA: Ruta = {
+  id: 1,
+  origen: 'San Borja',
+  destino: 'UPC',
+  capacidadMaxima: 3,
+  puntosReferencia: 'Av. Arequipa 1234',
+  zonasSinParada: 'Centro de Lima',
+  notaContribucion: 'S/ 10 sugeridos por pasajero',
+  estado: 'ACTIVA',
+};
+
+const VIAJES: Viaje[] = [
+  { id: 1, fecha: '2026-10-13', hora: '07:30', estado: 'PROGRAMADO', pasajerosConfirmados: 2, capacidadMaxima: 3 },
+  { id: 2, fecha: '2026-10-15', hora: '07:30', estado: 'PROGRAMADO', pasajerosConfirmados: 1, capacidadMaxima: 3 },
+  { id: 3, fecha: '2026-10-10', hora: '07:30', estado: 'EN_PROGRESO', pasajerosConfirmados: 3, capacidadMaxima: 3 },
+  { id: 4, fecha: '2026-10-06', hora: '07:30', estado: 'COMPLETADO', pasajerosConfirmados: 3, capacidadMaxima: 3 },
+  { id: 5, fecha: '2026-10-03', hora: '07:30', estado: 'CANCELADO', pasajerosConfirmados: 0, capacidadMaxima: 3 },
+  { id: 6, fecha: '2026-10-01', hora: '07:30', estado: 'COMPLETADO', pasajerosConfirmados: 3, capacidadMaxima: 3 },
+  { id: 7, fecha: '2026-09-29', hora: '07:30', estado: 'COMPLETADO', pasajerosConfirmados: 3, capacidadMaxima: 3 },
+];
 
 @Component({
   selector: 'app-mis-viajes',
@@ -20,103 +40,15 @@ interface ViajeConRuta extends Viaje {
   imports: [RouterLink, MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatTableModule],
 })
 export class MisViajes {
-  private readonly rutasService = inject(RutasService);
-  private readonly pageSize = 100;
-
   readonly columnas: string[] = ['ruta', 'fecha', 'hora', 'estado', 'pasajeros', 'acciones'];
-  readonly viajes = signal<ViajeConRuta[]>([]);
-  readonly cargando = signal(true);
-  readonly error = signal<string | null>(null);
 
-  readonly programados = computed(
-    () => this.viajes().filter((viaje) => viaje.estado === 'PROGRAMADO').length,
-  );
-  readonly enCurso = computed(
-    () => this.viajes().filter((viaje) => viaje.estado === 'EN_PROGRESO').length,
-  );
-  readonly completados = computed(
-    () => this.viajes().filter((viaje) => viaje.estado === 'COMPLETADO').length,
-  );
-  readonly rutasConViajes = computed(
-    () => new Set(this.viajes().map((viaje) => viaje.ruta.id)).size,
-  );
+  readonly viajes = signal<ViajeConRuta[]>(VIAJES.map((viaje) => ({ ...viaje, ruta: RUTA })));
 
-  constructor() {
-    this.cargar();
-  }
-
-  cargar(): void {
-    this.cargando.set(true);
-    this.error.set(null);
-    this.viajes.set([]);
-
-    this.rutasService
-      .listarRutas(0, this.pageSize)
-      .pipe(
-        switchMap((primera) =>
-          this.acumularPaginas(primera, (pagina) => this.rutasService.listarRutas(pagina, this.pageSize)),
-        ),
-        switchMap((rutas) => {
-          if (rutas.length === 0) {
-            return of<ViajeConRuta[]>([]);
-          }
-          return forkJoin(rutas.map((ruta) => this.cargarViajesDeRuta(ruta))).pipe(
-            map((listas) => listas.flat()),
-          );
-        }),
-        map((viajes) => this.ordenar(viajes)),
-      )
-      .subscribe({
-        next: (viajes) => {
-          this.viajes.set(viajes);
-          this.cargando.set(false);
-        },
-        error: (error: unknown) => {
-          this.error.set(mensajeError(error));
-          this.cargando.set(false);
-        },
-      });
-  }
-
-  private cargarViajesDeRuta(ruta: Ruta): Observable<ViajeConRuta[]> {
-    return this.rutasService.listarViajes(ruta.id, 0, this.pageSize).pipe(
-      switchMap((primera) =>
-        this.acumularPaginas(primera, (pagina) =>
-          this.rutasService.listarViajes(ruta.id, pagina, this.pageSize),
-        ),
-      ),
-      map((viajes) => viajes.map((viaje) => ({ ...viaje, ruta }))),
-    );
-  }
-
-  private acumularPaginas<T>(
-    primera: Pagina<T>,
-    cargarPagina: (pagina: number) => Observable<Pagina<T>>,
-  ): Observable<T[]> {
-    const restantes = Array.from(
-      { length: Math.max(primera.totalPages - 1, 0) },
-      (_, indice) => indice + 1,
-    );
-
-    if (restantes.length === 0) {
-      return of(primera.content);
-    }
-
-    return forkJoin(restantes.map(cargarPagina)).pipe(
-      map((paginas) => [
-        ...primera.content,
-        ...paginas.flatMap((pagina) => pagina.content),
-      ]),
-    );
-  }
-
-  private ordenar(viajes: ViajeConRuta[]): ViajeConRuta[] {
-    return [...viajes].sort((a, b) => {
-      const fechaA = `${a.fecha}T${a.hora}`;
-      const fechaB = `${b.fecha}T${b.hora}`;
-      return fechaA.localeCompare(fechaB) || a.id - b.id;
-    });
-  }
+  // El resumen del Figma M2.4 (2/1/4) no cuadra con su propia tabla; se replica tal cual.
+  readonly programados = signal(2);
+  readonly enCurso = signal(1);
+  readonly completados = signal(4);
+  readonly rutasConViajes = signal(1);
 
   formatearFecha(fecha: string): string {
     const partes = fecha.split('-').map(Number);
