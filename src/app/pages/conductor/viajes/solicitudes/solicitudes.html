@@ -1,0 +1,68 @@
+@let pendientes = (aceptada !== 'maria' && !rechazos?.includes('maria') ? 1 : 0) + (aceptada !== 'diego' && !rechazos?.includes('diego') ? 1 : 0) + (aceptada !== 'valeria' && !rechazos?.includes('valeria') ? 1 : 0);
+@let elegidas = (seleccion.value.maria && aceptada !== 'maria' && !rechazos?.includes('maria') ? 1 : 0) + (seleccion.value.diego && aceptada !== 'diego' && !rechazos?.includes('diego') ? 1 : 0) + (seleccion.value.valeria && aceptada !== 'valeria' && !rechazos?.includes('valeria') ? 1 : 0);
+@let total = filtro === 'pendientes' ? pendientes : filtro === 'aceptadas' ? (aceptada ? 3 : 2) : 5;
+@let disponible = !aceptada && (!estado || estado === 'programado');
+<header class="page-heading"><p class="breadcrumb">Viajes / Coordinación</p><h1>Solicitudes recibidas</h1><p>Revisa a tus pasajeros y organiza los cupos de cada viaje.</p></header>
+
+@if (aviso) {
+  <div class="notice success feedback" role="status"><div><strong>{{ aviso === 'aceptada' ? 'Solicitud aceptada' : aviso === 'multiples' ? 'Solicitudes rechazadas' : 'Solicitud rechazada' }}</strong><p>{{ aviso === 'aceptada' ? 'Se reservó un cupo y se generó un borrador de compensación.' : 'La selección se ha actualizado en este viaje.' }}</p></div><a matButton="text" routerLink="." [queryParams]="{aviso: null}" queryParamsHandling="merge" aria-label="Cerrar aviso">Cerrar</a></div>
+}
+
+<mat-card class="trip-summary">
+  <div><small>Viaje</small><span>San Borja → UPC</span></div><div><small>Salida</small><span>6 nov · 07:30</span></div><div><small>Cupos disponibles</small><span>{{ aceptada ? '0' : '1' }} de 3</span></div>
+  <a matButton="outlined" routerLink="/conductor/viajes/1" [queryParams]="{accion: null, aviso: null, objetivo: null}" queryParamsHandling="merge">Gestionar viaje</a>
+</mat-card>
+
+<div class="list-toolbar">
+  <nav class="filter-tabs" aria-label="Filtrar solicitudes">
+    <a matButton="text" routerLink="." [class.selected]="!filtro || filtro === 'todas'" [attr.aria-current]="!filtro || filtro === 'todas' ? 'page' : null" [queryParams]="{filtro: null, aviso: null}" queryParamsHandling="merge" (click)="pagina = 0">Todas · 5</a>
+    <a matButton="text" routerLink="." [class.selected]="filtro === 'pendientes'" [attr.aria-current]="filtro === 'pendientes' ? 'page' : null" [queryParams]="{filtro: 'pendientes', aviso: null}" queryParamsHandling="merge" (click)="pagina = 0">Pendientes · {{ pendientes }}</a>
+    <a matButton="text" routerLink="." [class.selected]="filtro === 'aceptadas'" [attr.aria-current]="filtro === 'aceptadas' ? 'page' : null" [queryParams]="{filtro: 'aceptadas', aviso: null}" queryParamsHandling="merge" (click)="pagina = 0">Aceptadas · {{ aceptada ? 3 : 2 }}</a>
+  </nav>
+  <span class="selection-hint">{{ elegidas ? elegidas + ' solicitudes seleccionadas' : 'Gestiona las solicitudes seleccionadas.' }}</span>
+  <button matButton="outlined" routerLink="." [queryParams]="{accion: 'rechazar-multiples', objetivo: null, aviso: null}" queryParamsHandling="merge" [disabled]="!elegidas || (!!estado && estado !== 'programado')">Rechazar selección</button>
+</div>
+
+<form [formGroup]="seleccion" class="request-list" aria-label="Solicitudes recibidas">
+  @for (solicitud of solicitudes; track solicitud.id; let i = $index) {
+    @let situacion = i > 2 || aceptada === solicitud.id ? 'Aceptada' : rechazos?.includes(solicitud.id) ? 'Rechazada' : 'Pendiente';
+    @if ((filtro === 'pendientes' && situacion === 'Pendiente') || (filtro === 'aceptadas' && situacion === 'Aceptada') || ((!filtro || filtro === 'todas') && (pagina === 0 ? i < 3 : i >= 3))) {
+      <mat-card class="request-card" [attr.data-request]="solicitud.id">
+        <div class="request-heading">
+          @if (situacion === 'Pendiente' && (!estado || estado === 'programado')) { <mat-checkbox [formControlName]="solicitud.id" [aria-label]="'Seleccionar a ' + solicitud.nombre" /> }
+          <span class="avatar">{{ solicitud.iniciales }}</span><div class="request-person"><h2>{{ solicitud.nombre }}</h2><p>{{ solicitud.descripcion }}</p></div>
+          <span class="status" [class.success]="situacion === 'Aceptada'" [class.danger]="situacion === 'Rechazada'" [class.warning]="situacion === 'Pendiente'">{{ situacion }}</span>
+        </div>
+        <div class="request-footer"><p class="request-message">“{{ solicitud.mensaje }}”</p><div class="actions">
+          @if (i < 3) { <a matButton="text" [routerLink]="['/conductor/viajes/1/solicitudes', solicitud.id]" [queryParams]="{accion: null, aviso: null}" queryParamsHandling="merge">Ver detalle</a> }
+          @if (situacion === 'Pendiente' && (!estado || estado === 'programado')) {
+            <button matButton="filled" routerLink="." [queryParams]="{accion: 'aceptar', objetivo: solicitud.id, aviso: null}" queryParamsHandling="merge" [disabled]="!disponible">Aceptar</button>
+            <button matButton="outlined" routerLink="." [queryParams]="{accion: 'rechazar', objetivo: solicitud.id, aviso: null}" queryParamsHandling="merge">Rechazar</button>
+          }
+        </div></div>
+      </mat-card>
+    }
+  }
+</form>
+@if (total === 0) { <mat-card class="empty-state"><h2>No hay solicitudes pendientes</h2><p>Ya gestionaste todas las solicitudes de este viaje.</p><a matButton="outlined" routerLink="." [queryParams]="{filtro: null}" queryParamsHandling="merge">Ver todas las solicitudes</a></mat-card> }
+@if (aceptada) { <p class="muted seat-note">Los 3 cupos están ocupados. No puedes aceptar más solicitudes.</p> }
+<div class="pagination"><span>{{ total === 0 ? '0' : filtro && filtro !== 'todas' ? '1–' + total : pagina === 0 ? '1–3' : '4–5' }} de {{ total }} solicitudes</span><mat-paginator [length]="total" [pageSize]="3" [pageIndex]="filtro && filtro !== 'todas' ? 0 : pagina" [hidePageSize]="true" (page)="pagina = $event.pageIndex" aria-label="Páginas de solicitudes" /></div>
+
+@if (accion === 'aceptar' || accion === 'rechazar' || accion === 'rechazar-multiples') {
+  <div class="dialog-backdrop"><mat-card class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialog-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (keydown.escape)="cerrar.querySelector('button')?.click()">
+    @let persona = objetivo === 'diego' ? 'Diego Ramírez' : objetivo === 'valeria' ? 'Valeria Rojas' : 'María Torres';
+    <h2 id="dialog-title">{{ accion === 'aceptar' ? 'Aceptar solicitud' : accion === 'rechazar-multiples' ? 'Rechazar solicitudes seleccionadas' : 'Rechazar solicitud' }}</h2>
+    @if (accion === 'aceptar') {
+      <p>¿Aceptar a {{ persona }} en tu viaje San Borja → UPC?</p><div class="notice info"><strong>Se reservará 1 cupo</strong><p>Se generará un borrador de compensación para que ambas partes lo revisen.</p></div>
+      @if (!disponible) { <p class="error-text" role="alert">No hay cupos disponibles o el viaje ya no admite solicitudes.</p> }
+    } @else {
+      <p>{{ accion === 'rechazar-multiples' ? 'Se rechazarán ' + elegidas + ' solicitudes pendientes. Esta acción no consume cupos.' : '¿Rechazar la solicitud de ' + persona + '?' }}</p>
+      <form [formGroup]="motivo"><mat-form-field appearance="outline"><mat-label>Motivo (opcional)</mat-label><textarea matInput formControlName="motivo" rows="3" maxlength="301" placeholder="Puedes explicar el motivo del rechazo"></textarea><mat-hint>Máximo 300 caracteres</mat-hint><mat-error>El motivo no debe superar los 300 caracteres.</mat-error></mat-form-field></form>
+    }
+    <div class="dialog-actions" #cerrar><button matButton="outlined" routerLink="." [queryParams]="{accion: null, objetivo: null}" queryParamsHandling="merge" cdkFocusInitial>Volver</button>
+      @if (accion === 'aceptar') { <button matButton="filled" routerLink="." [queryParams]="{aceptada: objetivo, accion: null, objetivo: null, aviso: 'aceptada'}" queryParamsHandling="merge" [disabled]="!disponible || !objetivo || rechazos?.includes(objetivo) || !['maria', 'diego', 'valeria'].includes(objetivo)">Aceptar solicitud</button> }
+      @else if (accion === 'rechazar') { <button class="danger-button" matButton="filled" routerLink="." [queryParams]="{rechazos: (rechazos ?? '') + ',' + objetivo, accion: null, objetivo: null, aviso: 'rechazada'}" queryParamsHandling="merge" [disabled]="motivo.invalid || !objetivo || aceptada === objetivo || !!estado && estado !== 'programado'">Rechazar solicitud</button> }
+      @else { <button class="danger-button" matButton="filled" routerLink="." [queryParams]="{rechazos: (rechazos ?? '') + (seleccion.value.maria && aceptada !== 'maria' ? ',maria' : '') + (seleccion.value.diego && aceptada !== 'diego' ? ',diego' : '') + (seleccion.value.valeria && aceptada !== 'valeria' ? ',valeria' : ''), accion: null, aviso: 'multiples'}" queryParamsHandling="merge" [disabled]="motivo.invalid || !elegidas || !!estado && estado !== 'programado'">Rechazar selección</button> }
+    </div>
+  </mat-card></div>
+}

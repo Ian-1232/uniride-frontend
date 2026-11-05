@@ -1,87 +1,588 @@
-# UniRide
+# UniRide — Especificación del Frontend
 
-Aplicación web responsiva para realizar viajes universitarios compartidos con estudiantes que van a la misma universidad y comparten horarios similares.
+Aplicación web responsiva de viajes compartidos universitarios, desarrollada como parte del proyecto UniRide para el curso de Ingeniería de Software de la Universidad Peruana de Ciencias Aplicadas (UPC).
 
-## Datos
+UniRide permite que estudiantes universitarios con vehículo publiquen rutas y viajes, mientras que estudiantes sin vehículo pueden buscar viajes disponibles, solicitar cupos y coordinar contribuciones.
 
-- Figma: https://www.figma.com/design/Y12BnmOuhShBxVckf6J8gg/UniRide-Design?node-id=0-1&p=f&t=Na4lIp2KLIu4q4zX-0
+Este documento establece las reglas compartidas para desarrollar las interfaces utilizando Angular, Angular Material, Figma y un agente de inteligencia artificial.
+
+## 1. Datos del proyecto
+
+- Nombre del producto: UniRide
+- Nombre del startup: MoviUni
+- Repositorio: https://github.com/Ian-1232/uniride-frontend
+- Figma oficial: https://www.figma.com/design/Y12BnmOuhShBxVckf6J8gg/UniRide-Design?node-id=0-1
+- Framework: Angular 22
+- Lenguaje: TypeScript
 - UI: Angular Material
-- Gráficos: ng2-charts
+- Estilos: CSS y SCSS
+- Gestor de paquetes: npm
+- Control de versiones: Git y GitHub
+- Rama principal: main
+- Rama de integración: develop
+- Agente de desarrollo: Codex CLI
+- Conexión con Figma: MCP
 
-## Cómo trabajar
+El backend de UniRide se encuentra en un repositorio independiente y está desarrollado con Spring Boot y PostgreSQL.
 
-Haz solo las pantallas que te pidan. Crealas en el Figma y si es necesario hacer correcciones hazlas. Luego impleméntala en Angular y verifica que compile.
-Al terminar, lista los archivos creados y qué quedó pendiente.
+La integración con el backend se realizará después de completar y verificar las interfaces correspondientes.
 
-## Estructura
+## 2. Fuentes de referencia
 
-Sigue la siguiente estructura:
+Las fuentes principales para el desarrollo son:
 
+1. Este archivo SPEC.md.
+2. El Figma oficial de UniRide.
+3. La guía global de estilos del proyecto.
+4. El informe del proyecto y sus User Stories.
+5. La estructura existente del repositorio Angular.
+
+No utilizar diseños, rutas, componentes o nombres procedentes del proyecto de ejemplo EventSales.
+
+Cuando existan diferencias entre una pantalla de Figma y las reglas globales de diseño, se debe comunicar la inconsistencia antes de implementar cambios.
+
+No modificar pantallas de otros integrantes sin coordinación.
+
+## 3. Organización del equipo
+
+Las funcionalidades se encuentran distribuidas de la siguiente manera:
+
+### Renzo Arbulú
+
+- US01–US05: Autenticación, registro, roles y perfiles.
+- US23–US24: Gestión de cursos y horarios académicos.
+- US30: Búsqueda de viajes mediante lenguaje natural.
+
+### José Quispe
+
+- US06–US09: Publicación y administración de rutas.
+- US10–US13: Búsqueda y solicitudes de viajes.
+- US31: Gestión de viajes y solicitudes mediante lenguaje natural.
+
+### Sebastián Córdova
+
+- US14–US16: Solicitudes recibidas, aceptación y rechazo.
+- US17–US18: Confirmación y cancelación de viajes.
+- US25: Notificaciones por correo.
+
+### Ian Landauro
+
+- US19: Número total de viajes realizados.
+- US20: Frecuencia de viajes por día de la semana.
+- US21: Rutas más utilizadas.
+- US22: Exportación de historial personal en PDF.
+- US26: Registro de métodos de compensación.
+- US27: Actualización de métodos de compensación.
+- US28: Eliminación de métodos de compensación.
+- US29: Sugerencia de contribución estimada.
+
+Las User Stories son la referencia funcional.
+
+Varias historias pueden representarse mediante una misma pantalla cuando forman parte de un flujo común.
+
+No crear una pantalla independiente por cada User Story si la funcionalidad corresponde a una sección, diálogo o estado de otra pantalla.
+
+## 4. Organización de las pantallas
+
+El frontend contempla los siguientes grupos principales:
+
+### Autenticación
+
+Registro, inicio de sesión, verificación de cuenta y administración del perfil.
+
+### Conductor
+
+Publicación de rutas, gestión de viajes, solicitudes recibidas, estadísticas y otras funcionalidades relacionadas con el conductor.
+
+### Pasajero
+
+Búsqueda de viajes, solicitudes, información de viajes, estadísticas y contribuciones.
+
+### Funcionalidades compartidas
+
+Aquellas que pueden utilizar tanto conductores como pasajeros deben diseñarse evitando duplicaciones innecesarias.
+
+Por ejemplo, la gestión de métodos de compensación y las estadísticas personales deben contemplar los permisos y necesidades de ambos roles.
+
+La ubicación definitiva de estas pantallas en Angular se establecerá al preparar la base compartida del frontend.
+
+## 5. Estructura del proyecto
+
+Mantener una estructura organizada por funcionalidades y roles.
+
+Estructura general:
+
+```text
+src/
+├── app/
+│   ├── app.routes.ts
+│   ├── home/
+│   ├── layouts/
+│   │   ├── auth-layout/
+│   │   ├── conductor-layout/
+│   │   └── pasajero-layout/
+│   └── pages/
+│       ├── auth/
+│       ├── conductor/
+│       │   ├── rutas/
+│       │   └── viajes/
+│       └── pasajero/
+│           └── viajes/
+├── styles.css
+└── material-theme.scss
 ```
-src/app/
-├── app.routes.ts                    # "/" carga home; cada grupo con loadChildren
-├── home/                            # Landing: una página en "/", sin layout
-│   └── home.ts · home.html · home.css
-├── layouts/                         # Un layout por grupo
-│   ├── auth-layout/
-│   ├── conductor-layout/
-│   └── pasajero-layout/
-└── pages/
-    ├── auth/                        # Grupo de acceso (se nombra por su función)
-    │   ├── auth.routes.ts           # /login, /registro
-    │   ├── login/
-    │   └── signup/
-    ├── conductor/                # Grupo por tipo de usuario
-    │   ├── conductor.routes.ts   # /conductor/...
-    |   ├── dashboard/
-    │   ├── rutas/
-    │   ├── viajes/
-    │   ├── compensaciones/
-    |   ├── reportes/
-    |   ├── horarios/
-    │   └── configuracion/
-    └── pasajero/
-        ├── pasajero.routes.ts    # /pasajero/...
-        ├── dashboard/
-        ├── viajes/
-        ├── compensaciones/
-        ├── reportes/
-        ├── horarios/
-        └── configuracion/
-```
 
-Un grupo es un conjunto de pantallas que comparten el mismo layout.
+Esta estructura representa la organización general y los módulos que ya se están desarrollando.
 
-## Alcance
+Las carpetas adicionales para estadísticas, historial y compensaciones se definirán después de aprobar el Design System y revisar las rutas compartidas.
 
-Dibuja cada pantalla y conéctala: formularios con sus campos, listas con `@for`,
-errores con `@if` y enlaces con `routerLink`. La lógica se programa también.
+Reglas de estructura:
 
-La paleta de colores a utilizar será la siguiente:
+- Mantener componentes standalone.
+- Organizar las pantallas por funcionalidad.
+- Utilizar nombres en minúsculas y separados por guiones.
+- Cada pantalla debe tener sus archivos TypeScript, HTML y CSS.
+- Utilizar rutas hijas cuando corresponda.
+- Reutilizar los layouts existentes.
+- No crear layouts duplicados para el mismo rol.
+- No crear rutas que entren en conflicto con las de otros módulos.
+- No sobrescribir archivos de otros integrantes sin revisión.
+- No reorganizar carpetas existentes sin coordinación previa.
 
-- Primario: #4F46E5
-- Secundario: #1E293B
-- Terciario (Accent): #10B981
-- Fondo: #F8FAFC
+## 6. Design System global
 
-### Métodos Angular a utilizar
+UniRide debe utilizar una guía de estilos compartida para asegurar la consistencia visual de todas las pantallas.
 
-- `FormGroup` con validaciones simples y mensaje de error, botón deshabilitado si el formulario es inválido, listas con `@for` y datos de ejemplo fijos, navegación con `routerLink`.
-- funciones, signals, `computed`, `inject()`, `Router`, servicios, modelos ni interfaces. Usa los valores del Figma, tal cual.
+La guía global está documentada en la página `00 · Design System — UniRide` del archivo oficial de Figma.
 
-## Reglas
+También deberá tener una implementación equivalente en los archivos globales de Angular.
 
-- **Angular:** componentes standalone, un `.ts`, `.html` y `.css` por pantalla, nombres en minúsculas y guiones.
-- **Control flow:** usa `@if`, `@for` (siempre con `track`) y `@switch`. Nunca `*ngIf`, `*ngFor` ni `ngSwitch`.
-- **UI:** usa los componentes de la librería indicada en Datos en lugar de HTML a mano. No crees componentes ni carpeta `components/`: todo va dentro de cada página.
-- **Librerías:** si Datos nombra una que no está instalada, instálala con `npm`. Úsalas en lugar de dibujar a mano: fechas con `mat-datepicker` y listas largas con `mat-paginator` (configúralos en la ruta que los usa). Gráficos: solo instala la librería y deja en la pantalla un bloque con el texto «Aquí irá un gráfico».
-- **Formularios:** Reactive Forms (`FormGroup`, `formControlName`). Todo lo que el usuario llena o elige (campos, chips, fechas, cantidades) va dentro de un `FormGroup`, nunca suelto. No uses Signal Forms: debe funcionar en Angular 21 y 22.
-- **Validaciones:** simples y según el diseño (`required`, `email`, `minLength`). El mensaje va en el idioma del Figma, debajo del campo, al tocarlo (en Material, con `<mat-error>`). Cada campo con validación lleva su `<mat-error>` en el HTML, y el botón del formulario va con `[disabled]="form.invalid"`.
-- **Navegación:** todos los botones y enlaces usan `routerLink`, también el que envía un formulario (va deshabilitado mientras sea inválido).
-- **Landing (home):** es una sola página en la ruta `/`, en `src/app/home/` (fuera de `pages/`), sin layout ni rutas hijas. Lleva su propia cabecera y pie, y sus botones salen hacia los demás grupos con `routerLink`. Usa componentes de la librería de UI (en Material: `mat-toolbar` para la cabecera, `mat-form-field`, `mat-chip`, `mat-card`, `mat-button` y `mat-divider`).
-- **Diseño:** cada pantalla es una sola página responsiva (escritorio y móvil). Respeta el Figma y usa las variables de `styles.css`.
-- **Pantallas alternativas** (error, vacío, rechazo): son estados de la misma pantalla, no rutas. Por ahora solo los errores de formulario.
-- Si dudas, pregunta. No inventes pantallas.
+Figma es la fuente de verdad para los valores visuales. La implementación en Angular debe reproducir sus variables, estilos, variantes y criterios responsivos sin crear una paleta o escala paralela.
+
+### 6.1. Colección de variables
+
+La colección local utilizada por el Design System es `Sebastián / Coordinación UI` y actualmente contiene un único modo: `Light`.
+
+No existe todavía un modo oscuro. No simularlo ni implementarlo hasta que se defina en Figma.
+
+La colección contiene variables primitivas y alias semánticos. En la implementación deben utilizarse los nombres semánticos siempre que sea posible.
+
+### 6.2. Colores
+
+| Variable semántica | Valor | Aplicación principal |
+|---|---:|---|
+| `color/primary` | `#4F46E5` | Acciones principales, selección y foco |
+| `color/ink` | `#1E293B` | Texto y contenido principal |
+| `color/accent` | `#10B981` | Acentos positivos |
+| `color/background` | `#F8FAFC` | Fondo general de la aplicación |
+| `color/surface` | `#FFFFFF` | Tarjetas, campos y superficies elevadas |
+| `color/muted` | `#64748B` | Texto secundario |
+| `color/border` | `#E2E8F0` | Bordes y divisores |
+| `color/primarySoft` | `#EEF2FF` | Fondos seleccionados o informativos |
+| `color/successSoft` | `#ECFDF5` | Fondo de estado exitoso |
+| `color/successText` | `#047857` | Texto de estado exitoso |
+| `color/warningSoft` | `#FFFBEB` | Fondo de advertencia |
+| `color/warningText` | `#92400E` | Texto de advertencia |
+| `color/danger` | `#DC2626` | Error y acciones destructivas |
+| `color/dangerSoft` | `#FEF2F2` | Fondo de error |
+
+Estos colores constituyen la base visual existente.
+
+No cambiar, duplicar ni ampliar la paleta arbitrariamente. Valores cercanos presentes en frames anteriores deben mapearse al token semántico correspondiente al implementar pantallas nuevas.
+
+### 6.3. Tipografía
+
+La familia tipográfica global definida en el Design System es `Roboto`.
+
+Los frames antiguos de autenticación que todavía utilizan Inter se consideran una diferencia heredada del archivo y no una segunda escala global. No se deben modificar esos frames sin coordinación, pero las implementaciones nuevas deben emplear la escala global de Roboto.
+
+| Estilo de Figma | Fuente | Tamaño | Interlineado |
+|---|---|---:|---:|
+| `Typography/Display` | Roboto Bold | 36 px | 44 px |
+| `Typography/Page title` | Roboto Bold | 28 px | 39 px |
+| `Typography/Section title` | Roboto Bold | 22 px | 31 px |
+| `Typography/Card title` | Roboto Bold | 18 px | 25 px |
+| `Typography/Body` | Roboto Regular | 14 px | 20 px |
+| `Typography/Body strong` | Roboto Medium | 14 px | 20 px |
+| `Typography/Body small` | Roboto Regular | 13 px | 18 px |
+| `Typography/Label` | Roboto Medium | 12 px | 17 px |
+| `Typography/Caption` | Roboto Regular | 12 px | 17 px |
+
+No introducir nuevas familias ni combinaciones tipográficas sin incorporarlas primero al Design System de Figma.
+
+### 6.4. Espaciados, radios y tamaños
+
+Escala de espaciado:
+
+- `spacing/4`: 4 px.
+- `spacing/8`: 8 px.
+- `spacing/12`: 12 px.
+- `spacing/16`: 16 px.
+- `spacing/20`: 20 px.
+- `spacing/24`: 24 px.
+- `spacing/32`: 32 px.
+- `spacing/48`: 48 px.
+
+Escala de radios:
+
+- `radius/6`: 6 px.
+- `radius/8`: 8 px.
+- `radius/12`: 12 px.
+- `radius/16`: 16 px.
+- `radius/24`: 24 px.
+- `radius/pill`: 9999 px.
+
+Tamaños funcionales:
+
+- `size/control/compact`: 40 px.
+- `size/control/default`: 48 px.
+- `size/layout/sidebar`: 240 px.
+- `size/icon/sm`: 16 px.
+- `size/icon/md`: 20 px.
+- `size/icon/lg`: 24 px.
+
+Los valores de altura de control, iconografía y layout no deben reutilizarse como espaciados por el solo hecho de compartir el mismo valor numérico.
+
+### 6.5. Elevaciones
+
+Los estilos de efecto definidos en Figma son:
+
+- `Elevation/Subtle`: separación ligera para superficies y tarjetas discretas.
+- `Elevation/Card`: elevación estándar de tarjetas destacadas.
+- `Elevation/Modal`: elevación de diálogos sobre contenido bloqueado.
+
+No crear sombras diferentes por pantalla. Se debe utilizar el nivel semántico que corresponda.
+
+### 6.6. Componentes globales existentes
+
+#### Button
+
+Variantes:
+
+- Style: `Primary`, `Secondary`, `Destructive`.
+- State: `Default`, `Hover`, `Disabled`.
+- Size: `Compact` de 40 px y `Default` de 48 px.
+
+Debe existir como máximo una acción primaria por región. `Destructive` se reserva para acciones con consecuencias reales.
+
+#### Text Field
+
+Estados:
+
+- `Default`.
+- `Focus`.
+- `Error`.
+- `Disabled`.
+
+La etiqueta debe permanecer visible. Los errores deben incluir un mensaje textual y no depender únicamente del color.
+
+#### Badge
+
+Tonos:
+
+- `Neutral`.
+- `Info`.
+- `Success`.
+- `Warning`.
+- `Danger`.
+
+Los badges comunican estado; no deben utilizarse como botones o enlaces.
+
+#### Card
+
+Variantes:
+
+- `Standard`: contenido general.
+- `Route`: rutas publicadas.
+- `Trip`: coordinación y resumen de viajes.
+
+#### Dialog
+
+Variantes:
+
+- `Confirmation`.
+- `Success`.
+- `Destructive`.
+
+En móvil, el diálogo debe ocupar el ancho disponible dejando un margen lateral de 16 px.
+
+#### Navegación
+
+El componente existente `Layout/Sidebar Conductor` se conserva y no debe duplicarse. El ancho de referencia del sidebar es 240 px.
+
+Los componentes globales se deben reutilizar antes de crear estructuras manuales equivalentes. Card y Dialog reutilizan Button y Badge internamente.
+
+### 6.7. Elementos todavía no consolidados como componentes
+
+Los siguientes patrones aparecen en las pantallas, pero todavía no forman parte de la biblioteca global creada:
+
+- Selectores.
+- Checkbox y radio.
+- Tablas y listas completas.
+- Paginación.
+- Estados vacíos.
+- Navegación móvil.
+- Sidebar de pasajero como componente local documentado.
+
+Cuando una tarea necesite uno de estos elementos, se debe revisar primero el frame correspondiente y coordinar su incorporación al Design System. No asumir que ya existe una variante global.
+
+### 6.8. Implementación en Angular
+
+Los estilos globales deberán centralizarse principalmente en:
+
+- src/styles.css
+- src/material-theme.scss
+
+No crear sistemas de colores independientes por pantalla.
+
+No sobrescribir el tema global para resolver necesidades particulares de un módulo.
+
+Los nombres de tokens implementados en CSS o SCSS deben mantener una correspondencia explícita con las variables semánticas de Figma. Angular Material puede adaptarse mediante el tema global, pero no debe introducir colores, tipografías, radios o elevaciones incompatibles con esta especificación.
+
+La implementación de la base visual se realizará mediante un Pull Request específico hacia develop.
+
+Durante la primera etapa se seguirán las restricciones del laboratorio: no crear una biblioteca adicional de componentes Angular sin aprobación. Los layouts y estilos compartidos sí forman parte de la base del proyecto.
+
+## 7. Alcance de la primera etapa del frontend
+
+La primera etapa consiste en desarrollar y validar las interfaces siguiendo Figma.
+
+### Permitido
+
+- Componentes standalone.
+- Angular Material.
+- HTML y CSS.
+- Reactive Forms.
+- Validaciones simples.
+- Mensajes de error.
+- Navegación mediante routerLink.
+- Listas con datos de ejemplo.
+- Contadores con valores fijos.
+- Estados visuales.
+- Diseño responsivo.
+
+### No implementar todavía
+
+- Peticiones HTTP al backend.
+- Servicios de integración.
+- Autenticación real con JWT.
+- Persistencia de datos.
+- Lógica de negocio.
+- Cálculos de contribuciones.
+- Filtros reales.
+- Búsquedas reales.
+- Descargas reales de PDF.
+- Generación de contenido dinámico mediante código.
+
+Las funcionalidades anteriores se integrarán en una etapa posterior.
+
+### Gráficos
+
+Las pantallas de estadísticas deben representar visualmente los gráficos definidos en Figma.
+
+Durante esta primera etapa se pueden utilizar marcadores visuales o datos estáticos, según las indicaciones del laboratorio.
+
+La elección e integración de una librería de gráficos se confirmará cuando corresponda implementar la funcionalidad.
+
+## 8. Reglas de Angular
+
+- Utilizar componentes standalone.
+- Mantener archivos .ts, .html y .css por pantalla.
+- Usar nombres en minúsculas y separados por guiones.
+- Utilizar @if, @for y @switch.
+- En @for, incluir siempre track.
+- No utilizar *ngIf, *ngFor ni ngSwitch.
+- Utilizar Angular Material cuando exista un componente apropiado.
+- No reemplazar componentes de Material por implementaciones manuales sin justificación.
+
+### Formularios
+
+Utilizar Reactive Forms:
+
+- FormGroup.
+- FormControl.
+- formControlName.
+- Validators.
+
+Aplicar validaciones como:
+
+- required.
+- email.
+- minLength.
+- Otras validaciones simples necesarias según la pantalla.
+
+Mostrar errores debajo del campo correspondiente.
+
+Utilizar mat-error cuando se empleen formularios de Angular Material.
+
+Deshabilitar acciones de confirmación cuando el formulario sea inválido.
+
+### Navegación
+
+Utilizar routerLink para las conexiones entre pantallas.
+
+No implementar lógica de navegación mediante servicios durante la primera etapa.
+
+### Estados alternativos
+
+Los estados de error, vacío, confirmación o rechazo deben corresponder a los escenarios definidos en las User Stories.
+
+No convertir automáticamente cada estado en una ruta independiente.
+
+Representarlos como variantes o estados de la pantalla correspondiente cuando sea apropiado.
+
+## 9. Diseño responsivo
+
+Los criterios definidos en la página del Design System son:
+
+### Escritorio
+
+- Breakpoint de referencia: 1024 px o más.
+- Frame de referencia: 1440 × 1024 px.
+- Sidebar: 240 px.
+- Área principal: 1200 px.
+- Contenido interior habitual: 1136 px.
+
+### Tablet
+
+- Rango de referencia: 768–1023 px.
+- Sidebar colapsable.
+- Columnas adaptativas.
+- Formularios de una o dos columnas según el espacio disponible.
+
+### Móvil
+
+- Rango de referencia: 320–767 px.
+- Frame utilizado en Figma: 390 px de ancho.
+- Padding lateral habitual: 16 px.
+- Flujo principal vertical.
+- Controles táctiles de al menos 48 px.
+- Acciones principales de ancho completo cuando corresponda.
+
+Cada pantalla debe verificarse al menos en:
+
+- Escritorio.
+- Dispositivos móviles.
+
+El diseño debe conservar:
+
+- Jerarquía visual.
+- Legibilidad.
+- Espaciados consistentes.
+- Navegación accesible.
+- Formularios utilizables.
+- Correcta distribución de tarjetas y listas.
+
+No asumir que una pantalla de escritorio es responsiva sin comprobarla.
+
+Cuando no exista una versión móvil en Figma, solicitar orientación antes de inventar una composición definitiva.
+
+## 10. Flujo de trabajo con Codex
+
+Antes de implementar cualquier pantalla:
+
+1. Leer SPEC.md.
+2. Identificar la User Story correspondiente.
+3. Localizar el frame exacto en Figma.
+4. Revisar el Design System global.
+5. Comprobar los componentes, layouts y rutas existentes.
+6. Verificar que la rama de trabajo parte de develop.
+
+El agente debe trabajar únicamente en las funcionalidades solicitadas.
+
+Al finalizar deberá informar:
+
+- Archivos creados.
+- Archivos modificados.
+- Rutas incorporadas.
+- Componentes reutilizados.
+- Validaciones realizadas.
+- Resultado de la compilación.
+- Funcionalidades pendientes.
+
+No modificar archivos ajenos a la tarea sin justificación y autorización.
+
+## 11. Flujo de Git y GitHub
+
+Ramas:
+
+- main: versión principal estable.
+- develop: integración del trabajo del equipo.
+- feature/*: desarrollo de pantallas y funcionalidades.
+- chore/*: configuración y tareas técnicas compartidas.
+
+Proceso:
+
+1. Actualizar develop.
+2. Crear una rama de trabajo desde develop.
+3. Implementar una pantalla o conjunto funcional.
+4. Revisar el resultado.
+5. Ejecutar la compilación.
+6. Crear un commit descriptivo.
+7. Subir la rama a GitHub.
+8. Crear un Pull Request hacia develop.
+9. Solicitar revisión.
+10. Fusionar después de aprobar los cambios.
+
+No realizar implementaciones de pantallas directamente en main.
+
+No sobrescribir cambios de otros integrantes.
+
+### Commits
+
+Utilizar mensajes descriptivos:
+
+- feat(reportes): agrega pantalla de estadísticas
+- feat(compensaciones): agrega gestión de métodos
+- fix(rutas): corrige diseño móvil
+- style(auth): ajusta estilos del formulario
+- chore(ui): configura tema global
+- docs(spec): actualiza especificación del frontend
+
+## 12. Validación
+
+Antes de crear un Pull Request:
+
+- Comprobar que la pantalla corresponde al frame de Figma.
+- Revisar la presentación en escritorio y móvil.
+- Comprobar los mensajes de error de formularios.
+- Verificar la navegación.
+- Comprobar que no se modificaron otros módulos innecesariamente.
+- Ejecutar npm run build.
+- Corregir los errores de compilación.
+
+La implementación del agente debe ser revisada por el integrante responsable.
+
+## 13. Evidencias
+
+Cada integrante deberá conservar evidencias de su trabajo:
+
+- Identificador de la User Story.
+- Enlace al frame de Figma.
+- Capturas del diseño.
+- Capturas de la pantalla Angular.
+- Resultado de la compilación.
+- Commits relevantes.
+- Enlace al Pull Request.
+- Observaciones y correcciones realizadas.
+
+Estas evidencias se utilizarán en el informe del proyecto, especialmente en el apartado correspondiente al Sprint 2 — Frontend.
+
+## 14. Reglas finales
+
+- Respetar el Figma oficial.
+- Seguir el Design System global.
+- No inventar nuevas pantallas.
+- No duplicar funcionalidades.
+- No introducir estilos independientes sin justificación.
+- No implementar servicios del backend durante la primera etapa visual.
+- Mantener la organización de carpetas.
+- Trabajar mediante ramas y Pull Requests.
+- Consultar antes de modificar elementos compartidos.
+
+Ante cualquier duda, revisar primero SPEC.md, Figma y las User Stories.
+
+---
 
 ## Referencia de Endpoints
 
