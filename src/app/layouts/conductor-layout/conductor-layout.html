@@ -4,10 +4,15 @@
   <p class="panel-label">Panel del conductor</p>
   <mat-nav-list aria-label="Navegación principal">
     @for (item of menu; track item.icono) {
-      @if (item.icono === 'viajes') {
-        <a mat-list-item class="active" routerLink="/conductor/viajes" queryParamsHandling="merge" aria-current="page"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></a>
-      } @else if (item.ruta) {
-        <a mat-list-item [routerLink]="item.ruta"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></a>
+      @if (item.ruta) {
+        <a
+          mat-list-item
+          [routerLink]="item.ruta"
+          queryParamsHandling="merge"
+          routerLinkActive="active"
+          #rla="routerLinkActive"
+          [attr.aria-current]="rla.isActive ? 'page' : null"
+        ><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></a>
       } @else {
         <mat-list-item disabled [title]="item.nombre + ': módulo de otro integrante'"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></mat-list-item>
       }
