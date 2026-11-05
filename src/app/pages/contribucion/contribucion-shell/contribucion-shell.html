@@ -1,0 +1,87 @@
+<div class="contribucion-shell">
+  <header class="mobile-header">
+    <a class="brand-mobile" routerLink="/contribucion/sugerencia/35">UniRide</a>
+    <div class="mobile-actions">
+      <span class="ur-status ur-status--success">Pasajero</span>
+      <button
+        mat-icon-button
+        class="menu-button"
+        type="button"
+        aria-label="Abrir navegación del pasajero"
+        [matMenuTriggerFor]="passengerMenu"
+      >
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">menu</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <mat-menu #passengerMenu="matMenu">
+    <a mat-menu-item routerLink="/contribucion/sugerencia/35">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">directions_car</mat-icon>
+      <span>Sugerencia del viaje</span>
+    </a>
+    <a mat-menu-item routerLink="/compensaciones/metodos">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">handshake</mat-icon>
+      <span>Compensaciones</span>
+    </a>
+    <a mat-menu-item routerLink="/reportes/resumen">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
+      <span>Reportes</span>
+    </a>
+  </mat-menu>
+
+  <div class="contribucion-layout">
+    <aside class="passenger-sidebar" aria-label="Navegación del pasajero">
+      <div class="brand-block">
+        <a routerLink="/contribucion/sugerencia/35">
+          <span class="brand-dot" aria-hidden="true"></span>
+          UniRide
+        </a>
+        <p>Panel del pasajero</p>
+      </div>
+
+      <nav>
+        <span class="nav-item nav-item--disabled" aria-disabled="true">
+          <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
+          Dashboard
+        </span>
+        <span class="nav-item nav-item--disabled" aria-disabled="true">
+          <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">route</mat-icon>
+          Rutas
+        </span>
+        <span class="nav-item nav-item--active" aria-current="page">
+          <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">directions_car</mat-icon>
+          Viajes
+        </span>
+        <a class="nav-item" routerLink="/compensaciones/metodos">
+          <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">handshake</mat-icon>
+          Compensaciones
+        </a>
+        <a class="nav-item" routerLink="/reportes/resumen">
+          <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
+          Reportes
+        </a>
+        <span class="nav-item nav-item--disabled" aria-disabled="true">
+          <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">schedule</mat-icon>
+          Horarios
+        </span>
+        <span class="nav-item nav-item--disabled" aria-disabled="true">
+          <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
+          Configuración
+        </span>
+      </nav>
+
+      <div class="sidebar-user">
+        <span class="avatar" aria-hidden="true">JP</span>
+        <div>
+          <p>Juan Pérez</p>
+          <span>PASAJERO</span>
+        </div>
+      </div>
+    </aside>
+
+    <main id="contenido-principal" class="contribucion-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

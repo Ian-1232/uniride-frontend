@@ -1,0 +1,200 @@
+:host {
+  display: block;
+}
+
+.suggestion-page {
+  display: grid;
+  width: min(100%, var(--ur-content-width));
+  margin-inline: auto;
+  gap: var(--ur-space-24);
+}
+
+.page-heading {
+  display: grid;
+  gap: var(--ur-space-4);
+}
+
+.page-heading p,
+.trip-card p {
+  color: var(--ur-color-muted);
+}
+
+.trip-card {
+  border-color: var(--ur-color-border);
+  border-radius: var(--ur-radius-12);
+  background: var(--ur-color-surface);
+  box-shadow: var(--ur-shadow-subtle);
+}
+
+.trip-card mat-card-content {
+  display: grid;
+  gap: var(--ur-space-12);
+  padding: var(--ur-space-24);
+}
+
+.trip-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ur-space-16);
+}
+
+.trip-card .passenger-count {
+  color: var(--ur-color-ink);
+  font-weight: var(--ur-font-weight-medium);
+}
+
+.estimate-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr);
+  gap: var(--ur-space-24);
+}
+
+.amount-card,
+.alternatives-card,
+.reference-note {
+  border: var(--ur-border);
+  border-radius: var(--ur-radius-12);
+  background: var(--ur-color-surface);
+}
+
+.amount-card,
+.alternatives-card {
+  display: grid;
+  align-content: start;
+  gap: var(--ur-space-12);
+  padding: var(--ur-space-24);
+}
+
+.amount-label {
+  color: var(--ur-color-muted);
+  font-size: var(--ur-type-label-size);
+  font-weight: var(--ur-font-weight-medium);
+}
+
+.amount-value {
+  color: var(--ur-color-primary);
+  font-size: var(--ur-type-display-size);
+  font-weight: var(--ur-font-weight-bold);
+  letter-spacing: var(--ur-type-display-tracking);
+  line-height: var(--ur-type-display-line-height);
+}
+
+.alternatives-card h2 {
+  font-size: var(--ur-type-card-title-size);
+  line-height: var(--ur-type-card-title-line-height);
+}
+
+.alternative {
+  display: grid;
+  grid-template-columns: var(--ur-icon-lg) minmax(0, 1fr);
+  gap: var(--ur-space-12);
+}
+
+.alternative mat-icon {
+  color: var(--ur-color-primary);
+}
+
+.alternative > div {
+  display: grid;
+  gap: var(--ur-space-4);
+}
+
+.alternative-value {
+  font-size: var(--ur-type-section-title-size);
+  font-weight: var(--ur-font-weight-bold);
+  line-height: var(--ur-type-section-title-line-height);
+}
+
+.reference-note {
+  display: grid;
+  gap: var(--ur-space-8);
+  padding: var(--ur-space-20);
+  border-color: var(--ur-color-primary);
+  background: var(--ur-color-primary-soft);
+}
+
+.reference-note h2 {
+  color: var(--ur-color-primary);
+  font-size: var(--ur-type-card-title-size);
+  line-height: var(--ur-type-card-title-line-height);
+}
+
+.return-button {
+  width: fit-content;
+  min-height: var(--ur-control-default);
+}
+
+.passengers-form {
+  display: grid;
+  width: min(100%, 35rem);
+  gap: var(--ur-space-16);
+  padding: var(--ur-space-24);
+  border: var(--ur-border);
+  border-radius: var(--ur-radius-12);
+  background: var(--ur-color-surface);
+  box-shadow: var(--ur-shadow-subtle);
+}
+
+.passengers-form mat-form-field {
+  width: 100%;
+}
+
+.passengers-form button {
+  width: fit-content;
+  min-height: var(--ur-control-default);
+}
+
+@media (max-width: 767px) {
+  .suggestion-page {
+    gap: var(--ur-space-16);
+  }
+
+  .trip-card mat-card-content {
+    padding: var(--ur-space-16);
+  }
+
+  .trip-heading {
+    align-items: start;
+  }
+
+  .estimate-grid {
+    grid-template-columns: 1fr;
+    gap: var(--ur-space-16);
+  }
+
+  .amount-card,
+  .alternatives-card,
+  .reference-note {
+    padding: var(--ur-space-16);
+  }
+
+  .amount-card {
+    background: var(--ur-color-primary);
+    color: var(--ur-color-surface);
+  }
+
+  .amount-label,
+  .amount-value {
+    color: var(--ur-color-surface);
+  }
+
+  .return-button,
+  .passengers-form,
+  .passengers-form button {
+    width: 100%;
+  }
+
+  .passengers-form {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 359px) {
+  .trip-heading {
+    display: grid;
+  }
+}
