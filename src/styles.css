@@ -254,7 +254,9 @@ h3,
   color: var(--ur-color-surface);
   cursor: pointer;
   font-weight: var(--ur-font-weight-medium);
-  transition: filter var(--ur-transition-fast), background var(--ur-transition-fast);
+  transition:
+    filter var(--ur-transition-fast),
+    background var(--ur-transition-fast);
 }
 
 .ur-button:hover:not(:disabled) {
@@ -1023,5 +1025,126 @@ mat-paginator.uni-paginator {
 
   .stats {
     gap: 20px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Móvil (≤767 px): el resumen apila ruta sobre las estadísticas
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  .route-summary {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .stats {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .stat {
+    flex: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Móvil (≤767 px): las tablas (M2.4 y Mis viajes) pasan a tarjetas apiladas
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  .uni-table-card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  /* La tabla completa pasa a flujo de bloques para que cada fila crezca */
+  .uni-table .mat-mdc-table,
+  .uni-table .mat-mdc-table tbody {
+    display: block;
+    background: transparent;
+  }
+
+  .uni-table .mat-mdc-header-row {
+    display: none;
+  }
+
+  .uni-table .mat-mdc-row {
+    display: block;
+    height: auto;
+    min-height: 0;
+    margin-bottom: 12px;
+    padding: 14px 16px;
+    background: #ffffff;
+    border: 1px solid var(--uni-borde);
+    border-radius: 12px;
+  }
+
+  .uni-table .mat-mdc-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 0;
+    height: auto;
+    overflow: visible;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .uni-table .mat-mdc-cell::before {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--uni-texto-suave);
+  }
+
+  .uni-table .mat-column-ruta::before {
+    content: 'Ruta';
+  }
+
+  .uni-table .mat-column-fecha::before {
+    content: 'Fecha';
+  }
+
+  .uni-table .mat-column-hora::before {
+    content: 'Hora';
+  }
+
+  .uni-table .mat-column-estado::before {
+    content: 'Estado';
+  }
+
+  .uni-table .mat-column-pasajeros::before {
+    content: 'Pasajeros';
+  }
+
+  .uni-table .mat-column-acciones::before {
+    content: 'Acciones';
+  }
+
+  /* La ruta ocupa su propia línea y las acciones van debajo, a ancho completo */
+  .uni-table .mat-column-ruta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .uni-table .mat-column-acciones {
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .uni-table .mat-column-acciones .row-actions {
+    flex: 1 0 100%;
+  }
+
+  .uni-table .row-actions > * {
+    flex: 1 1 auto;
+    min-height: 48px;
+    justify-content: center;
   }
 }

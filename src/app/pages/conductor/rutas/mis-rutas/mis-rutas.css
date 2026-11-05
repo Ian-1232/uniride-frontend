@@ -97,9 +97,24 @@
   --mat-button-text-label-text-color: #dc2626;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 767px) {
   .route-bottom {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  /* Acciones en cuadrícula 2×2 de 48 px, a ancho completo */
+  .route-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .route-actions .mat-mdc-button {
+    min-height: 48px;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
   }
 }

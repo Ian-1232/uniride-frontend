@@ -68,3 +68,18 @@
     justify-content: center;
   }
 }
+
+/* Móvil: tarjetas apiladas (ver styles.css), sin desplazamiento horizontal */
+@media (max-width: 767px) {
+  .uni-table-card {
+    overflow-x: visible;
+  }
+
+  .uni-table table {
+    min-width: 0;
+  }
+
+  .row-actions {
+    flex-wrap: nowrap;
+  }
+}
