@@ -133,6 +133,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'conductor/viajes/1/solicitudes',
+    redirectTo: 'home',
   },
 ];
