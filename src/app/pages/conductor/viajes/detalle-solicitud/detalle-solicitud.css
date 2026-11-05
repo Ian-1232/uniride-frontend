@@ -1,0 +1,9 @@
+.back-link { margin: 0 0 24px; }
+.detail-grid { display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 24px; align-items: start; margin-bottom: 24px; }
+.profile-card, .application-card { padding: 24px; gap: 20px; }
+.profile-card h2 { font-size: 24px; line-height: 34px; margin: 0; }
+.profile-card .status { align-self: start; }
+.profile-card dl, .application-card dl { margin: 0; }
+.application-card .actions { gap: 12px; }
+@media (max-width: 1200px) { .detail-grid { grid-template-columns: minmax(250px, .85fr) minmax(0, 1.5fr); } }
+@media (max-width: 700px) { .detail-grid { grid-template-columns: 1fr; gap: 16px; } .profile-card, .application-card { padding: 20px; } .back-link { margin-bottom: 16px; } .application-card .actions { display: grid; grid-template-columns: 1fr; } }

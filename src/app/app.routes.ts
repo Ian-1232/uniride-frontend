@@ -94,4 +94,23 @@ export const routes: Routes = [
       },
     ],
   },
+],
+{
+    path: 'conductor',
+    loadChildren: () =>
+      import('./pages/conductor/conductor.routes').then(
+        (module) => module.CONDUCTOR_ROUTES,
+      ),
+  },
+  {
+    path: 'pasajero',
+    loadChildren: () =>
+      import('./pages/pasajero/pasajero.routes').then(
+        (module) => module.PASAJERO_ROUTES,
+      ),
+  },
+  {
+    path: '**',
+    redirectTo: 'conductor/viajes/1/solicitudes',
+  },
 ];
