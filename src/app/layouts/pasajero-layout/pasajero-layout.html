@@ -6,6 +6,8 @@
     @for (item of menu; track item.icono) {
       @if (item.icono === 'viajes') {
         <a mat-list-item class="active" routerLink="/pasajero/viajes/1" queryParamsHandling="merge" aria-current="page"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></a>
+      } @else if (item.ruta) {
+        <a mat-list-item [routerLink]="item.ruta"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></a>
       } @else {
         <mat-list-item disabled [title]="item.nombre + ': módulo de otro integrante'"><img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" /><span matListItemTitle>{{ item.nombre }}</span></mat-list-item>
       }
@@ -13,5 +15,10 @@
   </mat-nav-list>
   <div class="sidebar-user"><span class="avatar">MT</span><div>María Torres<small>PASAJERO</small></div></div>
 </aside>
-<mat-toolbar class="mobile-toolbar"><a class="brand" routerLink="/pasajero/viajes/1" queryParamsHandling="merge"><img src="assets/uniride/brand-dot.svg" alt="" />UniRide</a><span class="role-label">Pasajero</span></mat-toolbar>
+<mat-toolbar class="mobile-toolbar"><a class="brand" routerLink="/pasajero/viajes/1"><img src="assets/uniride/brand-dot.svg" alt="" />UniRide</a><span class="role-label">Pasajero</span><button matButton="text" [matMenuTriggerFor]="mobileMenu" aria-label="Abrir navegación">Menú</button></mat-toolbar>
+<mat-menu #mobileMenu="matMenu" aria-label="Navegación móvil">
+  @for (item of menu; track item.icono) {
+    @if (item.ruta) { <a mat-menu-item [routerLink]="item.ruta">{{ item.nombre }}</a> }
+  }
+</mat-menu>
 <main class="workspace" id="contenido"><router-outlet /></main>

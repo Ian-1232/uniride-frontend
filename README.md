@@ -1,4 +1,4 @@
-Los datos son ejemplos fijos del diseño. Las transiciones se conservan en parámetros de URL para poder recorrer y recargar la demostración, sin servicios, modelos ni estado global. El motivo del rechazo se valida en el formulario. aún no se almacena ni se envía. No hay autenticación ni llamadas al API. Cambiar la URL o usar Atrás cambia el escenario de demostración, no constituye un registro real de operaciones.
+Los datos son ejemplos fijos del diseño. Las transiciones se conservan en parámetros de URL para poder recorrer y recargar la demostración, sin servicios, modelos ni estado global. El motivo del rechazo se valida en el formulario; aún no se almacena ni se envía. No hay autenticación ni llamadas al API. Cambiar la URL o usar Atrás cambia el escenario de demostración, no constituye un registro real de operaciones.
 
 El viaje de ejemplo sale el viernes 6 de noviembre de 2026 a las 07:30. Tiene 3 cupos, 2 ocupados inicialmente. La antelación predeterminada es 30 horas para reproducir las variantes de Figma sin depender del reloj del equipo.
 
@@ -34,20 +34,20 @@ Los diálogos y resultados son estados de la misma pantalla. La cancelación no 
 - `src/app/pages/pasajero/pasajero.routes.ts`
 - `src/app/pages/pasajero/viajes/detalle-viaje/detalle-viaje`
 - `public/assets/uniride/`: ocho SVG originales exportados desde Figma: `brand-dot`, `dashboard`, `rutas`, `viajes`, `compensaciones`, `reportes`, `horarios` y `configuracion`.
-- `public/assets/fonts/`: Roboto 400, 500 y 700 con su licencia, para cargar la tipografía sin depender de Google Fonts.
+- `public/assets/fonts/`: copias de Roboto 400, 500 y 700 con su licencia. La carga global vigente usa `@fontsource/roboto` desde `src/styles.css`.
 - `public/emails/solicitud-aceptada.html`
 - `public/emails/viaje-confirmado.html`
 - `public/emails/recordatorio-confirmacion.html`
 - `public/emails/viaje-cancelado.html`
 
-Archivos base actualizados: `src/app/app.ts`, `app.html`, `app.config.ts`, `app.routes.ts`, `app.spec.ts`, `src/styles.css`, `src/index.html` y este README. Las pruebas verifican navegación, aceptación y cupos, rechazo múltiple, confirmación, ciclo del viaje y los límites de penalidad.
+La integración añade las rutas del Módulo 4 en `src/app/app.routes.ts` y conserva las rutas de Reportes, Compensaciones y Contribución. `src/styles.css` mantiene los tokens y estilos globales de UniRide; las reglas visuales específicas del Módulo 4 están limitadas a sus layouts en `src/app/layouts/module-4.css`. Las pruebas verifican navegación, aceptación y cupos, rechazo múltiple, confirmación, ciclo del viaje y los límites de penalidad.
 
 ## Integración pendiente
 
 Conectar los endpoints de solicitudes y viajes del SPEC, guardar el motivo, recuperar usuarios y cupos reales y validar permisos con el servidor. El backend debe calcular los plazos con la fecha real, aplicar penalidades e idempotencia y enviar los correos; el recordatorio se envía una sola vez entre 12 y 20 horas antes de la salida. Las plantillas contienen ejemplos fijos y enlaces locales.
 
-Los demás módulos del equipo se muestran deshabilitados en el menú para no inventar sus pantallas. La landing y el acceso son trabajo de los módulos correspondientes.
+Reportes y Compensaciones enlazan a las pantallas existentes del equipo. Las secciones sin ruta implementada siguen deshabilitadas. La landing y el acceso son trabajo de los módulos correspondientes.
 
 Diseño de referencia: https://www.figma.com/design/Y12BnmOuhShBxVckf6J8gg/UniRide-Design?node-id=103-1866
 
-SPEC original de referencia: https://pastes.dev/fz4274swn9
+La especificación técnica vigente se encuentra en `SPEC.md` del repositorio.

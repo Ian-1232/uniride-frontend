@@ -69,6 +69,21 @@ describe('Coordinación de viajes', () => {
     });
   });
 
+  it('conserva las rutas integradas de los otros módulos', async () => {
+    const h = await RouterTestingHarness.create();
+    for (const path of [
+      '/reportes/resumen',
+      '/reportes/frecuencia',
+      '/reportes/rutas',
+      '/compensaciones/metodos',
+      '/compensaciones/metodos/nuevo',
+      '/contribucion/sugerencia/1',
+    ]) {
+      await h.navigateByUrl(path);
+      expect(h.routeNativeElement?.querySelector('h1'), path).toBeTruthy();
+    }
+  }, 15000);
+
   it('abre las solicitudes y permite consultar cada perfil', async () => {
     const h = await RouterTestingHarness.create(
       '/conductor/viajes/1/solicitudes',
@@ -92,7 +107,7 @@ describe('Coordinación de viajes', () => {
     expect(
       h.routeNativeElement?.querySelectorAll('.request-card').length,
     ).toBe(3);
-  });
+  }, 15000);
 
   it('reserva el último cupo y conserva el pasajero al gestionar el viaje', async () => {
     const h = await RouterTestingHarness.create(
