@@ -1,4 +1,30 @@
-Los datos son ejemplos fijos del diseño. Las transiciones se conservan en parámetros de URL para poder recorrer y recargar la demostración, sin servicios, modelos ni estado global. El motivo del rechazo se valida en el formulario. aún no se almacena ni se envía. No hay autenticación ni llamadas al API. Cambiar la URL o usar Atrás cambia el escenario de demostración, no constituye un registro real de operaciones.
+# UniRide Frontend
+
+Implementación Angular del módulo de Sebastián Córdova sobre la base original del repositorio `Ian-1232/uniride-frontend`.
+
+## Ejecutar
+
+Requiere una versión de Node compatible con Angular 22 y npm. El proyecto conserva las versiones y dependencias del ZIP recibido.
+
+```bash
+npm ci
+npm start
+```
+
+Abrir `http://localhost:4200`. La entrada redirige temporalmente a las solicitudes del conductor; cuando se integre la landing del equipo, reemplazar solo esa redirección en `app.routes.ts`.
+
+```bash
+npm run build
+npm test -- --watch=false
+```
+
+## Alcance
+
+- **Coordinación, US14–US18:** solicitudes recibidas, filtros y paginación; perfil de María, Diego y Valeria; aceptación con reserva del último cupo; rechazo individual o múltiple con motivo opcional; confirmación; inicio y finalización; cancelación desde conductor o pasajero con aviso de penalidad.
+- **Notificaciones, US25:** cuatro plantillas HTML de correo según Figma: aceptación, confirmación, recordatorio y cancelación. El recordatorio automático y el envío real corresponden al backend.
+- Vistas responsivas con Angular Material, Reactive Forms, `@if`, `@for` y `routerLink`. Componentes standalone separados en `.ts`, `.html` y `.css`; layouts por rol y grupos de rutas con `loadChildren`.
+
+Los datos son ejemplos fijos del diseño. Las transiciones se conservan en parámetros de URL para poder recorrer y recargar la demostración, sin servicios, modelos ni estado global. El motivo del rechazo se valida en el formulario; aún no se almacena ni se envía. No hay autenticación ni llamadas al API. Cambiar la URL o usar Atrás cambia el escenario de demostración; no constituye un registro real de operaciones.
 
 El viaje de ejemplo sale el viernes 6 de noviembre de 2026 a las 07:30. Tiene 3 cupos, 2 ocupados inicialmente. La antelación predeterminada es 30 horas para reproducir las variantes de Figma sin depender del reloj del equipo.
 
@@ -21,9 +47,11 @@ El viaje de ejemplo sale el viernes 6 de noviembre de 2026 a las 07:30. Tiene 3 
 | Cancelación con penalidad leve | `/pasajero/viajes/1?horas=24&accion=cancelar` |
 | Cancelación con penalidad grave | `/pasajero/viajes/1?horas=3&accion=cancelar` |
 
-Los diálogos y resultados son estados de la misma pantalla. La cancelación no tiene penalidad con más de 24 horas, es leve entre 4 y 24 horas, y grave con menos de 4. Confirmar requiere al menos 12 horas. Solo se inicia un viaje programado y confirmado, y solo se completa un viaje en progreso. Para reiniciar la demostración, abrir la ruta sin parámetros.
+Los diálogos y resultados son estados de la misma pantalla. La cancelación no tiene penalidad con más de 24 horas; es leve entre 4 y 24 horas, y grave con menos de 4. Confirmar requiere al menos 12 horas. Solo se inicia un viaje programado y confirmado, y solo se completa un viaje en progreso. Para reiniciar la demostración, abrir la ruta sin parámetros.
 
 ## Archivos creados
+
+Cada nombre de pantalla o layout de esta lista tiene sus tres archivos `.ts`, `.html` y `.css`:
 
 - `src/app/layouts/conductor-layout/conductor-layout`
 - `src/app/layouts/pasajero-layout/pasajero-layout`
@@ -44,9 +72,9 @@ Archivos base actualizados: `src/app/app.ts`, `app.html`, `app.config.ts`, `app.
 
 ## Integración pendiente
 
-Conectar los endpoints de solicitudes y viajes del SPEC, guardar el motivo, recuperar usuarios y cupos reales y validar permisos con el servidor. El backend debe calcular los plazos con la fecha real, aplicar penalidades e idempotencia y enviar los correos; el recordatorio se envía una sola vez entre 12 y 20 horas antes de la salida. Las plantillas contienen ejemplos fijos y enlaces locales.
+Conectar los endpoints de solicitudes y viajes del SPEC, guardar el motivo, recuperar usuarios y cupos reales y validar permisos con el servidor. El backend debe calcular los plazos con la fecha real, aplicar penalidades e idempotencia y enviar los correos; el recordatorio se envía una sola vez entre 12 y 20 horas antes de la salida. Las plantillas contienen ejemplos fijos y enlaces locales; para correo real, parametrizar los datos y usar la URL absoluta de producción.
 
-Los demás módulos del equipo se muestran deshabilitados en el menú para no inventar sus pantallas. La landing y el acceso son trabajo de los módulos correspondientes.
+Los demás módulos del equipo se muestran deshabilitados en el menú para no inventar sus pantallas. La landing y el acceso son trabajo de los módulos correspondientes. No se han cambiado elementos de Figma ni el contenido original de `spec.md`. No se han publicado cambios en GitHub.
 
 Diseño de referencia: https://www.figma.com/design/Y12BnmOuhShBxVckf6J8gg/UniRide-Design?node-id=103-1866
 
