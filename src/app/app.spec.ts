@@ -90,6 +90,22 @@ describe('Coordinación de viajes', () => {
     }
   }, 15000);
 
+  it('navega y carga correctamente las rutas de autenticación y home', async () => {
+    const h = await RouterTestingHarness.create();
+    for (const path of [
+      '/home',
+      '/login',
+      '/registro',
+      '/auth/login',
+      '/auth/registro',
+      '/auth/perfil',
+      '/auth/info-adicional',
+    ]) {
+      await h.navigateByUrl(path);
+      expect(h.routeNativeElement?.querySelector('h1'), path).toBeTruthy();
+    }
+  }, 15000);
+
   it('abre las solicitudes y permite consultar cada perfil', async () => {
     const h = await RouterTestingHarness.create(
       '/conductor/viajes/1/solicitudes',
