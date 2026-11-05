@@ -33,6 +33,12 @@ describe('App', () => {
     }).compileComponents();
   });
 
+  it('debe crear el componente principal', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
   it('should render the application shell', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();

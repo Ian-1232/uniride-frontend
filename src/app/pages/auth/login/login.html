@@ -1,0 +1,284 @@
+<div class="login-page-wrapper">
+  <div class="login-layout-grid">
+    <!-- COLUMNA IZQUIERDA: SHOWCASE DE COMUNIDAD Y RED -->
+    <section class="left-showcase-column">
+      <div class="ambient-glow glow-1"></div>
+      <div class="ambient-glow glow-2"></div>
+
+      <div class="top-brand-badge">
+        <mat-icon class="shield-mini">verified_user</mat-icon>
+        <span>RED INTERUNIVERSITARIA DE MOVILIDAD</span>
+      </div>
+
+      <div class="headline-block">
+        <h1 class="main-title">
+          Viaja seguro, comparte ruta, llega <span class="highlight">puntual a clase.</span>
+        </h1>
+        <p class="main-description">
+          Conectamos estudiantes de campus vecinos para reducir costos, huella de carbono y tiempos de traslado en Lima Metropolitana.
+        </p>
+      </div>
+
+      <!-- TARJETA VISUAL CENTRAL: VIAJE EJEMPLO -->
+      <div class="route-hero-card">
+        <div class="hero-image-overlay">
+          <div class="route-badge-float">
+            <span class="route-dot"></span>
+            <span class="route-path">San Miguel ➔ Monterrico (Campus UPC)</span>
+          </div>
+
+          <div class="driver-info-float">
+            <div class="driver-profile">
+              <div class="driver-avatar">MR</div>
+              <div class="driver-details">
+                <div class="driver-name-row">
+                  <span class="driver-name">Mateo Ruiz • Ing. Sistemas</span>
+                  <mat-icon class="verified-icon">check_circle</mat-icon>
+                </div>
+                <span class="driver-vehicle">Toyota Yaris • 3 asientos disponibles</span>
+              </div>
+            </div>
+            <div class="price-pill">
+              <span class="price-amount">S/ 4.50</span>
+              <span class="price-unit">por asiento</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-val text-primary">28 min</span>
+            <span class="metric-lbl">Tiempo promedio</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-val text-success">-65%</span>
+            <span class="metric-lbl">Ahorro vs Taxi</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-val text-dark">4.9 ★</span>
+            <span class="metric-lbl">Calificación</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ESTADÍSTICAS INFERIORES -->
+      <div class="bottom-stats-row">
+        <div class="stat-pill">
+          <div class="stat-tag text-primary">
+            <mat-icon>trending_up</mat-icon>
+            <span>FLUJO ACTIVO</span>
+          </div>
+          <span class="stat-number">+324</span>
+          <span class="stat-sub">Rutas activas hoy hacia sedes UPC</span>
+        </div>
+
+        <div class="stat-pill">
+          <div class="stat-tag text-success">
+            <mat-icon>shield</mat-icon>
+            <span>VALIDACIÓN</span>
+          </div>
+          <span class="stat-number">100%</span>
+          <span class="stat-sub">Estudiantes verificados con correo institucional</span>
+        </div>
+
+        <div class="stat-pill">
+          <div class="stat-tag text-dark">
+            <mat-icon>savings</mat-icon>
+            <span>ECONOMÍA</span>
+          </div>
+          <span class="stat-number">Hasta 70%</span>
+          <span class="stat-sub">De ahorro real en presupuesto diario</span>
+        </div>
+      </div>
+
+      <div class="footnote-bar">
+        <div class="footnote-left">
+          <mat-icon>lock</mat-icon>
+          <span>Comunidad cerrada • Protocolo UPC Seguro 2026</span>
+        </div>
+        <span class="footnote-version">v2.4.0 • Lima, Perú</span>
+      </div>
+    </section>
+
+    <!-- COLUMNA DERECHA: TARJETA DE LOGIN -->
+    <section class="right-form-column">
+      <mat-card class="login-card">
+        <div class="card-header-badge-row">
+          <div class="network-badge">
+            <mat-icon class="badge-icon">school</mat-icon>
+            <span>UNIRIDE CAMPUS NETWORK</span>
+          </div>
+          <div class="live-pill">
+            <span class="live-dot"></span>
+            <span>En vivo</span>
+          </div>
+        </div>
+
+        <div class="card-titles">
+          <h2 class="login-title">Bienvenido de nuevo</h2>
+          <p class="login-subtitle">
+            Ingresa a tu cuenta institucional para coordinar tus viajes diarios al campus y gestionar tus asientos compartidos.
+          </p>
+        </div>
+
+        <!-- ALERTAS CONDICIONALES SEGÚN CRITERIOS DE ACEPTACIÓN US02 -->
+        @if (showErrorBanner) {
+          <div class="alert-box error-alert">
+            <mat-icon class="alert-icon">error_outline</mat-icon>
+            <div class="alert-content">
+              <strong>Correo o contraseña incorrectos</strong>
+              <p>Verifica tus credenciales o solicita restablecer tu acceso institucional.</p>
+            </div>
+            <button type="button" class="btn-close-alert" (click)="dismissAlert('error')">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+
+        @if (showUnverifiedBanner) {
+          <div class="alert-box info-alert">
+            <mat-icon class="alert-icon">mark_email_unread</mat-icon>
+            <div class="alert-content">
+              <strong>Tu cuenta aún no ha sido verificada</strong>
+              <p>Revisa tu bandeja institucional o ingresa tu código de confirmación enviado a tu correo.</p>
+            </div>
+            <button type="button" class="btn-close-alert" (click)="dismissAlert('unverified')">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+
+        <!-- FORMULARIO REACTIVO (REACTIVE FORMS) -->
+        <form [formGroup]="loginForm" class="login-form">
+          <!-- CAMPO CORREO INSTITUCIONAL -->
+          <div class="field-container">
+            <div class="field-label-row">
+              <label class="field-label" for="login-email">Correo institucional</label>
+              <span class="field-hint">Requerido &#64;*.edu.pe</span>
+            </div>
+
+            <mat-form-field appearance="outline" class="uniride-form-field">
+              <mat-icon matPrefix class="input-icon">email</mat-icon>
+              <input
+                id="login-email"
+                matInput
+                type="email"
+                formControlName="correo"
+                placeholder="u202323115@upc.edu.pe"
+                autocomplete="email"
+              />
+              <span matSuffix class="edu-suffix-badge">.edu.pe</span>
+
+              @if (loginForm.get('correo')?.hasError('required') && loginForm.get('correo')?.touched) {
+                <mat-error>El correo institucional es obligatorio.</mat-error>
+              }
+              @if (loginForm.get('correo')?.hasError('email') && loginForm.get('correo')?.touched) {
+                <mat-error>Ingresa un formato de correo electrónico válido.</mat-error>
+              }
+              @if (loginForm.get('correo')?.hasError('pattern') && loginForm.get('correo')?.touched) {
+                <mat-error>Debes ingresar tu correo institucional con dominio .edu o .edu.pe.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- CAMPO CONTRASEÑA -->
+          <div class="field-container">
+            <div class="field-label-row">
+              <label class="field-label" for="login-password">Contraseña</label>
+              <a href="#olvide-contrasena" class="forgot-link">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <mat-form-field appearance="outline" class="uniride-form-field">
+              <mat-icon matPrefix class="input-icon">lock</mat-icon>
+              <input
+                id="login-password"
+                matInput
+                [type]="hidePassword ? 'password' : 'text'"
+                formControlName="contrasena"
+                placeholder="••••••••••••"
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                mat-icon-button
+                matSuffix
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="hidePassword ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+              >
+                <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+
+              @if (loginForm.get('contrasena')?.hasError('required') && loginForm.get('contrasena')?.touched) {
+                <mat-error>La contraseña es obligatoria.</mat-error>
+              }
+              @if (loginForm.get('contrasena')?.hasError('minlength') && loginForm.get('contrasena')?.touched) {
+                <mat-error>La contraseña debe tener al menos 8 caracteres.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- RECORDAR Y SEGURIDAD -->
+          <div class="form-aux-row">
+            <mat-checkbox formControlName="recordarDispositivo" color="primary">
+              <span class="remember-label">Recordar este dispositivo</span>
+            </mat-checkbox>
+
+            <div class="ssl-badge">
+              <mat-icon>security</mat-icon>
+              <span>SSL 256-bit</span>
+            </div>
+          </div>
+
+          <!-- BOTÓN PRINCIPAL DE INICIO DE SESIÓN -->
+          <button
+            mat-flat-button
+            type="submit"
+            class="btn-primary btn-submit-auth"
+            [disabled]="loginForm.invalid"
+            routerLink="/pasajero/dashboard"
+          >
+            <span>Iniciar Sesión</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </form>
+
+        <!-- SEPARADOR SSO -->
+        <div class="sso-divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">O INGRESA CON</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="sso-buttons-row">
+          <button type="button" mat-stroked-button class="btn-sso" (click)="triggerDemoState('unverified')">
+            <span class="sso-upc-icon">U</span>
+            <span>Portal UPC</span>
+          </button>
+          <button type="button" mat-stroked-button class="btn-sso" (click)="triggerDemoState('error')">
+            <mat-icon class="office-icon">corporate_fare</mat-icon>
+            <span>Office 365 Edu</span>
+          </button>
+        </div>
+
+        <!-- FOOTER PROMPT A REGISTRO -->
+        <div class="register-prompt">
+          <span>¿No tienes una cuenta universitaria? </span>
+          <a routerLink="/auth/registro" class="link-register">Regístrate aquí</a>
+        </div>
+
+        <!-- AVISO DE VIAJE SEGURO (CAMBIO MANUAL REQUERIDO POR LABORATORIO) -->
+        <section class="aviso" id="viaje-seguro">
+          <h3 class="aviso__title">Viaje universitario seguro</h3>
+          <p>Todos los conductores cuentan con SOAT vigente y validación presencial en campus.</p>
+          <a class="aviso__enlace" routerLink="/auth/registro">Conoce los protocolos de seguridad</a>
+        </section>
+
+        <!-- MICRO BADGE DE SEGURIDAD -->
+        <div class="campus-security-card">
+          <mat-icon>verified</mat-icon>
+          <span>Red exclusiva para comunidad universitaria verificada con carné vigente</span>
+        </div>
+      </mat-card>
+    </section>
+  </div>
+</div>

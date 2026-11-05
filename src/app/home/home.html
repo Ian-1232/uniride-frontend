@@ -1,0 +1,33 @@
+<mat-toolbar class="home-toolbar">
+  <div class="toolbar-container">
+    <div class="brand">
+      <mat-icon class="brand-icon">directions_car</mat-icon>
+      <span class="brand-name">UniRide</span>
+    </div>
+
+    <div class="toolbar-actions">
+      <a mat-button routerLink="/auth/login">Iniciar Sesión</a>
+      <a mat-flat-button class="btn-primary" routerLink="/auth/registro">Registrarme</a>
+    </div>
+  </div>
+</mat-toolbar>
+
+<main class="home-main">
+  <div class="hero-section">
+    <span class="hero-badge">COMUNIDAD UNIVERSITARIA UPC</span>
+    <h1 class="hero-title">Viajes universitarios compartidos entre estudiantes</h1>
+    <p class="hero-subtitle">
+      Conéctate con compañeros de tu misma sede que comparten rutas y horarios. Reduce costos diarios, viaja seguro y olvídate del estrés del tráfico limeño.
+    </p>
+
+    <div class="hero-buttons">
+      <a mat-flat-button class="btn-primary btn-hero" routerLink="/auth/registro">
+        <span>Comenzar Ahora</span>
+        <mat-icon>arrow_forward</mat-icon>
+      </a>
+      <a mat-stroked-button class="btn-hero" routerLink="/auth/login">
+        <span>Ya tengo cuenta</span>
+      </a>
+    </div>
+  </div>
+</main>

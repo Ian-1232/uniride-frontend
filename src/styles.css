@@ -88,6 +88,32 @@
   --ur-shadow-modal: 0 16px 32px -8px rgb(15 23 41 / 16%);
   --ur-focus-ring: 0 0 0 3px rgb(79 70 229 / 24%);
   --ur-transition-fast: 150ms ease;
+
+  /* Compatibility tokens for Auth & Home modules */
+  --primary-color: var(--ur-color-primary, #4f46e5);
+  --primary-hover: #4338ca;
+  --primary-light: var(--ur-color-primary-soft, #eff4ff);
+  --primary-badge: #e2dfff;
+  --secondary-color: var(--ur-color-ink, #1e293b);
+  --secondary-dark: #0b1c30;
+  --accent-color: var(--ur-color-accent, #10b981);
+  --accent-light: var(--ur-color-success-soft, #d1fae5);
+  --background-color: var(--ur-color-background, #f8fafc);
+  --surface-color: var(--ur-color-surface, #ffffff);
+  --surface-border: var(--ur-color-border, #e2e8f0);
+  --text-main: var(--ur-color-ink, #0b1c30);
+  --text-muted: var(--ur-color-muted, #64748b);
+  --text-light: #777587;
+  --error-color: var(--ur-color-danger, #ba1a1a);
+  --error-bg: var(--ur-color-danger-soft, #ffdad6);
+  --font-family: var(--ur-font-family);
+  --radius-sm: var(--ur-radius-8, 8px);
+  --radius-md: var(--ur-radius-12, 12px);
+  --radius-lg: var(--ur-radius-16, 16px);
+  --radius-xl: var(--ur-radius-24, 24px);
+  --shadow-sm: var(--ur-shadow-subtle, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  --shadow-md: var(--ur-shadow-card, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1));
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
 
 *,
@@ -460,4 +486,54 @@ h3,
     animation-duration: 0.01ms;
     animation-iteration-count: 1;
   }
+}
+
+
+/* Auth module and Angular Material form overrides */
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-card {
+  border-radius: var(--radius-xl) !important;
+}
+
+button[mat-raised-button].btn-primary,
+button[mat-flat-button].btn-primary,
+a[mat-flat-button].btn-primary {
+  background-color: var(--primary-color) !important;
+  color: #ffffff !important;
+  border-radius: var(--radius-md) !important;
+  font-weight: 600 !important;
+}
+
+button[mat-raised-button].btn-primary:hover,
+button[mat-flat-button].btn-primary:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+/* Custom Alert Banners */
+.alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.alert-banner.error {
+  background-color: var(--error-bg);
+  color: var(--error-color);
+}
+
+.alert-banner.info {
+  background-color: #d5e0f8;
+  color: #111c2d;
+}
+
+.alert-banner.success {
+  background-color: var(--accent-light);
+  color: #065f46;
 }

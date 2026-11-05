@@ -1,0 +1,42 @@
+<div class="auth-layout-container">
+  <header class="auth-header">
+    <div class="header-content">
+      <a routerLink="/" class="brand-logo">
+        <div class="brand-icon">
+          <mat-icon>directions_car</mat-icon>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">UniRide</span>
+          <span class="brand-subtitle">Campus Carpooling</span>
+        </div>
+      </a>
+
+      <div class="header-badge">
+        <span class="badge-dot"></span>
+        <span class="badge-text">COMUNIDAD UPC SEGURA</span>
+      </div>
+
+      <nav class="header-nav">
+        <a mat-button routerLink="/auth/login" routerLinkActive="active-nav">Iniciar Sesión</a>
+        <a mat-flat-button class="btn-signup-header" routerLink="/auth/registro">Registrarme</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="auth-main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="auth-footer">
+    <div class="footer-content">
+      <span>&copy; 2026 UniRide • Red de Movilidad Compartida UPC • Lima, Perú</span>
+      <div class="footer-links">
+        <a href="#terminos">Términos y Condiciones</a>
+        <span class="separator">•</span>
+        <a href="#privacidad">Políticas de Privacidad</a>
+        <span class="separator">•</span>
+        <a href="#soporte">Soporte Universitario</a>
+      </div>
+    </div>
+  </footer>
+</div>

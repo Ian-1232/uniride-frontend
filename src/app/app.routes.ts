@@ -7,6 +7,24 @@ export const routes: Routes = [
     redirectTo: 'conductor/viajes/1/solicitudes',
   },
   {
+    path: 'home',
+    loadComponent: () => import('./home/home').then((m) => m.HomeComponent),
+  },
+  {
+    path: 'auth',
+    loadChildren: () => import('./pages/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+  },
+  {
+    path: 'login',
+    redirectTo: 'auth/login',
+    pathMatch: 'full',
+  },
+  {
+    path: 'registro',
+    redirectTo: 'auth/registro',
+    pathMatch: 'full',
+  },
+  {
     path: 'reportes',
     loadComponent: () =>
       import('./pages/reportes/reportes-shell/reportes-shell').then(
