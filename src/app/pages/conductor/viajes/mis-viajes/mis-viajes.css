@@ -1,0 +1,85 @@
+.summary-card {
+  margin-bottom: 18px;
+}
+
+.summary-main .summary-icon {
+  color: var(--uni-primario);
+}
+
+.route-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.route-cell > .mat-icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  color: var(--uni-primario);
+}
+
+.route-name {
+  display: block;
+  font-weight: 600;
+  color: var(--uni-secundario);
+}
+
+.route-detail {
+  display: block;
+  max-width: 280px;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--uni-texto-suave);
+}
+
+.row-actions .mat-mdc-outlined-button {
+  --mat-button-outlined-container-shape: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .uni-table-card {
+    overflow-x: auto;
+  }
+
+  .uni-table table {
+    min-width: 860px;
+  }
+
+  .page-header > a[mat-stroked-button] {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Móvil: tarjetas apiladas (ver styles.css), sin desplazamiento horizontal */
+@media (max-width: 767px) {
+  .uni-table-card {
+    overflow-x: visible;
+  }
+
+  .uni-table table {
+    min-width: 0;
+  }
+
+  .row-actions {
+    flex-wrap: nowrap;
+  }
+}

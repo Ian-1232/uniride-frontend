@@ -111,28 +111,24 @@ export const routes: Routes = [
       {
         path: 'sugerencia/:viajeId',
         loadComponent: () =>
-          import(
-            './pages/contribucion/sugerencia-contribucion/sugerencia-contribucion'
-          ).then((component) => component.SugerenciaContribucion),
+          import('./pages/contribucion/sugerencia-contribucion/sugerencia-contribucion').then(
+            (component) => component.SugerenciaContribucion,
+          ),
       },
     ],
   },
   {
     path: 'conductor',
     loadChildren: () =>
-      import('./pages/conductor/conductor.routes').then(
-        (module) => module.CONDUCTOR_ROUTES,
-      ),
+      import('./pages/conductor/conductor.routes').then((module) => module.CONDUCTOR_ROUTES),
   },
   {
     path: 'pasajero',
     loadChildren: () =>
-      import('./pages/pasajero/pasajero.routes').then(
-        (module) => module.PASAJERO_ROUTES,
-      ),
+      import('./pages/pasajero/pasajero.routes').then((module) => module.PASAJERO_ROUTES),
   },
   {
     path: '**',
-    redirectTo: 'conductor/viajes/1/solicitudes',
+    redirectTo: '/conductor/viajes',
   },
 ];
