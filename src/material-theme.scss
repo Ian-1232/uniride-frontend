@@ -1,156 +1,38 @@
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
-/* Angular Material bridge for the UniRide light theme. */
 html {
   height: 100%;
-
   @include mat.theme(
     (
       color: (
-        theme-type: light,
         primary: mat.$azure-palette,
-        tertiary: mat.$green-palette,
+        tertiary: mat.$blue-palette,
       ),
       typography: Roboto,
       density: 0,
     )
   );
-
-  @include mat.theme-overrides(
-    (
-      background: var(--ur-color-background),
-      error: var(--ur-color-danger),
-      error-container: var(--ur-color-danger-soft),
-      inverse-on-surface: var(--ur-color-surface),
-      inverse-primary: var(--ur-color-primary-soft),
-      inverse-surface: var(--ur-color-ink),
-      on-background: var(--ur-color-ink),
-      on-error: var(--ur-color-surface),
-      on-error-container: var(--ur-color-danger),
-      on-primary: var(--ur-color-surface),
-      on-primary-container: var(--ur-color-ink),
-      on-primary-fixed: var(--ur-color-ink),
-      on-primary-fixed-variant: var(--ur-color-primary),
-      on-secondary: var(--ur-color-surface),
-      on-secondary-container: var(--ur-color-ink),
-      on-secondary-fixed: var(--ur-color-ink),
-      on-secondary-fixed-variant: var(--ur-color-muted),
-      on-surface: var(--ur-color-ink),
-      on-surface-variant: var(--ur-color-muted),
-      on-tertiary: var(--ur-color-ink),
-      on-tertiary-container: var(--ur-color-success-text),
-      on-tertiary-fixed: var(--ur-color-ink),
-      on-tertiary-fixed-variant: var(--ur-color-success-text),
-      outline: var(--ur-color-border),
-      outline-variant: var(--ur-color-border),
-      primary: var(--ur-color-primary),
-      primary-container: var(--ur-color-primary-soft),
-      primary-fixed: var(--ur-color-primary-soft),
-      primary-fixed-dim: var(--ur-color-primary-soft),
-      scrim: var(--ur-color-ink),
-      secondary: var(--ur-color-muted),
-      secondary-container: var(--ur-color-background),
-      secondary-fixed: var(--ur-color-background),
-      secondary-fixed-dim: var(--ur-color-border),
-      shadow: var(--ur-color-ink),
-      surface: var(--ur-color-surface),
-      surface-bright: var(--ur-color-surface),
-      surface-container: var(--ur-color-background),
-      surface-container-high: var(--ur-color-primary-soft),
-      surface-container-highest: var(--ur-color-primary-soft),
-      surface-container-low: var(--ur-color-surface),
-      surface-container-lowest: var(--ur-color-surface),
-      surface-dim: var(--ur-color-border),
-      surface-tint: var(--ur-color-primary),
-      surface-variant: var(--ur-color-background),
-      tertiary: var(--ur-color-accent),
-      tertiary-container: var(--ur-color-success-soft),
-      tertiary-fixed: var(--ur-color-success-soft),
-      tertiary-fixed-dim: var(--ur-color-success-soft),
-    )
-  );
-
-  @include mat.button-overrides(
-    (
-      filled-container-height: var(--ur-control-default),
-      filled-container-shape: var(--ur-radius-8),
-      filled-label-text-font: var(--ur-font-family),
-      filled-label-text-weight: var(--ur-font-weight-medium),
-      outlined-container-height: var(--ur-control-default),
-      outlined-container-shape: var(--ur-radius-8),
-      outlined-label-text-font: var(--ur-font-family),
-      outlined-label-text-weight: var(--ur-font-weight-medium),
-      outlined-outline-color: var(--ur-color-border),
-      protected-container-height: var(--ur-control-default),
-      protected-container-shape: var(--ur-radius-8),
-      protected-label-text-font: var(--ur-font-family),
-      protected-label-text-weight: var(--ur-font-weight-medium),
-      text-container-height: var(--ur-control-default),
-      text-container-shape: var(--ur-radius-8),
-      text-label-text-font: var(--ur-font-family),
-      text-label-text-weight: var(--ur-font-weight-medium),
-      tonal-container-height: var(--ur-control-default),
-      tonal-container-shape: var(--ur-radius-8),
-      tonal-label-text-font: var(--ur-font-family),
-      tonal-label-text-weight: var(--ur-font-weight-medium),
-    )
-  );
-
-  @include mat.card-overrides(
-    (
-      elevated-container-color: var(--ur-color-surface),
-      elevated-container-elevation: var(--ur-shadow-card),
-      elevated-container-shape: var(--ur-radius-12),
-      filled-container-color: var(--ur-color-surface),
-      filled-container-shape: var(--ur-radius-12),
-      outlined-container-color: var(--ur-color-surface),
-      outlined-container-shape: var(--ur-radius-12),
-      outlined-outline-color: var(--ur-color-border),
-      subtitle-text-font: var(--ur-font-family),
-      title-text-font: var(--ur-font-family),
-    )
-  );
-
-  @include mat.dialog-overrides(
-    (
-      container-color: var(--ur-color-surface),
-      container-elevation-shadow: var(--ur-shadow-modal),
-      container-shape: var(--ur-radius-16),
-      subhead-color: var(--ur-color-ink),
-      subhead-font: var(--ur-font-family),
-      supporting-text-color: var(--ur-color-muted),
-      supporting-text-font: var(--ur-font-family),
-    )
-  );
-
-  @include mat.form-field-overrides(
-    (
-      container-height: var(--ur-control-default),
-      container-text-font: var(--ur-font-family),
-      container-vertical-padding: var(--ur-space-12),
-      filled-container-color: var(--ur-color-background),
-      filled-container-shape: var(--ur-radius-8),
-      outlined-container-shape: var(--ur-radius-8),
-      outlined-outline-color: var(--ur-color-border),
-      subscript-text-font: var(--ur-font-family),
-    )
-  );
-
-  @include mat.table-overrides(
-    (
-      background-color: var(--ur-color-surface),
-      header-headline-color: var(--ur-color-muted),
-      header-headline-font: var(--ur-font-family),
-      header-headline-weight: var(--ur-font-weight-medium),
-      row-item-label-text-color: var(--ur-color-ink),
-      row-item-label-text-font: var(--ur-font-family),
-      row-item-outline-color: var(--ur-color-border),
-    )
-  );
 }
 
 body {
+  // Default the application to a light color theme. This can be changed to
+  // `dark` to enable the dark color theme, or to `light dark` to defer to the
+  // user's system settings.
   color-scheme: light;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables. Learn more about these
+  // variables at https://material.angular.dev/guide/system-variables
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+
+  // Reset the user agent margin.
   margin: 0;
-  min-height: 100%;
+  height: 100%;
 }
