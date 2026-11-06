@@ -1,21 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
-import { ActivatedRoute, Router } from '@angular/router';
-import {
-  FREQUENT_ROUTES,
-  resolveViewState,
-  RoutesViewState,
-} from '../reportes.models';
+import { ReportesService } from '../../../core/services/reportes.service';
+import { FrequentRoute } from '../reportes.models';
+import { reportQuery } from '../shared/report-query';
 import { ReportesStatePanel } from '../shared/reportes-state-panel/reportes-state-panel';
-
-const ROUTES_STATES: readonly RoutesViewState[] = [
-  'disponible',
-  'insuficiente',
-  'restringido',
-  'penalidades',
-  'error',
-];
 
 @Component({
   selector: 'app-rutas-frecuentes',
@@ -24,25 +12,18 @@ const ROUTES_STATES: readonly RoutesViewState[] = [
   styleUrl: './rutas-frecuentes.css',
 })
 export class RutasFrecuentes {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly queryParams = toSignal(this.route.queryParamMap, {
-    initialValue: this.route.snapshot.queryParamMap,
+  private readonly service = inject(ReportesService);
+  protected readonly report = reportQuery(() => this.service.rutas());
+  protected readonly data = computed(() => this.report.state().data);
+  protected readonly routes = computed<readonly FrequentRoute[]>(() => {
+    const data = this.data();
+    if (!data?.suficientesDatos) return [];
+    return [...data.ranking].sort((a, b) => b.cantidad - a.cantidad).map((route, index) => ({
+      position: index + 1,
+      origin: route.origen,
+      destination: route.destino,
+      completedTrips: route.cantidad,
+      penalties: route.penalidades,
+    }));
   });
-
-  protected readonly routes = FREQUENT_ROUTES;
-  protected readonly state = computed(() =>
-    resolveViewState(this.queryParams().get('estado'), ROUTES_STATES, 'disponible'),
-  );
-  protected readonly showRanking = computed(
-    () => this.state() === 'disponible' || this.state() === 'penalidades',
-  );
-
-  protected restoreDefaultState(): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { estado: null },
-      queryParamsHandling: 'merge',
-    });
-  }
 }

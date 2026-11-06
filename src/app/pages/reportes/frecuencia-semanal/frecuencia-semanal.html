@@ -1,29 +1,29 @@
 <article class="report-page">
   <header class="page-heading">
     <h1>Frecuencia semanal</h1>
-    <p>Viajes completados durante los siete días de la semana.</p>
+    <p>Distribución del historial de viajes completados por día de la semana; no se limita a la semana actual.</p>
   </header>
 
-  @if (showChart()) {
+  @if (data()?.suficientesDatos) {
     <mat-card class="chart-card" appearance="outlined">
       <mat-card-header>
         <mat-card-title>Viajes completados</mat-card-title>
-        <mat-card-subtitle>Total semanal: {{ totalTrips }} viajes</mat-card-subtitle>
+        <mat-card-subtitle>Total del historial: {{ totalTrips() }} viajes</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <div class="chart" role="img" aria-label="Gráfico semanal con un total de 20 viajes">
+        <div class="chart" role="img" [attr.aria-label]="'Viajes completados del historial por día de la semana: ' + totalTrips() + ' viajes'">
           <div class="chart-scale" aria-hidden="true">
-            @for (tick of scale; track tick) {
+            @for (tick of scale(); track tick) {
               <span>{{ tick }}</span>
             }
           </div>
 
           <div class="chart-bars">
-            @for (day of trips; track day.day) {
+            @for (day of trips(); track day.day) {
               <div class="bar-column" [attr.aria-label]="day.day + ': ' + day.count + ' viajes'">
                 <span class="bar-value">{{ day.count }}</span>
                 <div class="bar-area">
-                  <span class="bar" [style.--bar-value]="day.count"></span>
+                  <span class="bar" [style.height.%]="day.count / scaleMax() * 100"></span>
                 </div>
                 <span class="day-label">
                   <span class="day-label-long">{{ day.day }}</span>
@@ -36,57 +36,31 @@
       </mat-card-content>
     </mat-card>
 
+  } @else if (data(); as result) {
+    <app-reportes-state-panel title="Información insuficiente" [message]="result.mensaje ?? 'Aún no hay suficientes viajes completados para generar el análisis.'" tone="info" />
+  } @else if (report.state().status === 'cargando') {
+    <app-reportes-state-panel title="Cargando frecuencia" message="Estamos consultando tu historial por día de la semana." [loading]="true" tone="neutral" />
+  } @else {
+    <app-reportes-state-panel title="No pudimos cargar la frecuencia" [message]="report.state().message" tone="danger" actionLabel="Reintentar" (action)="report.retry()" />
+  }
+  @if (data()) {
     <section class="cancellations" aria-labelledby="cancellations-title">
       <h2 id="cancellations-title">Cancelaciones</h2>
       <div class="cancellation-grid">
         <mat-card class="cancellation-card cancellation-card--mine" appearance="outlined">
           <mat-card-content>
             <span>Por mí</span>
-            <strong>2</strong>
+            <strong>{{ data()!.canceladosPorMi }}</strong>
           </mat-card-content>
         </mat-card>
         <mat-card class="cancellation-card cancellation-card--others" appearance="outlined">
           <mat-card-content>
             <span>Por terceros</span>
-            <strong>1</strong>
+            <strong>{{ data()!.canceladosPorTerceros }}</strong>
           </mat-card-content>
         </mat-card>
       </div>
     </section>
 
-    @if (state() === 'cancelaciones') {
-      <app-reportes-state-panel
-        title="Cancelaciones diferenciadas"
-        message="Las 2 cancelaciones realizadas por ti y la cancelación de un tercero no se contabilizan como viajes completados."
-        tone="warning"
-      />
-    }
-  } @else {
-    @switch (state()) {
-      @case ('insuficiente') {
-        <app-reportes-state-panel
-          title="Información insuficiente"
-          message="Aún no hay al menos cinco viajes completados. No se muestran barras con datos inexistentes."
-          tone="info"
-        />
-      }
-      @case ('cargando') {
-        <app-reportes-state-panel
-          title="Cargando frecuencia"
-          message="Estamos consultando los siete días de la semana."
-          tone="neutral"
-          [loading]="true"
-        />
-      }
-      @case ('error') {
-        <app-reportes-state-panel
-          title="No pudimos cargar la frecuencia"
-          message="La consulta semanal no respondió. Intenta nuevamente."
-          tone="danger"
-          actionLabel="Reintentar"
-          (action)="restoreDefaultState()"
-        />
-      }
-    }
   }
 </article>

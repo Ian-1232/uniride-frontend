@@ -1,21 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
-import { ActivatedRoute, Router } from '@angular/router';
-import {
-  FrequencyViewState,
-  resolveViewState,
-  WEEKLY_TRIPS,
-} from '../reportes.models';
+import { ReportesService } from '../../../core/services/reportes.service';
+import { WeeklyTripCount } from '../reportes.models';
+import { reportQuery } from '../shared/report-query';
 import { ReportesStatePanel } from '../shared/reportes-state-panel/reportes-state-panel';
-
-const FREQUENCY_STATES: readonly FrequencyViewState[] = [
-  'disponible',
-  'insuficiente',
-  'cancelaciones',
-  'cargando',
-  'error',
-];
 
 @Component({
   selector: 'app-frecuencia-semanal',
@@ -24,27 +12,22 @@ const FREQUENCY_STATES: readonly FrequencyViewState[] = [
   styleUrl: './frecuencia-semanal.css',
 })
 export class FrecuenciaSemanal {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly queryParams = toSignal(this.route.queryParamMap, {
-    initialValue: this.route.snapshot.queryParamMap,
+  private readonly service = inject(ReportesService);
+  protected readonly report = reportQuery(() => this.service.semana());
+  protected readonly data = computed(() => this.report.state().data);
+  protected readonly trips = computed<readonly WeeklyTripCount[]>(() => {
+    const data = this.data();
+    if (!data?.suficientesDatos) return [];
+    return data.viajesPorDia.map(day => ({
+      day: day.dia.replace('Miercoles', 'Miércoles').replace('Sabado', 'Sábado'),
+      shortDay: day.dia.startsWith('Mi') ? 'X' : day.dia[0],
+      count: day.cantidad,
+    }));
   });
-
-  protected readonly trips = WEEKLY_TRIPS;
-  protected readonly scale = [5, 4, 3, 2, 1, 0] as const;
-  protected readonly totalTrips = WEEKLY_TRIPS.reduce((total, day) => total + day.count, 0);
-  protected readonly state = computed(() =>
-    resolveViewState(this.queryParams().get('estado'), FREQUENCY_STATES, 'disponible'),
-  );
-  protected readonly showChart = computed(
-    () => this.state() === 'disponible' || this.state() === 'cancelaciones',
-  );
-
-  protected restoreDefaultState(): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { estado: null },
-      queryParamsHandling: 'merge',
-    });
-  }
+  protected readonly totalTrips = computed(() => this.trips().reduce((sum, day) => sum + day.count, 0));
+  protected readonly scaleMax = computed(() => {
+    const max = Math.max(0, ...this.trips().map(day => day.count));
+    return Math.max(1, Math.ceil(max / 5)) * 5;
+  });
+  protected readonly scale = computed(() => Array.from({ length: 6 }, (_, index) => this.scaleMax() * (5 - index) / 5));
 }
