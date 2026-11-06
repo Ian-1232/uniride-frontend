@@ -6,10 +6,15 @@ import { MatIconModule } from '@angular/material/icon';
 export interface ImpactoEdicion {
   origen: string;
   destino: string;
+  salidaAnterior?: string;
+  salidaNueva?: string;
+  pasajerosAceptados?: number;
+  pierdeConfirmacion?: boolean;
 }
 
 @Component({
   selector: 'app-confirmar-impacto-dialog',
+  host: { '[class.reprogramacion]': '!!impacto.salidaNueva' },
   imports: [MatButtonModule, MatDialogModule, MatIconModule],
   templateUrl: './confirmar-impacto-dialog.html',
   styleUrl: './confirmar-impacto-dialog.css',

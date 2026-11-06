@@ -126,6 +126,7 @@
             <th mat-header-cell *matHeaderCellDef>Acciones</th>
             <td mat-cell *matCellDef="let viaje">
               <div class="row-actions">
+                @if (viaje.estado === 'PROGRAMADO') { <a mat-stroked-button [routerLink]="['/conductor/viajes', viaje.id, 'editar']">Reprogramar</a> }
                 <a
                   mat-stroked-button
                   class="btn-outline-primary"

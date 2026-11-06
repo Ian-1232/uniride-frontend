@@ -2,10 +2,35 @@
   <mat-icon>warning</mat-icon>
 </div>
 
-<h2 mat-dialog-title>Confirmar edición</h2>
+<h2 mat-dialog-title>
+  {{ impacto.salidaNueva ? 'Confirmar reprogramación' : 'Confirmar edición' }}
+</h2>
 
 <mat-dialog-content>
-  <p>Esta modificación afecta a pasajeros ya aceptados. ¿Deseas guardar los cambios?</p>
+  @if (impacto.salidaNueva) {
+    <p>
+      El cambio afecta a {{ impacto.pasajerosAceptados }} pasajero(s) con solicitudes aceptadas.
+    </p>
+    <dl class="horarios-impacto">
+      <div>
+        <dt>Horario anterior</dt>
+        <dd>{{ impacto.salidaAnterior }}</dd>
+      </div>
+      <div>
+        <dt>Nuevo horario</dt>
+        <dd>{{ impacto.salidaNueva }}</dd>
+      </div>
+    </dl>
+    @if (impacto.pierdeConfirmacion) {
+      <p>
+        Este viaje perderá su confirmación. Tendrás que confirmarlo nuevamente dentro del plazo
+        establecido.
+      </p>
+    }
+    <p>¿Deseas guardar esta reprogramación?</p>
+  } @else {
+    <p>Esta modificación afecta a pasajeros ya aceptados. ¿Deseas guardar los cambios?</p>
+  }
   <p class="ruta-summary">
     <strong>{{ impacto.origen }} → {{ impacto.destino }}</strong>
     <span>Se notificará a los pasajeros afectados.</span>
