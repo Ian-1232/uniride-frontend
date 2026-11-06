@@ -1,55 +1,53 @@
-# UniRide Frontend
+El registro, OTP, login y recuperación de sesión están conectados al backend. Consulta [la guía de autenticación](docs/integracion-auth.md) para ejecutar y comprobar el flujo. Las operaciones de viajes descritas a continuación conservan datos de demostración y requieren una sesión real del rol correspondiente. Sus transiciones se conservan en parámetros de URL; cambiar la URL o usar Atrás cambia el escenario visual y no registra operaciones reales de viajes. El motivo del rechazo se valida en el formulario; aún no se almacena ni se envía.
 
-Módulo 4 integrado con el backend adjunto, sin modificar su código ni sus
-contratos. Esta versión parte de `uniride-frontend-develop(1).zip` y utiliza
-el backend de `uniride-spring-backend-development (1)(1).zip`.
+El viaje de ejemplo sale el viernes 6 de noviembre de 2026 a las 07:30. Tiene 3 cupos, 2 ocupados inicialmente. La antelación predeterminada es 30 horas para reproducir las variantes de Figma sin depender del reloj del equipo.
 
-## Ejecutar
+## Rutas y escenarios
 
-Mantén tu backend local en `http://localhost:8080/api`. En una terminal dentro
-de esta carpeta ejecuta:
+| Pantalla o estado | URL local |
+| --- | --- |
+| Solicitudes del conductor | `/conductor/viajes/1/solicitudes` |
+| Detalle de María | `/conductor/viajes/1/solicitudes/maria` |
+| Detalle de Diego | `/conductor/viajes/1/solicitudes/diego` |
+| Detalle de Valeria | `/conductor/viajes/1/solicitudes/valeria` |
+| Gestionar viaje | `/conductor/viajes/1` |
+| Viaje confirmado | `/conductor/viajes/1?confirmado=true` |
+| Confirmación en el límite permitido | `/conductor/viajes/1?horas=12` |
+| Confirmación vencida | `/conductor/viajes/1?horas=11` |
+| Sin cupos | `/conductor/viajes/1/solicitudes?aceptada=maria` |
+| Sin solicitudes pendientes | `/conductor/viajes/1/solicitudes?rechazos=maria,diego,valeria&filtro=pendientes` |
+| Viaje del pasajero | `/pasajero/viajes/1` |
+| Cancelación sin penalidad | `/pasajero/viajes/1?horas=25&accion=cancelar` |
+| Cancelación con penalidad leve | `/pasajero/viajes/1?horas=24&accion=cancelar` |
+| Cancelación con penalidad grave | `/pasajero/viajes/1?horas=3&accion=cancelar` |
 
-```powershell
-npm ci
-npm start
-```
+Los diálogos y resultados son estados de la misma pantalla. La cancelación no tiene penalidad con más de 24 horas, es leve entre 4 y 24 horas, y grave con menos de 4. Confirmar requiere al menos 12 horas. Solo se inicia un viaje programado y confirmado, y solo se completa un viaje en progreso. Para reiniciar la demostración, abrir la ruta sin parámetros.
 
-Abre `http://localhost:4200` e inicia sesión con una cuenta verificada y el perfil
-completo. El proxy existente envía `/api` al backend de `localhost:8080` y el
-interceptor existente adjunta el JWT. No se añadieron dependencias.
+## Archivos creados
 
-## Usar el módulo 4
+- `src/app/layouts/conductor-layout/conductor-layout`
+- `src/app/layouts/pasajero-layout/pasajero-layout`
+- `src/app/pages/conductor/conductor.routes.ts`
+- `src/app/pages/conductor/viajes/solicitudes/solicitudes`
+- `src/app/pages/conductor/viajes/detalle-solicitud/detalle-solicitud`
+- `src/app/pages/conductor/viajes/gestionar-viaje/gestionar-viaje`
+- `src/app/pages/pasajero/pasajero.routes.ts`
+- `src/app/pages/pasajero/viajes/detalle-viaje/detalle-viaje`
+- `public/assets/uniride/`: ocho SVG originales exportados desde Figma: `brand-dot`, `dashboard`, `rutas`, `viajes`, `compensaciones`, `reportes`, `horarios` y `configuracion`.
+- `public/assets/fonts/`: copias de Roboto 400, 500 y 700 con su licencia. La carga global vigente usa `@fontsource/roboto` desde `src/styles.css`.
+- `public/emails/solicitud-aceptada.html`
+- `public/emails/viaje-confirmado.html`
+- `public/emails/recordatorio-confirmacion.html`
+- `public/emails/viaje-cancelado.html`
 
-- Conductor: **Viajes → Ver solicitudes** para revisar perfiles, aceptar, rechazar
-  o rechazar varias solicitudes con motivo.
-- Conductor: **Viajes → Gestionar viaje** para confirmar, iniciar, completar o
-  cancelar el viaje. También se accede desde **Mis rutas → Viajes de la ruta**.
-- Pasajero: **Mis viajes → Detalle del viaje → Cancelar viaje completo**, cuando
-  su solicitud está aceptada y la vista no es de historial. Cancelar solo una
-  solicitud pendiente conserva el flujo existente del módulo 3.
+La integración añade las rutas del Módulo 4 en `src/app/app.routes.ts` y conserva las rutas de Reportes, Compensaciones y Contribución. `src/styles.css` mantiene los tokens y estilos globales de UniRide; las reglas visuales específicas del Módulo 4 están limitadas a sus layouts en `src/app/layouts/module-4.css`. Las pruebas verifican navegación, aceptación y cupos, rechazo múltiple, confirmación, ciclo del viaje y los límites de penalidad.
 
-Los estados, pasajeros, cupos, motivos y acuerdos se obtienen de respuestas reales.
-Los parámetros antiguos de demostración (`horas`, `estado`, `confirmado`,
-`aceptada`, `rechazos`) ya no cambian los estados del módulo 4.
+## Integración pendiente
 
-La confirmación requiere al menos 12 horas de anticipación. Se inicia a partir
-de la hora de salida y se completa desde `EN_PROGRESO`. La estimación visible de
-penalidad usa la hora del equipo y la fecha de salida en Lima; la validación y la
-penalidad definitiva pertenecen al backend existente.
+Conectar los endpoints de solicitudes y viajes del SPEC, guardar el motivo, recuperar usuarios y cupos reales y validar permisos con el servidor. El backend debe calcular los plazos con la fecha real, aplicar penalidades e idempotencia y enviar los correos; el recordatorio se envía una sola vez entre 12 y 20 horas antes de la salida. Las plantillas contienen ejemplos fijos y enlaces locales.
 
-## Qué cambió y dónde
+Reportes y Compensaciones enlazan a las pantallas existentes del equipo. Las secciones sin ruta implementada siguen deshabilitadas. La landing y el acceso son trabajo de los módulos correspondientes.
 
-Consulta [el informe completo](docs/cambios-modulo4.md), que incluye el listado
-exacto de archivos, los endpoints usados, la comprobación manual y los límites.
+Diseño de referencia: https://www.figma.com/design/Y12BnmOuhShBxVckf6J8gg/UniRide-Design?node-id=103-1866
 
-## Verificar
-
-```powershell
-npm test -- --watch=false
-npm run build
-```
-
-También están disponibles las guías existentes de [autenticación](docs/integracion-auth.md),
-[perfil y roles](docs/integracion-perfil-roles-US03-US04-US05.md),
-[viajes del pasajero](docs/integracion-viajes-pasajero.md), reportes,
-compensaciones y contribución. La especificación general se encuentra en `SPEC.md`.
+La especificación técnica vigente se encuentra en `SPEC.md` del repositorio.
