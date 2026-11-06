@@ -6,6 +6,13 @@
     </div>
   </header>
 
+  @if (error(); as mensaje) {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ mensaje }}</div>
+    </div>
+  }
+
   <mat-card class="uni-card">
     <mat-card-content>
       <div class="banner">

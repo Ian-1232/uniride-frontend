@@ -12,6 +12,22 @@
     </div>
   </header>
 
+  @if (error(); as mensaje) {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ mensaje }}</div>
+    </div>
+  }
+
+  @if (consulta.state().estado === 'cargando') {
+    <p class="state-note">Cargando la ruta…</p>
+  } @else if (consulta.state().estado === 'error') {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ consulta.state().mensaje }}</div>
+    </div>
+    <button mat-stroked-button type="button" (click)="consulta.retry()">Reintentar</button>
+  } @else {
   <mat-card class="uni-card">
       <mat-card-content>
         <div class="banner">
@@ -86,4 +102,5 @@
         </form>
       </mat-card-content>
     </mat-card>
+  }
 </section>

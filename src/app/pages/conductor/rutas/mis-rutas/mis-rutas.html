@@ -10,82 +10,105 @@
     </a>
   </header>
 
-  <div class="routes-list">
-    @for (ruta of rutas(); track ruta.id) {
-      <mat-card class="uni-card">
-        <mat-card-header class="route-head">
-          <mat-icon class="route-head-icon">route</mat-icon>
-          <mat-card-title class="route-title">{{ ruta.origen }} → {{ ruta.destino }}</mat-card-title>
-        </mat-card-header>
+  @if (errorAccion(); as mensaje) {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ mensaje }}</div>
+    </div>
+  }
 
-        <mat-card-content>
-          <div class="route-meta">
-            <span class="meta-item">
-              <mat-icon>route</mat-icon>
-              <span class="meta-label">Puntos de referencia:</span>
-              <span class="meta-value">{{ ruta.puntosReferencia }}</span>
-            </span>
-            @if (ruta.zonasSinParada) {
+  @if (consulta.state().estado === 'cargando') {
+    <p class="state-note">Cargando tus rutas…</p>
+  } @else if (consulta.state().estado === 'error') {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ consulta.state().mensaje }}</div>
+    </div>
+    <button mat-stroked-button type="button" (click)="consulta.retry()">Reintentar</button>
+  } @else if (rutas().length === 0) {
+    <p class="state-note">
+      Aún no tienes rutas publicadas. Crea la primera con «Publicar ruta».
+    </p>
+  } @else {
+    <div class="routes-list">
+      @for (ruta of visibles(); track ruta.id) {
+        <mat-card class="uni-card">
+          <mat-card-header class="route-head">
+            <mat-icon class="route-head-icon">route</mat-icon>
+            <mat-card-title class="route-title">{{ ruta.origen }} → {{ ruta.destino }}</mat-card-title>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="route-meta">
               <span class="meta-item">
-                <mat-icon>block</mat-icon>
-                <span class="meta-label">Zonas sin parada:</span>
-                <span class="meta-value">{{ ruta.zonasSinParada }}</span>
+                <mat-icon>route</mat-icon>
+                <span class="meta-label">Puntos de referencia:</span>
+                <span class="meta-value">{{ ruta.puntosReferencia }}</span>
               </span>
-            }
-          </div>
-
-          <div class="route-bottom">
-            @if (ruta.notaContribucion) {
-              <mat-chip class="chip-nota">Nota: {{ ruta.notaContribucion }}</mat-chip>
-            }
-
-            <div class="route-actions">
-              <a
-                mat-button
-                [routerLink]="['/conductor/viajes', ruta.id, 'generar']"
-                [state]="{ ruta }"
-              >
-                <mat-icon>event</mat-icon>
-                Generar viaje
-              </a>
-              <a
-                mat-button
-                [routerLink]="['/conductor/viajes', ruta.id]"
-                [state]="{ ruta }"
-              >
-                <mat-icon>directions_bus</mat-icon>
-                Ver viajes
-              </a>
-              <a
-                mat-button
-                [routerLink]="['/conductor/rutas/editar', ruta.id]"
-                [state]="{ ruta }"
-              >
-                <mat-icon>edit</mat-icon>
-                Editar
-              </a>
-              <button
-                mat-button
-                type="button"
-                class="btn-danger"
-                (click)="eliminar(ruta.id)"
-              >
-                <mat-icon>delete</mat-icon>
-                Eliminar
-              </button>
+              @if (ruta.zonasSinParada) {
+                <span class="meta-item">
+                  <mat-icon>block</mat-icon>
+                  <span class="meta-label">Zonas sin parada:</span>
+                  <span class="meta-value">{{ ruta.zonasSinParada }}</span>
+                </span>
+              }
             </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    }
 
-    <mat-paginator
-      class="uni-paginator"
-      [length]="rutas().length"
-      [pageSize]="pageSize"
-      [showFirstLastButtons]="false"
-      [pageSizeOptions]="[]"
-      aria-label="Seleccionar página de rutas"
-    />
-  </div>
+            <div class="route-bottom">
+              @if (ruta.notaContribucion) {
+                <mat-chip class="chip-nota">Nota: {{ ruta.notaContribucion }}</mat-chip>
+              }
+
+              <div class="route-actions">
+                <a
+                  mat-button
+                  [routerLink]="['/conductor/viajes', ruta.id, 'generar']"
+                  [state]="{ ruta }"
+                >
+                  <mat-icon>event</mat-icon>
+                  Generar viaje
+                </a>
+                <a
+                  mat-button
+                  [routerLink]="['/conductor/rutas', ruta.id, 'viajes']"
+                  [state]="{ ruta }"
+                >
+                  <mat-icon>directions_bus</mat-icon>
+                  Ver viajes
+                </a>
+                <a
+                  mat-button
+                  [routerLink]="['/conductor/rutas/editar', ruta.id]"
+                  [state]="{ ruta }"
+                >
+                  <mat-icon>edit</mat-icon>
+                  Editar
+                </a>
+                <button
+                  mat-button
+                  type="button"
+                  class="btn-danger"
+                  (click)="eliminar(ruta)"
+                >
+                  <mat-icon>delete</mat-icon>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      <mat-paginator
+        class="uni-paginator"
+        [length]="rutas().length"
+        [pageSize]="pageSize"
+        [pageIndex]="pagina()"
+        [showFirstLastButtons]="false"
+        [pageSizeOptions]="[]"
+        (page)="cambiarPagina($event)"
+        aria-label="Seleccionar página de rutas"
+      />
+    </div>
+  }
 </section>

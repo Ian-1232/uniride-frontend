@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
@@ -8,19 +9,9 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Ruta } from '../../../../core/models/ruta.model';
-
-// shortcut: datos hardcodeados del Figma M2.5; sustituir por RutasService cuando haya backend
-const RUTA: Ruta = {
-  id: 1,
-  origen: 'San Borja',
-  destino: 'UPC',
-  capacidadMaxima: 3,
-  puntosReferencia: 'Av. Arequipa 1234',
-  zonasSinParada: 'Centro de Lima',
-  notaContribucion: 'S/ 10 sugeridos por pasajero',
-  estado: 'ACTIVA',
-};
+import { authError } from '../../../../core/services/auth-error';
+import { consultaQuery } from '../../../../core/services/consulta';
+import { RutasService } from '../../../../core/services/rutas.service';
 
 @Component({
   selector: 'app-generar-viaje',
@@ -42,11 +33,14 @@ export class GenerarViaje {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly service = inject(RutasService);
 
   readonly rutaId = Number(this.route.snapshot.paramMap.get('id'));
   readonly hoy = new Date();
-  readonly ruta = signal<Ruta>(RUTA);
+  readonly consulta = consultaQuery(() => this.service.obtener(this.rutaId));
+  readonly ruta = computed(() => this.consulta.state().data);
   readonly guardando = signal(false);
+  readonly error = signal<string | null>(null);
 
   readonly form = this.fb.group({
     fecha: new FormControl<Date | null>(null, [Validators.required]),
@@ -57,10 +51,25 @@ export class GenerarViaje {
   });
 
   enviar(): void {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.guardando()) {
       return;
     }
-    // shortcut: sin backend, solo navega; crearViaje real pendiente (US06/POST rutas/{id}/viajes)
-    void this.router.navigate(['/conductor/viajes', this.rutaId]);
+    const { fecha, hora } = this.form.getRawValue();
+    this.guardando.set(true);
+    this.error.set(null);
+    this.service
+      .crearViaje(this.rutaId, { fecha: this.formatoFecha(fecha!), hora: hora })
+      .pipe(finalize(() => this.guardando.set(false)))
+      .subscribe({
+        next: () => void this.router.navigate(['/conductor/rutas', this.rutaId, 'viajes']),
+        error: (err) => this.error.set(authError(err, 'No se pudo generar el viaje.')),
+      });
+  }
+
+  /** LocalDate del backend en la zona horaria local, no en UTC. */
+  private formatoFecha(fecha: Date): string {
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    return `${fecha.getFullYear()}-${mes}-${dia}`;
   }
 }

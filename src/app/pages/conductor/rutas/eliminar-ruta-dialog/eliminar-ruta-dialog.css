@@ -1,0 +1,62 @@
+:host {
+  display: block;
+}
+
+.dialog-icon {
+  display: grid;
+  width: var(--ur-control-default);
+  height: var(--ur-control-default);
+  place-items: center;
+  border-radius: var(--ur-radius-pill);
+  background: var(--ur-color-danger-soft);
+  color: var(--ur-color-danger);
+}
+
+[mat-dialog-title] {
+  margin: var(--ur-space-16) 0 var(--ur-space-8);
+  padding: 0;
+}
+
+[mat-dialog-content] {
+  display: grid;
+  gap: var(--ur-space-16);
+  padding: 0;
+  color: var(--ur-color-muted);
+}
+
+.ruta-summary {
+  display: grid;
+  gap: var(--ur-space-4);
+  padding: var(--ur-space-16);
+  border: var(--ur-border);
+  border-radius: var(--ur-radius-8);
+  background: var(--ur-color-background);
+  color: var(--ur-color-ink);
+}
+
+[mat-dialog-actions] {
+  gap: var(--ur-space-8);
+  min-height: 0;
+  margin-top: var(--ur-space-24);
+  padding: 0;
+}
+
+[mat-dialog-actions] button {
+  min-height: var(--ur-control-default);
+}
+
+.destructive-button {
+  background: var(--ur-color-danger);
+  color: var(--ur-color-surface);
+}
+
+@media (max-width: 479px) {
+  [mat-dialog-actions] {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  [mat-dialog-actions] button {
+    width: 100%;
+  }
+}

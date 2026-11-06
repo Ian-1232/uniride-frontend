@@ -1,0 +1,18 @@
+<div class="dialog-icon" aria-hidden="true">
+  <mat-icon>warning</mat-icon>
+</div>
+
+<h2 mat-dialog-title>Confirmar edición</h2>
+
+<mat-dialog-content>
+  <p>Esta modificación afecta a pasajeros ya aceptados. ¿Deseas guardar los cambios?</p>
+  <p class="ruta-summary">
+    <strong>{{ impacto.origen }} → {{ impacto.destino }}</strong>
+    <span>Se notificará a los pasajeros afectados.</span>
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+  <button mat-flat-button type="button" (click)="confirmar()">Guardar cambios</button>
+</mat-dialog-actions>
