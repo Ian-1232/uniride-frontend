@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { METODOS_COMPENSACION_DEMO } from '../compensaciones.models';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EliminarMetodoDialog } from './eliminar-metodo-dialog';
 
 describe('EliminarMetodoDialog', () => {
@@ -13,7 +14,12 @@ describe('EliminarMetodoDialog', () => {
     await TestBed.configureTestingModule({
       imports: [EliminarMetodoDialog],
       providers: [
-        { provide: MAT_DIALOG_DATA, useValue: METODOS_COMPENSACION_DEMO[2] },
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: { id: 87, tipo: 'FAVOR', descripcion: 'Ayuda con apuntes', activo: false },
+        },
         { provide: MatDialogRef, useValue: { close } },
       ],
     }).compileComponents();
@@ -31,13 +37,18 @@ describe('EliminarMetodoDialog', () => {
     const cancelButton = fixture.nativeElement.querySelector('button');
     cancelButton.click();
 
-    expect(close).toHaveBeenCalledWith(false);
+    expect(close).toHaveBeenCalledWith();
+    TestBed.inject(HttpTestingController).expectNone((req) => req.method === 'DELETE');
   });
 
-  it('returns an explicit confirmation without deleting data itself', () => {
+  it('deletes only after confirmation and waits for HTTP success', () => {
     const buttons = fixture.nativeElement.querySelectorAll('button');
     buttons[1].click();
 
-    expect(close).toHaveBeenCalledWith(true);
+    expect(close).not.toHaveBeenCalled();
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/metodos-compensacion/87')
+      .flush({ mensaje: 'OK' });
+    expect(close).toHaveBeenCalledWith({ action: 'deleted' });
   });
 });
