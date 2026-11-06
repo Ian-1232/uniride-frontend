@@ -1,38 +1,244 @@
-@let antelacion = +(horas ?? 30);
-@let situacion = estado ?? 'programado';
-@let programado = situacion === 'programado';
-@let penalidad = antelacion > 24 ? 'Sin penalidad' : antelacion >= 4 ? 'Penalidad leve' : 'Penalidad grave';
-<header class="page-heading"><p class="breadcrumb">Viajes / Coordinación</p><h1>Gestionar viaje</h1><p>Confirma la salida y consulta a los pasajeros que te acompañarán.</p></header>
-@if (aviso) { <div class="notice feedback" [class.success]="aviso !== 'vencido' && aviso !== 'cancelado'" [class.warning]="aviso === 'vencido' || aviso === 'cancelado'" role="status"><div>
-  @switch (aviso) {
-    @case ('confirmado') { <strong>Viaje confirmado</strong><p>La salida ha sido confirmada para todos los pasajeros aceptados.</p> }
-    @case ('iniciado') { <strong>Viaje iniciado</strong><p>El estado del viaje es EN PROGRESO.</p> }
-    @case ('completado') { <strong>Viaje completado</strong><p>El trayecto ha finalizado correctamente.</p> }
-    @case ('vencido') { <strong>El viaje venció sin confirmar</strong><p>El plazo mínimo es de 12 horas. Se registra una penalidad leve.</p> }
-    @case ('cancelado') { <strong>Viaje cancelado</strong><p>{{ penalidad }}. La cancelación se comunicará a los involucrados.</p> }
-  }</div><a matButton="text" routerLink="." [queryParams]="{aviso: null}" queryParamsHandling="merge">Cerrar</a></div> }
-<mat-card class="route-card"><div class="card-title"><h2>San Borja → UPC</h2><div class="badges"><span class="status" [class.info]="programado || situacion === 'en-progreso'" [class.success]="situacion === 'completado'" [class.danger]="situacion === 'cancelado'" [class.warning]="situacion === 'vencido'">{{ programado ? 'PROGRAMADO' : situacion === 'en-progreso' ? 'EN PROGRESO' : situacion === 'completado' ? 'COMPLETADO' : situacion === 'cancelado' ? 'CANCELADO' : 'VENCIDO' }}</span>@if (programado) { <span class="status" [class.success]="confirmado" [class.warning]="!confirmado">{{ confirmado ? 'Confirmado' : 'Sin confirmar' }}</span> }</div></div><dl class="trip-facts"><div><dt>Salida</dt><dd>Viernes, 6 nov · 07:30</dd></div><div><dt>Punto de encuentro</dt><dd>Av. Arequipa 1234</dd></div><div><dt>Pasajeros</dt><dd>{{ aceptada ? '3 aceptados · sin cupos libres' : '2 aceptados · 1 cupo libre' }}</dd></div></dl></mat-card>
-@if (programado && !confirmado) { <div class="notice warning"><strong>Confirma tu viaje antes del plazo</strong><p>Confirma con 12 horas o más de anticipación. Si el viaje vence sin confirmar, se registra una penalidad leve.</p></div> }
-@if (programado && confirmado) { <div class="notice success"><strong>Tu viaje está confirmado</strong><p>Ya puedes iniciar el viaje cuando llegue el momento de la salida.</p></div> }
-@if (situacion === 'cancelado' || situacion === 'vencido') { <div class="notice warning"><strong>{{ situacion === 'cancelado' ? 'Este viaje está cancelado' : 'Este viaje está vencido' }}</strong><p>{{ situacion === 'cancelado' ? penalidad + '. No se puede confirmar ni iniciar.' : 'No se confirmó con la anticipación mínima. Se registra una penalidad leve.' }}</p></div> }
-<mat-card class="passengers-card"><h2>Pasajeros aceptados</h2>@for (pasajero of pasajeros; track pasajero.iniciales) { <div class="passenger-row"><span class="avatar">{{ pasajero.iniciales }}</span><span>{{ pasajero.nombre }} · {{ pasajero.carrera }}</span><span class="status success">Aceptada</span></div> }@if (aceptada && nuevosPasajeros[aceptada]) { @let nuevo = nuevosPasajeros[aceptada]; <div class="passenger-row"><span class="avatar">{{ nuevo.iniciales }}</span><span>{{ nuevo.nombre }} · {{ nuevo.carrera }}</span><span class="status success">Aceptada</span></div> }</mat-card>
-<div class="actions trip-actions">
-  @if (programado && !confirmado) { <button matButton="filled" routerLink="." [queryParams]="{accion: 'confirmar', aviso: null}" queryParamsHandling="merge">Confirmar viaje</button> }
-  @if (programado && confirmado) { <button matButton="filled" routerLink="." [queryParams]="{estado: 'en-progreso', accion: null, aviso: 'iniciado'}" queryParamsHandling="merge">Iniciar viaje</button> }
-  @if (situacion === 'en-progreso') { <button matButton="filled" routerLink="." [queryParams]="{estado: 'completado', accion: null, aviso: 'completado'}" queryParamsHandling="merge">Completar viaje</button> }
-  <a matButton="outlined" routerLink="/conductor/viajes/1/solicitudes" [queryParams]="{accion: null, aviso: null}" queryParamsHandling="merge">Ver solicitudes</a>
-  @if (programado) { <button matButton="text" routerLink="." [queryParams]="{accion: 'cancelar', aviso: null}" queryParamsHandling="merge">Cancelar viaje</button> }
+<header class="page-heading">
+  <p class="breadcrumb">Viajes / Coordinación</p>
+  <h1>Gestionar viaje</h1>
+  <p>Consulta el estado y coordina tu viaje.</p>
+</header>
+<div class="actions">
+  <a matButton="text" routerLink="/conductor/viajes">Volver a mis viajes</a>
+  <button matButton="text" (click)="cargar()" [disabled]="cargando() || enviando()">
+    Actualizar
+  </button>
 </div>
-@if (programado && !confirmado) { <div class="notice info"><strong>Recordatorio por correo</strong><p>Si el viaje sigue sin confirmar, recibirás un único recordatorio entre 12 y 20 horas antes de la salida.</p></div> }
-@if (situacion === 'completado') { <div class="notice success"><strong>Viaje completado</strong><p>Gracias por compartir tu trayecto con UniRide.</p></div> }
-
-@if ((accion === 'confirmar' && !confirmado || accion === 'cancelar') && programado) {
-  <div class="dialog-backdrop"><mat-card class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialog-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (keydown.escape)="cerrar.querySelector('button')?.click()"><h2 id="dialog-title">{{ accion === 'confirmar' ? 'Confirmar viaje' : 'Cancelar viaje' }}</h2>
-    @if (accion === 'confirmar') { <p>¿Confirmar tu salida San Borja → UPC del 6 nov a las 07:30?</p><div class="notice" [class.info]="antelacion >= 12" [class.warning]="antelacion < 12"><strong>{{ antelacion >= 12 ? 'Confirmación de salida' : 'Plazo de confirmación vencido' }}</strong><p>{{ antelacion >= 12 ? 'La confirmación se comunicará a los pasajeros aceptados.' : 'Quedan menos de 12 horas. El viaje pasará a VENCIDO y se registrará una penalidad leve.' }}</p></div> }
-    @else { <p>Esta acción cancelará el viaje para todos los pasajeros aceptados.</p><div class="notice" [class.success]="antelacion > 24" [class.warning]="antelacion <= 24 && antelacion >= 4" [class.danger]="antelacion < 4"><strong>{{ penalidad }}</strong><p>{{ antelacion > 24 ? 'Faltan más de 24 horas para la salida.' : antelacion >= 4 ? 'Faltan entre 4 y 24 horas para la salida.' : 'Faltan menos de 4 horas para la salida.' }}</p></div><p class="muted">La cancelación se comunicará a los involucrados.</p> }
-    <div class="dialog-actions" #cerrar><button matButton="outlined" routerLink="." [queryParams]="{accion: null}" queryParamsHandling="merge" cdkFocusInitial>Volver</button>
-      @if (accion === 'confirmar') { <button matButton="filled" routerLink="." [queryParams]="{confirmado: antelacion >= 12 ? true : null, estado: antelacion >= 12 ? 'programado' : 'vencido', accion: null, aviso: antelacion >= 12 ? 'confirmado' : 'vencido'}" queryParamsHandling="merge">{{ antelacion >= 12 ? 'Confirmar viaje' : 'Entendido' }}</button> }
-      @else { <button matButton="filled" class="danger-button" routerLink="." [queryParams]="{estado: 'cancelado', accion: null, aviso: 'cancelado'}" queryParamsHandling="merge">Sí, cancelar viaje</button> }
+@if (cargando()) {
+  <p role="status">Cargando viaje…</p>
+}
+@if (error()) {
+  <div class="notice warning" role="alert">
+    <p>{{ error() }}</p>
+    <button matButton="outlined" (click)="cargar()" [disabled]="cargando() || enviando()">
+      Reintentar
+    </button>
+  </div>
+}
+@if (aviso()) {
+  <div class="notice success" role="status">{{ aviso() }}</div>
+}
+@if (datos(); as datos) {
+  @let viaje = datos.viaje;
+  @let programado = viaje.estado === 'PROGRAMADO';
+  <mat-card class="route-card">
+    <div class="card-title">
+      <h2>{{ datos.origen }} → {{ datos.destino }}</h2>
+      <div class="badges">
+        <span
+          class="status"
+          [class.info]="programado || viaje.estado === 'EN_PROGRESO'"
+          [class.success]="viaje.estado === 'COMPLETADO'"
+          [class.danger]="viaje.estado === 'CANCELADO'"
+          [class.warning]="viaje.estado === 'VENCIDO'"
+          >{{ viaje.estado.replace('_', ' ') }}</span
+        >
+        @if (programado) {
+          <span
+            class="status"
+            [class.success]="viaje.confirmado"
+            [class.warning]="!viaje.confirmado"
+            >{{ viaje.confirmado ? 'Confirmado' : 'Sin confirmar' }}</span
+          >
+        }
+      </div>
     </div>
-  </mat-card></div>
+    <dl class="trip-facts">
+      <div>
+        <dt>Salida</dt>
+        <dd>{{ salidaTexto(viaje) }}</dd>
+      </div>
+      <div>
+        <dt>Punto de encuentro</dt>
+        <dd>{{ datos.puntosReferencia || 'No indicado' }}</dd>
+      </div>
+      <div>
+        <dt>Pasajeros</dt>
+        <dd>{{ viaje.pasajeros }} aceptados · {{ datos.cuposDisponibles }} cupos libres</dd>
+      </div>
+    </dl>
+  </mat-card>
+  @if (programado && !viaje.confirmado) {
+    <div class="notice warning">
+      <strong>Confirma con al menos 12 horas de anticipación</strong>
+      <p>Si vence el plazo sin confirmar, el viaje pasará a vencido.</p>
+    </div>
+  }
+  @if (programado && viaje.confirmado) {
+    <div class="notice success">
+      <strong>Tu viaje está confirmado</strong>
+      <p>
+        {{
+          segundos(viaje) > 0
+            ? 'Podrás iniciarlo a partir de la hora de salida. Actualiza la pantalla cuando llegue el momento.'
+            : 'Ya llegó la hora de salida.'
+        }}
+      </p>
+    </div>
+  }
+  @if (viaje.estado === 'VENCIDO') {
+    <div class="notice warning">
+      <strong>El viaje venció sin confirmar</strong>
+      <p>El viaje permanece registrado con la penalidad correspondiente.</p>
+    </div>
+  }
+  @if (viaje.estado === 'CANCELADO') {
+    <div class="notice warning">
+      <strong>Este viaje está cancelado</strong>
+      <p>La cancelación quedó registrada para los involucrados.</p>
+    </div>
+  }
+  <mat-card class="passengers-card">
+    <h2>Pasajeros aceptados</h2>
+    @for (pasajero of pasajeros(); track pasajero.id) {
+      <div class="passenger-row">
+        <span class="avatar">{{ iniciales(pasajero.pasajeroNombre) }}</span>
+        <span
+          >{{ pasajero.pasajeroNombre }} ·
+          {{ pasajero.pasajeroCarrera || 'Carrera no indicada' }}</span
+        >
+        <a
+          matButton="text"
+          [routerLink]="['/conductor/viajes', viaje.id, 'solicitudes', pasajero.id]"
+          >Ver detalle</a
+        >
+      </div>
+    } @empty {
+      <p>Aún no hay pasajeros aceptados.</p>
+    }
+    @if (total > 10) {
+      <mat-paginator
+        [length]="total"
+        [pageSize]="10"
+        [pageIndex]="pagina"
+        [hidePageSize]="true"
+        [disabled]="cargando() || enviando()"
+        (page)="paginar($event)"
+      />
+    }
+  </mat-card>
+  <div class="actions trip-actions">
+    @if (programado && !viaje.confirmado) {
+      <button
+        matButton="filled"
+        (click)="dialogo.set('confirmar')"
+        [disabled]="cargando() || enviando()"
+      >
+        Confirmar viaje
+      </button>
+    }
+    @if (programado && viaje.confirmado) {
+      <button
+        matButton="filled"
+        (click)="ejecutar('iniciar')"
+        [disabled]="segundos(viaje) > 0 || cargando() || enviando()"
+      >
+        Iniciar viaje
+      </button>
+    }
+    @if (viaje.estado === 'EN_PROGRESO') {
+      <button
+        matButton="filled"
+        (click)="ejecutar('completar')"
+        [disabled]="cargando() || enviando()"
+      >
+        Completar viaje
+      </button>
+    }
+    <a matButton="outlined" [routerLink]="['/conductor/viajes', viaje.id, 'solicitudes']"
+      >Ver solicitudes</a
+    >
+    @if (programado && segundos(viaje) >= 0) {
+      <button
+        matButton="text"
+        (click)="dialogo.set('cancelar')"
+        [disabled]="cargando() || enviando()"
+      >
+        Cancelar viaje
+      </button>
+    }
+  </div>
+  @if (viaje.estado === 'COMPLETADO') {
+    <div class="notice success">
+      <strong>Viaje completado</strong>
+      <p>Gracias por compartir tu trayecto con UniRide.</p>
+    </div>
+  }
+  @if (dialogo(); as accion) {
+    <div class="dialog-backdrop">
+      <mat-card
+        class="dialog-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="viaje-dialog-title"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        (keydown.escape)="cerrarDialogo()"
+      >
+        <h2 id="viaje-dialog-title">
+          {{ accion === 'confirmar' ? 'Confirmar viaje' : 'Cancelar viaje' }}
+        </h2>
+        @if (accion === 'confirmar') {
+          <p>
+            ¿Confirmar la salida {{ datos.origen }} → {{ datos.destino }} del
+            {{ salidaTexto(viaje) }}?
+          </p>
+          @if (segundos(viaje) < 43200) {
+            <div class="notice warning">
+              <strong>Plazo de confirmación vencido</strong>
+              <p>
+                Quedan menos de 12 horas según la hora de este equipo. La confirmación fuera de
+                plazo registra VENCIDO y aplica una penalidad leve.
+              </p>
+            </div>
+          }
+        } @else {
+          <p>Esta acción cancelará el viaje completo y se comunicará a todos los involucrados.</p>
+          <div class="notice warning">
+            <strong>{{
+              penalidad(viaje) === 'GRAVE'
+                ? 'Penalidad grave estimada'
+                : penalidad(viaje) === 'LEVE'
+                  ? 'Penalidad leve estimada'
+                  : 'Sin penalidad estimada'
+            }}</strong>
+            <p>Más de 24 horas: sin penalidad. De 4 a 24 horas: leve. Menos de 4 horas: grave.</p>
+            <p>
+              La estimación usa la hora de tu equipo. La penalidad definitiva se calcula al
+              confirmar la cancelación.
+            </p>
+          </div>
+        }
+        <div class="dialog-actions">
+          <button
+            matButton="outlined"
+            (click)="cerrarDialogo()"
+            [disabled]="enviando()"
+            cdkFocusInitial
+          >
+            Volver
+          </button>
+          <button
+            matButton="filled"
+            [class.danger-button]="accion === 'cancelar'"
+            (click)="ejecutar(accion)"
+            [disabled]="enviando() || cargando()"
+          >
+            {{
+              enviando()
+                ? 'Guardando…'
+                : accion === 'confirmar'
+                  ? 'Confirmar viaje'
+                  : 'Sí, cancelar viaje'
+            }}
+          </button>
+        </div>
+      </mat-card>
+    </div>
+  }
 }

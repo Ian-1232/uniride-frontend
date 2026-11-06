@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Page, Ruta, RutaRequest, Viaje } from '../models/ruta.model';
+import { Page, Ruta, RutaRequest, Viaje, ViajeConRuta } from '../models/ruta.model';
+import { todasLasPaginas } from './consulta';
 
 /** Cuerpo de POST /api/rutas/{rutaId}/viajes (`ViajeRequest`). */
 export interface SalidaViaje {
@@ -19,11 +20,35 @@ export class RutasService {
     return this.http.get<Page<Ruta>>(this.url, { params: { page, size } });
   }
 
+  todas(): Observable<Ruta[]> {
+    return todasLasPaginas((pagina) => this.listar(pagina, 100));
+  }
+
+  todosLosViajes(rutaId: number): Observable<Viaje[]> {
+    return todasLasPaginas((pagina) => this.viajes(rutaId, pagina, 100));
+  }
+
+  viajesPropios(): Observable<ViajeConRuta[]> {
+    return this.todas().pipe(
+      switchMap((rutas) =>
+        rutas.length === 0
+          ? of([])
+          : forkJoin(
+              rutas.map((ruta) =>
+                this.todosLosViajes(ruta.id).pipe(
+                  map((viajes) => viajes.map((viaje) => ({ ...viaje, ruta }))),
+                ),
+              ),
+            ).pipe(map((grupos) => grupos.flat())),
+      ),
+    );
+  }
+
   /** La API no expone GET /rutas/{id}: se resuelve sobre el listado propio (US09). */
   obtener(id: number): Observable<Ruta> {
-    return this.listar().pipe(
-      map((pagina) => {
-        const ruta = pagina.content.find((item) => item.id === id);
+    return this.todas().pipe(
+      map((rutas) => {
+        const ruta = rutas.find((item) => item.id === id);
         if (!ruta) throw new HttpErrorResponse({ status: 404, url: `${this.url}/${id}` });
         return ruta;
       }),

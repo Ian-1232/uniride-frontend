@@ -9,10 +9,10 @@ export function crearPaginatorIntl(etiqueta: string): MatPaginatorIntl {
   intl.previousPageLabel = 'Página anterior';
   intl.nextPageLabel = 'Página siguiente';
   intl.lastPageLabel = 'Última página';
-  intl.getRangeLabel = (from: number, to: number, total: number) =>
+  intl.getRangeLabel = (page: number, pageSize: number, total: number) =>
     total === 0
       ? `0 – 0 de ${total} ${sustantivo}`
-      : `${from + 1} – ${to} de ${total} ${sustantivo}`;
+      : `${page * pageSize + 1} – ${Math.min((page + 1) * pageSize, total)} de ${total} ${sustantivo}`;
 
   return intl;
 }

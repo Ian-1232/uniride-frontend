@@ -34,19 +34,17 @@ export class ViajesRuta {
   readonly rutaId = Number(this.route.snapshot.paramMap.get('id'));
   readonly columnas: string[] = ['fecha', 'hora', 'estado', 'pasajeros', 'acciones'];
 
-  // shortcut: se cargan hasta 100 viajes por ruta y se pagina en pantalla; subir a
-  // paginación del servidor cuando una ruta pueda superar ese volumen.
   readonly consulta = consultaQuery(() =>
     forkJoin({
       ruta: this.service.obtener(this.rutaId),
-      viajes: this.service.viajes(this.rutaId, 0, 100),
+      viajes: this.service.todosLosViajes(this.rutaId),
     }),
   );
   readonly ruta = computed<Ruta | null>(() => this.consulta.state().data?.ruta ?? null);
   readonly pagina = signal(0);
   readonly pageSize = 5;
 
-  readonly viajesTotales = computed(() => this.consulta.state().data?.viajes.content ?? []);
+  readonly viajesTotales = computed(() => this.consulta.state().data?.viajes ?? []);
   readonly total = computed(() => this.viajesTotales().length);
   readonly viajes = computed(() => {
     const inicio = this.pagina() * this.pageSize;

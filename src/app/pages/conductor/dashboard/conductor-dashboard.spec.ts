@@ -33,23 +33,9 @@ describe('ConductorDashboard', () => {
     expect(component.tieneCupoLibre()).toBe(true);
   });
 
-  it('debe aceptar una solicitud y ocupar el cupo restante', () => {
-    const solicitud = component.solicitudes()[0];
-    component.aceptarSolicitud(solicitud);
-    fixture.detectChanges();
-
-    expect(component.cuposOcupados()).toBe(4);
-    expect(component.tieneCupoLibre()).toBe(false);
-    expect(component.pasajerosConfirmados()).toContain('Mateo Valdivia');
-    expect(component.feedbackMensaje()).toContain('aceptada');
-  });
-
-  it('debe rechazar una solicitud y mantener el cupo', () => {
-    const solicitud = component.solicitudes()[0];
-    component.rechazarSolicitud(solicitud);
-    fixture.detectChanges();
-
-    expect(component.solicitudes().some((s) => s.id === solicitud.id)).toBe(false);
-    expect(component.cuposOcupados()).toBe(3);
+  it('enlaza la coordinación a la lista de viajes reales', () => {
+    const enlace = (fixture.nativeElement as HTMLElement).querySelector('.requests-card a');
+    expect(enlace?.getAttribute('href')).toBe('/conductor/viajes');
+    expect(fixture.nativeElement.querySelector('.req-actions')).toBeNull();
   });
 });

@@ -1,6 +1,30 @@
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, defer, exhaustMap, map, Observable, of, startWith, Subject, timeout } from 'rxjs';
+import {
+  catchError,
+  defer,
+  EMPTY,
+  exhaustMap,
+  expand,
+  map,
+  Observable,
+  of,
+  reduce,
+  startWith,
+  Subject,
+  timeout,
+} from 'rxjs';
 import { authError } from './auth-error';
+import { Page } from '../models/ruta.model';
+
+/** Recorre las páginas reales sin truncar las rutas o viajes a los primeros 100. */
+export function todasLasPaginas<T>(
+  cargar: (pagina: number) => Observable<Page<T>>,
+): Observable<T[]> {
+  return cargar(0).pipe(
+    expand((pagina) => (pagina.number + 1 < pagina.totalPages ? cargar(pagina.number + 1) : EMPTY)),
+    reduce((elementos, pagina) => elementos.concat(pagina.content), [] as T[]),
+  );
+}
 
 export type EstadoConsulta<T> =
   | { estado: 'cargando'; data: T | null; mensaje: string }

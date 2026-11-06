@@ -1,44 +1,139 @@
-import { Component, Input } from '@angular/core';
+import { Component, DestroyRef, Input, OnChanges, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { A11yModule } from '@angular/cdk/a11y';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { Subscription, finalize, forkJoin } from 'rxjs';
+import { CoordinacionService } from '../../../../core/services/coordinacion.service';
+import { crearPaginatorIntl } from '../../../../core/services/paginator-intl';
+import {
+  CoordinacionViaje,
+  EstadoSolicitud,
+  SolicitudRecibida,
+  coordinacionError,
+  iniciales,
+  segundosParaSalida,
+  salidaTexto,
+} from '../../../../core/models/coordinacion.models';
+import {
+  AccionSolicitud,
+  ResultadoSolicitud,
+  SolicitudAccionDialog,
+} from '../solicitud-accion-dialog';
 
 @Component({
   selector: 'app-solicitudes',
-  imports: [RouterLink, ReactiveFormsModule, A11yModule, MatButtonModule, MatCardModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatPaginatorModule],
-  providers: [{ provide: MatPaginatorIntl, useValue: Object.assign(new MatPaginatorIntl(), {
-    itemsPerPageLabel: 'Solicitudes por página', nextPageLabel: 'Siguiente', previousPageLabel: 'Anterior',
-  }) }],
+  imports: [
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatPaginatorModule,
+    SolicitudAccionDialog,
+  ],
+  providers: [{ provide: MatPaginatorIntl, useFactory: () => crearPaginatorIntl('Solicitudes') }],
   templateUrl: './solicitudes.html',
   styleUrl: './solicitudes.css',
 })
-export class Solicitudes {
-  // Estado de demostración en la URL: se conserva al navegar y recargar.
-  @Input() aceptada?: string;
-  @Input() rechazos?: string;
-  @Input() filtro?: string;
-  @Input() accion?: string;
-  @Input() objetivo?: string;
-  @Input() aviso?: string;
-  @Input() estado?: string;
-  pagina = 0;
-  readonly seleccion = new FormGroup({
-    maria: new FormControl(false, { nonNullable: true }),
-    diego: new FormControl(false, { nonNullable: true }),
-    valeria: new FormControl(false, { nonNullable: true }),
-  });
-  readonly motivo = new FormGroup({ motivo: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(300)] }) });
-  readonly solicitudes = [
-    { id: 'maria', iniciales: 'MT', nombre: 'María Torres', descripcion: 'Ing. Industrial · Surco', mensaje: 'Puedo llegar al punto de encuentro a las 07:20.' },
-    { id: 'diego', iniciales: 'DR', nombre: 'Diego Ramírez', descripcion: 'Ing. de Sistemas · San Borja', mensaje: 'Mi clase empieza a las 08:00. ¡Gracias!' },
-    { id: 'valeria', iniciales: 'VR', nombre: 'Valeria Rojas', descripcion: 'Derecho · Miraflores', mensaje: 'Prefiero contribuir con gasolina para el viaje.' },
-    { id: 'lucia', iniciales: 'LM', nombre: 'Lucía Medina', descripcion: 'Arquitectura', mensaje: 'Nos vemos en el punto de encuentro.' },
-    { id: 'andres', iniciales: 'AV', nombre: 'Andrés Vega', descripcion: 'Administración', mensaje: '¡Gracias por compartir el viaje!' },
+export class Solicitudes implements OnChanges {
+  @Input() viajeId = '';
+  private readonly api = inject(CoordinacionService);
+  private readonly destroyRef = inject(DestroyRef);
+  private carga?: Subscription;
+  readonly viaje = signal<CoordinacionViaje | null>(null);
+  readonly solicitudes = signal<SolicitudRecibida[]>([]);
+  readonly cargando = signal(false);
+  readonly error = signal('');
+  readonly aviso = signal<ResultadoSolicitud | null>(null);
+  readonly seleccion = signal(new Set<number>());
+  readonly dialogo = signal<AccionSolicitud | null>(null);
+  readonly procesable = computed(
+    () =>
+      this.viaje()?.viaje.estado === 'PROGRAMADO' && segundosParaSalida(this.viaje()!.viaje) > 0,
+  );
+  readonly iniciales = iniciales;
+  readonly salidaTexto = salidaTexto;
+  readonly filtros: { estado: EstadoSolicitud | ''; etiqueta: string }[] = [
+    { estado: '', etiqueta: 'Todas' },
+    { estado: 'PENDIENTE', etiqueta: 'Pendientes' },
+    { estado: 'ACEPTADA', etiqueta: 'Aceptadas' },
+    { estado: 'RECHAZADA', etiqueta: 'Rechazadas' },
+    { estado: 'CANCELADA', etiqueta: 'Canceladas' },
   ];
+  filtro: EstadoSolicitud | '' = '';
+  pagina = 0;
+  tamanio = 10;
+  total = 0;
+
+  ngOnChanges() {
+    this.pagina = 0;
+    this.cargar();
+  }
+  cargar() {
+    this.carga?.unsubscribe();
+    this.seleccion.set(new Set());
+    this.error.set('');
+    const id = Number(this.viajeId);
+    if (!Number.isSafeInteger(id) || id < 1) {
+      this.viaje.set(null);
+      this.error.set('El identificador del viaje no es válido.');
+      return;
+    }
+    this.cargando.set(true);
+    this.carga = forkJoin({
+      viaje: this.api.viaje(id),
+      pagina: this.api.solicitudes(id, this.filtro, this.pagina, this.tamanio),
+    })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.cargando.set(false)),
+      )
+      .subscribe({
+        next: ({ viaje, pagina }) => {
+          this.viaje.set(viaje);
+          this.solicitudes.set(pagina.content);
+          this.total = pagina.totalElements;
+          if (!pagina.content.length && this.pagina > 0 && this.total > 0) {
+            this.pagina--;
+            this.cargar();
+          }
+        },
+        error: (error) => {
+          this.viaje.set(null);
+          this.solicitudes.set([]);
+          this.error.set(coordinacionError(error));
+        },
+      });
+  }
+  filtrar(estado: EstadoSolicitud | '') {
+    this.filtro = estado;
+    this.pagina = 0;
+    this.cargar();
+  }
+  paginar(evento: PageEvent) {
+    this.pagina = evento.pageIndex;
+    this.tamanio = evento.pageSize;
+    this.cargar();
+  }
+  seleccionar(id: number, marcado: boolean) {
+    this.seleccion.update((actual) => {
+      const siguiente = new Set(actual);
+      if (marcado) siguiente.add(id);
+      else siguiente.delete(id);
+      return siguiente;
+    });
+  }
+  abrir(tipo: 'aceptar' | 'rechazar', solicitud?: SolicitudRecibida) {
+    if (this.cargando() || !this.procesable()) return;
+    if (tipo === 'aceptar' && !this.viaje()!.cuposDisponibles) return;
+    const ids = solicitud ? [solicitud.id] : [...this.seleccion()];
+    if (ids.length) this.dialogo.set({ tipo, ids, nombre: solicitud?.pasajeroNombre ?? '' });
+  }
+  resuelta(resultado: ResultadoSolicitud) {
+    this.dialogo.set(null);
+    this.aviso.set(resultado);
+    this.cargar();
+  }
 }
