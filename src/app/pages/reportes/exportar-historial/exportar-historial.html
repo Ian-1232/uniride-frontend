@@ -7,7 +7,7 @@
   <mat-card class="export-card" appearance="outlined">
     <mat-card-header>
       <mat-card-title>
-        {{ state() === 'filtrado' || state() === 'sin-resultados' ? 'Filtros aplicados' : 'Historial completo' }}
+        Historial personal
       </mat-card-title>
       <mat-card-subtitle>
         El archivo corresponde exclusivamente a tu historial personal de viajes.
@@ -15,7 +15,7 @@
     </mat-card-header>
 
     <mat-card-content>
-      <form class="history-form" [formGroup]="form" (ngSubmit)="submitDemonstration()">
+      <form class="history-form" [formGroup]="form" (ngSubmit)="exportPdf()">
         <mat-form-field appearance="outline">
           <mat-label>Desde</mat-label>
           <input
@@ -60,7 +60,7 @@
           class="export-button"
           mat-flat-button
           type="submit"
-          [disabled]="form.invalid || isPreparing() || (state() === 'sin-resultados' && !form.dirty) || state() === 'descargado'"
+          [disabled]="form.invalid || isPreparing()"
         >
           <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">picture_as_pdf</mat-icon>
           Exportar PDF
@@ -80,38 +80,21 @@
   } @else {
     @switch (state()) {
       @case ('sin-resultados') {
-        @if (!form.dirty) {
-          <app-reportes-state-panel
-            title="No hay historial para exportar"
-            message="No encontramos viajes con los filtros: 01/10/2026–31/10/2026 · Pasajero. Modifica los filtros para intentar otra consulta."
-            tone="warning"
-          />
-        }
+        <app-reportes-state-panel title="No hay historial para exportar" [message]="message()" tone="warning" actionLabel="Reintentar" (action)="exportPdf()" />
       }
       @case ('preparando') {
-        <app-reportes-state-panel
-          title="Preparando PDF · Demostración"
-          message="Preparando historial-viajes.pdf… Este estado es únicamente una referencia visual; todavía no se genera ningún archivo."
-          tone="neutral"
-          [loading]="true"
-        />
+        <app-reportes-state-panel title="Preparando PDF" message="Estamos generando tu historial personal de viajes." tone="neutral" [loading]="true" />
       }
       @case ('descargado') {
-        <app-reportes-state-panel
-          title="PDF preparado · Demostración"
-          message="historial-viajes.pdf · application/pdf. No se generó ni descargó un archivo real; la descarga se habilitará al conectar el backend."
-          tone="success"
-        />
+        <app-reportes-state-panel title="PDF listo para descargar" [message]="message()" tone="success" />
+      }
+      @case ('error') {
+        <app-reportes-state-panel title="No se pudo exportar el historial" [message]="message()" tone="danger" actionLabel="Reintentar" (action)="exportPdf()" />
+      }
+      @default {
+        <app-reportes-state-panel title="Historial listo para consultar" message="Exporta todo tu historial o selecciona fechas y tipo de viaje." tone="info" />
       }
     }
-  }
-
-  @if (integrationNoticeVisible() && state() !== 'descargado') {
-    <app-reportes-state-panel
-      title="Interfaz lista para integración"
-      message="La descarga funcional se incorporará al conectar GET /historial/pdf. En esta etapa no se generó ni descargó un archivo."
-      tone="info"
-    />
   }
 
   <aside class="format-info" aria-labelledby="format-title">
@@ -119,11 +102,11 @@
     <div>
       <h2 id="format-title">Formato disponible</h2>
       <p>
-        El servicio previsto devolverá directamente un archivo <strong>application/pdf</strong>,
+        El servicio devuelve directamente un archivo <strong>application/pdf</strong>,
         sin vista previa dinámica ni formatos adicionales.
       </p>
       <p class="format-fields">
-        Incluirá fecha, día, hora, ruta, rol del usuario, estado del viaje y penalidad cuando corresponda.
+        Incluye fecha, día, hora, ruta, rol del usuario, estado del viaje y penalidad cuando corresponda.
       </p>
     </div>
   </aside>
