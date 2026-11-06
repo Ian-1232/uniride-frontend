@@ -1,10 +1,30 @@
 <h2 mat-dialog-title>Unirse al viaje</h2>
 
 <mat-dialog-content>
-  <p class="dialog-subtitle">
-    {{ viaje.origen }} → {{ viaje.destino }} · {{ viaje.fecha }} · {{ viaje.hora }}
-  </p>
+  <p class="dialog-subtitle">{{ viaje.origen }} → {{ viaje.destino }} · {{ salida(viaje) }}</p>
 
+  @if (methodsLoading()) {
+    <p role="status">Cargando métodos personales...</p>
+  }
+  @if (methodsError()) {
+    <app-reportes-state-panel
+      title="Métodos no disponibles"
+      [message]="methodsError()"
+      actionLabel="Reintentar métodos"
+      (action)="loadMethods()"
+    />
+  }
+  @if (error()) {
+    <app-reportes-state-panel
+      role="alert"
+      title="No se pudo enviar"
+      [message]="error()"
+      tone="danger"
+    />
+  }
+  @if (busy()) {
+    <p role="status">Enviando solicitud...</p>
+  }
   <form class="dialog-form" [formGroup]="form" (ngSubmit)="enviar()">
     <mat-form-field appearance="outline">
       <mat-label>Preferencia de compensación</mat-label>
@@ -20,11 +40,12 @@
     <mat-form-field appearance="outline">
       <mat-label>Método de compensación</mat-label>
       <mat-select formControlName="metodo">
+        <mat-option [value]="null">Sin método personal (opcional)</mat-option>
         @for (metodo of metodosPreferidos; track metodo.id) {
           <mat-option [value]="metodo.id">{{ metodo.descripcion }}</mat-option>
         }
       </mat-select>
-      <mat-hint>Tu método registrado que coincida con la preferencia.</mat-hint>
+      <mat-hint>Opcional: se muestran solo tus métodos activos compatibles.</mat-hint>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -35,10 +56,15 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button class="ur-button ur-button--secondary" type="button" (click)="cancelar()">
+  <button
+    class="ur-button ur-button--secondary"
+    type="button"
+    (click)="cancelar()"
+    [disabled]="busy()"
+  >
     Cancelar
   </button>
-  <button class="ur-button" type="button" [disabled]="form.invalid" (click)="enviar()">
+  <button class="ur-button" type="button" [disabled]="form.invalid || busy()" (click)="enviar()">
     Enviar solicitud
   </button>
 </mat-dialog-actions>

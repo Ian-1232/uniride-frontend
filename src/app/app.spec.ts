@@ -89,8 +89,10 @@ describe('Coordinación de viajes', () => {
   // sus rutas al listado propio).
   function flushPendientes() {
     const http = TestBed.inject(HttpTestingController);
-    for (const req of http.match(r => r.url.startsWith('/api/estadisticas') || r.url === '/api/metodos-compensacion' || r.url.endsWith('/sugerencia-contribucion'))) {
-      if (req.request.url.endsWith('/sugerencia-contribucion')) req.flush({ mensaje: 'El viaje aún no tiene pasajeros aceptados; indica la cantidad de pasajeros para calcular la sugerencia' }, { status: 400, statusText: 'Bad Request' });
+    for (const req of http.match(r => r.url.startsWith('/api/estadisticas') || r.url === '/api/metodos-compensacion' || r.url.endsWith('/sugerencia-contribucion') || ['/api/viajes/buscar/resumen', '/api/solicitudes/resumen', '/api/solicitudes/historial'].includes(r.url))) {
+      if (req.request.url === '/api/viajes/buscar/resumen') req.flush({ viajes: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 }, mensaje: null, sugerencia: null });
+      else if (req.request.url.startsWith('/api/solicitudes/')) req.flush({ solicitudes: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 }, mensaje: null });
+      else if (req.request.url.endsWith('/sugerencia-contribucion')) req.flush({ mensaje: 'El viaje aún no tiene pasajeros aceptados; indica la cantidad de pasajeros para calcular la sugerencia' }, { status: 400, statusText: 'Bad Request' });
       else if (req.request.url === '/api/metodos-compensacion') req.flush([]);
       else if (req.request.url.endsWith('/semana')) req.flush({ suficientesDatos: false, mensaje: 'Sin viajes', viajesPorDia: [], canceladosPorMi: 0, canceladosPorTerceros: 0 });
       else if (req.request.url.endsWith('/rutas')) req.flush({ suficientesDatos: false, mensaje: 'Sin rutas', ranking: [] });
