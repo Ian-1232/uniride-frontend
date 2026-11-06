@@ -1,3 +1,4 @@
+import { RoleSelector } from '../../shared/role-selector/role-selector';
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
@@ -8,7 +9,16 @@ import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-pasajero-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatListModule, MatToolbarModule, MatButtonModule, MatMenuModule],
+  imports: [
+    RoleSelector,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    MatListModule,
+    MatToolbarModule,
+    MatButtonModule,
+    MatMenuModule,
+  ],
   templateUrl: './pasajero-layout.html',
   styleUrl: './pasajero-layout.css',
 })
@@ -19,9 +29,9 @@ export class PasajeroLayout {
     { nombre: 'Dashboard', icono: 'dashboard', ruta: '/pasajero/dashboard' },
     { nombre: 'Rutas', icono: 'rutas' },
     { nombre: 'Viajes', icono: 'viajes', ruta: '/pasajero/viajes' },
-    { nombre: 'Compensaciones', icono: 'compensaciones' },
-    { nombre: 'Reportes', icono: 'reportes' },
+    { nombre: 'Compensaciones', icono: 'compensaciones', ruta: '/compensaciones' },
+    { nombre: 'Reportes', icono: 'reportes', ruta: '/reportes' },
     { nombre: 'Horarios', icono: 'horarios' },
-    { nombre: 'Configuración', icono: 'configuracion' },
+    { nombre: 'Configuración', icono: 'configuracion', ruta: '/configuracion' },
   ];
 }

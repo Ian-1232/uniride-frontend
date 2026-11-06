@@ -27,6 +27,7 @@
     }
   </mat-nav-list>
   <button mat-button type="button" (click)="authService.logout()">Cerrar sesión</button>
+  <app-role-selector />
   <div class="sidebar-user">
     <span class="avatar">{{ authService.currentUser()?.iniciales }}</span>
     <div>
@@ -39,12 +40,16 @@
   <a class="brand" routerLink="/pasajero/dashboard">
     <img src="assets/uniride/brand-dot.svg" alt="" />UniRide
   </a>
-  <span class="role-label">Pasajero</span>
-  <button matButton="text" [matMenuTriggerFor]="mobileMenu" aria-label="Abrir navegación">Menú</button>
+  <app-role-selector />
+  <button matButton="text" [matMenuTriggerFor]="mobileMenu" aria-label="Abrir navegación">
+    Menú
+  </button>
 </mat-toolbar>
 <mat-menu #mobileMenu="matMenu" aria-label="Navegación móvil">
   @for (item of menu; track item.icono) {
-    @if (item.ruta) { <a mat-menu-item [routerLink]="item.ruta">{{ item.nombre }}</a> }
+    @if (item.ruta) {
+      <a mat-menu-item [routerLink]="item.ruta">{{ item.nombre }}</a>
+    }
   }
   <button mat-menu-item type="button" (click)="authService.logout()">Cerrar sesión</button>
 </mat-menu>

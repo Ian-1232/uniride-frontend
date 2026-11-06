@@ -294,3 +294,34 @@
     grid-template-columns: 1fr;
   }
 }
+
+.stepper-header-card {
+  gap: var(--ur-space-16);
+  flex-wrap: wrap;
+}
+.days-chips-row {
+  flex-wrap: wrap;
+}
+.form-actions-row {
+  gap: var(--ur-space-16);
+  flex-wrap: wrap;
+}
+.form-actions-row button {
+  min-height: var(--ur-control-default);
+}
+@media (max-width: 767px) {
+  .stepper-track-block {
+    min-width: 0;
+    width: 100%;
+  }
+  .two-col-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .perfil-card {
+    padding: var(--ur-space-16) !important;
+    min-width: 0;
+  }
+  .form-actions-row > * {
+    width: 100%;
+  }
+}

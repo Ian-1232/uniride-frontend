@@ -93,9 +93,15 @@
   color: #ffffff;
 }
 
-.box-icon.music { background: linear-gradient(135deg, #4f46e5 0%, #3525cd 100%); }
-.box-icon.hobbies { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-.box-icon.rules { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.box-icon.music {
+  background: linear-gradient(135deg, #4f46e5 0%, #3525cd 100%);
+}
+.box-icon.hobbies {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+.box-icon.rules {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
 
 .box-icon mat-icon {
   font-size: 20px;
@@ -221,9 +227,16 @@
   margin-left: -8px;
 }
 
-.av-1 { background-color: #4f46e5; margin-left: 0; }
-.av-2 { background-color: #10b981; }
-.av-3 { background-color: #f59e0b; }
+.av-1 {
+  background-color: #4f46e5;
+  margin-left: 0;
+}
+.av-2 {
+  background-color: #10b981;
+}
+.av-3 {
+  background-color: #f59e0b;
+}
 
 .avatar-count {
   font-size: 11px;
@@ -284,5 +297,24 @@
 @media (max-width: 860px) {
   .info-grid-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+.bottom-action-bar {
+  flex-wrap: wrap;
+  gap: var(--ur-space-16);
+}
+@media (max-width: 767px) {
+  .bottom-action-bar > * {
+    width: 100%;
+    white-space: normal;
+    min-height: var(--ur-control-default);
+  }
+  .info-header-card {
+    padding: var(--ur-space-16);
+  }
+  .section-box-card {
+    min-width: 0;
+    padding: var(--ur-space-16) !important;
   }
 }

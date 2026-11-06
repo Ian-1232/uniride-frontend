@@ -1,3 +1,4 @@
+import { prepararPerfil } from '../../../testing/perfil-fixtures';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FormGroup } from '@angular/forms';
@@ -76,6 +77,7 @@ describe('US29 authenticated REST integration', () => {
           cuentaVerificada: true,
         },
       });
+    prepararPerfil();
   }
   async function render(path = '/contribucion/sugerencia/74') {
     harness = await RouterTestingHarness.create(path);

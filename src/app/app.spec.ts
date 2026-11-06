@@ -1,3 +1,4 @@
+import { prepararPerfil } from './testing/perfil-fixtures';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AuthService } from './core/services/auth.service';
@@ -109,6 +110,7 @@ describe('Coordinación de viajes', () => {
     TestBed.inject(HttpTestingController).expectOne('/api/auth/login').flush({
       token, mensaje: 'OK', usuario: { id: 1, correo: 'test@upc.edu.pe', nombre: 'Test', apellidos: 'User', rol, cuentaVerificada: true },
     });
+    prepararPerfil();
   }
 
   it('muestra el sidebar estándar de conductor en reportes y compensaciones', async () => {
@@ -121,7 +123,7 @@ describe('Coordinación de viajes', () => {
     expect(h.routeNativeElement?.querySelector('.reportes-tabs')).toBeTruthy();
 
     await h.navigateByUrl('/compensaciones/metodos');
-    flushReports();
+    flushPendientes();
     expect(h.routeNativeElement?.querySelector('.sidebar')).toBeTruthy();
     expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe('Panel del conductor');
   }, 30000);

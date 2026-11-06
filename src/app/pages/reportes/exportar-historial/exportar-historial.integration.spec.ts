@@ -1,3 +1,4 @@
+import { prepararPerfil } from '../../../testing/perfil-fixtures';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -33,6 +34,7 @@ describe('US22 export integration (mock HTTP and browser downloads)', () => {
     token = 'eyJhbGciOiJIUzI1NiJ9.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) + '.signature';
     auth.login({ correo: 'pdf@upc.edu.pe', contrasena: 'Password1!' }).subscribe();
     http.expectOne('/api/auth/login').flush({ token, mensaje: 'OK', usuario: { id: 3, correo: 'pdf@upc.edu.pe', nombre: 'Test', rol: 'CONDUCTOR', cuentaVerificada: true } });
+    prepararPerfil();
     downloads = [];
     createUrl = vi.fn(() => 'blob:uniride-test'); revokeUrl = vi.fn();
     const OriginalURL = URL;

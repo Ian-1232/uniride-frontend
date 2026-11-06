@@ -1,3 +1,4 @@
+import { prepararPerfil } from '../../testing/perfil-fixtures';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Type } from '@angular/core';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -50,6 +51,7 @@ describe('Reportes HTTP integration', () => {
     token = 'eyJhbGciOiJIUzI1NiJ9.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) + '.signature';
     auth.login({ correo: 'reportes@upc.edu.pe', contrasena: 'TestPassword1!' }).subscribe();
     http.expectOne('/api/auth/login').flush({ token, mensaje: 'OK', usuario: { id: 8, correo: 'reportes@upc.edu.pe', nombre: 'Test', rol, cuentaVerificada: true } });
+    prepararPerfil();
   }
   function create<T>(component: Type<T>) {
     const fixture = TestBed.createComponent(component);

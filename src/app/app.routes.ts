@@ -1,4 +1,5 @@
-import { conductorGuard, pasajeroGuard } from './core/guards/auth.guard';
+import { perfilGuard } from './core/guards/perfil.guard';
+import { authGuard, conductorGuard, pasajeroGuard } from './core/guards/auth.guard';
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
@@ -27,8 +28,8 @@ export const routes: Routes = [
   },
   {
     path: 'pasajero',
-    canActivate: [pasajeroGuard],
-    canActivateChild: [pasajeroGuard],
+    canActivate: [pasajeroGuard, perfilGuard],
+    canActivateChild: [pasajeroGuard, perfilGuard],
     loadComponent: () =>
       import('./layouts/pasajero-layout/pasajero-layout').then(
         (component) => component.PasajeroLayout,
@@ -82,12 +83,10 @@ export const routes: Routes = [
   },
   {
     path: 'reportes',
-    canActivate: [conductorGuard],
-    canActivateChild: [conductorGuard],
+    canActivate: [authGuard, perfilGuard],
+    canActivateChild: [authGuard, perfilGuard],
     loadComponent: () =>
-      import('./layouts/conductor-layout/conductor-layout').then(
-        (module) => module.ConductorLayout,
-      ),
+      import('./layouts/shared-layout/shared-layout').then((module) => module.SharedLayout),
     children: [
       {
         path: '',
@@ -117,6 +116,7 @@ export const routes: Routes = [
           },
           {
             path: 'rutas',
+            canActivate: [conductorGuard],
             loadComponent: () =>
               import('./pages/reportes/rutas-frecuentes/rutas-frecuentes').then(
                 (component) => component.RutasFrecuentes,
@@ -135,12 +135,10 @@ export const routes: Routes = [
   },
   {
     path: 'compensaciones',
-    canActivate: [conductorGuard],
-    canActivateChild: [conductorGuard],
+    canActivate: [authGuard, perfilGuard],
+    canActivateChild: [authGuard, perfilGuard],
     loadComponent: () =>
-      import('./layouts/conductor-layout/conductor-layout').then(
-        (module) => module.ConductorLayout,
-      ),
+      import('./layouts/shared-layout/shared-layout').then((module) => module.SharedLayout),
     children: [
       {
         path: '',
@@ -180,9 +178,36 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'configuracion',
+    canActivate: [authGuard],
+    canActivateChild: [authGuard],
+    loadComponent: () =>
+      import('./layouts/shared-layout/shared-layout').then((m) => m.SharedLayout),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./pages/configuracion/configuracion').then((m) => m.Configuracion),
+      },
+      {
+        path: 'perfil',
+        loadComponent: () => import('./pages/auth/perfil/perfil').then((m) => m.PerfilComponent),
+      },
+      {
+        path: 'info-adicional',
+        canActivate: [perfilGuard],
+        loadComponent: () =>
+          import('./pages/auth/info-adicional/info-adicional').then(
+            (m) => m.InfoAdicionalComponent,
+          ),
+      },
+    ],
+  },
+  {
     path: 'contribucion',
-    canActivate: [pasajeroGuard],
-    canActivateChild: [pasajeroGuard],
+    canActivate: [pasajeroGuard, perfilGuard],
+    canActivateChild: [pasajeroGuard, perfilGuard],
     loadComponent: () =>
       import('./pages/contribucion/contribucion-shell/contribucion-shell').then(
         (component) => component.ContribucionShell,
@@ -199,8 +224,8 @@ export const routes: Routes = [
   },
   {
     path: 'conductor',
-    canActivate: [conductorGuard],
-    canActivateChild: [conductorGuard],
+    canActivate: [conductorGuard, perfilGuard],
+    canActivateChild: [conductorGuard, perfilGuard],
     loadChildren: () =>
       import('./pages/conductor/conductor.routes').then((module) => module.CONDUCTOR_ROUTES),
   },

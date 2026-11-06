@@ -1,3 +1,4 @@
+import { prepararPerfil } from '../../../testing/perfil-fixtures';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FormControl, FormGroup } from '@angular/forms';
@@ -79,6 +80,7 @@ describe('Passenger trips REST integration', () => {
         cuentaVerificada: true,
       },
     });
+    prepararPerfil();
   }
   async function render(path: string) {
     harness = await RouterTestingHarness.create(path);

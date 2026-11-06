@@ -6,7 +6,7 @@
         <mat-icon>school</mat-icon>
       </div>
       <div class="brand-mini-text">
-        <span class="stepper-title">UniRide Onboarding</span>
+        <span class="stepper-title">{{ onboarding() ? 'Completa tu perfil' : 'Mi perfil' }}</span>
         <span class="stepper-subtitle">Perfil Académico</span>
       </div>
     </div>
@@ -15,191 +15,280 @@
       <div class="stepper-progress-bar">
         <div class="progress-fill step-2"></div>
       </div>
-      <span class="stepper-label">Paso 2 de 2: Completa tu perfil académico</span>
+      <span class="stepper-label">Datos personales y académicos</span>
     </div>
 
     <div class="stepper-skip-link">
-      <a routerLink="/auth/info-adicional" class="link-muted">Saltar por ahora</a>
+      <a routerLink="/configuracion" class="link-muted">Configuración</a>
     </div>
   </header>
 
-  <div class="perfil-layout-grid">
-    <!-- COLUMNA PRINCIPAL DE FORMULARIO -->
-    <mat-card class="perfil-card">
-      <div class="perfil-header-block">
-        <div class="step-pill">DATOS INSTITUCIONALES</div>
-        <h1 class="perfil-h1">Tu horario y campus universitario</h1>
-        <p class="perfil-desc">
-          Esta información permite que el algoritmo te sugiera rutas y compañeros con tus mismos horarios de entrada y salida.
-        </p>
-      </div>
-
-      <form [formGroup]="perfilForm" class="perfil-form">
-        <!-- CARRERA Y SEDE -->
-        <div class="two-col-grid">
-          <div class="field-box">
-            <label class="field-label" for="select-carrera">Carrera universitaria</label>
-            <mat-form-field appearance="outline">
-              <mat-icon matPrefix class="input-icon">school</mat-icon>
-              <mat-select id="select-carrera" formControlName="carrera">
-                @for (carrera of carreras; track carrera) {
-                  <mat-option [value]="carrera">{{ carrera }}</mat-option>
-                }
-              </mat-select>
-              @if (perfilForm.get('carrera')?.hasError('required')) {
-                <mat-error>La carrera es obligatoria.</mat-error>
-              }
-            </mat-form-field>
-          </div>
-
-          <div class="field-box">
-            <label class="field-label" for="select-sede">Campus de destino (Sede UPC)</label>
-            <mat-form-field appearance="outline">
-              <mat-icon matPrefix class="input-icon">location_on</mat-icon>
-              <mat-select id="select-sede" formControlName="universidad">
-                @for (sede of sedesUpc; track sede) {
-                  <mat-option [value]="sede">{{ sede }}</mat-option>
-                }
-              </mat-select>
-              @if (perfilForm.get('universidad')?.hasError('required')) {
-                <mat-error>La sede universitaria es obligatoria.</mat-error>
-              }
-            </mat-form-field>
-          </div>
+  @if (loading()) {
+    <app-reportes-state-panel
+      role="status"
+      title="Cargando perfil"
+      message="Estamos consultando tus datos."
+      [loading]="true"
+    />
+  }
+  @if (loadError()) {
+    <app-reportes-state-panel
+      role="alert"
+      title="No se pudo consultar el perfil"
+      [message]="loadError()"
+      actionLabel="Reintentar"
+      (action)="load(true)"
+    />
+  }
+  @if (!loading() && !loadError()) {
+    @if (onboarding()) {
+      <p role="status">Completa los campos obligatorios para continuar a UniRide.</p>
+    }
+    @if (error()) {
+      <app-reportes-state-panel
+        role="alert"
+        title="No se pudo guardar"
+        [message]="error()"
+        tone="danger"
+      />
+    }
+    @if (success()) {
+      <p role="status">{{ success() }}</p>
+    }
+    <div class="perfil-layout-grid">
+      <!-- COLUMNA PRINCIPAL DE FORMULARIO -->
+      <mat-card class="perfil-card">
+        <div class="perfil-header-block">
+          <div class="step-pill">DATOS INSTITUCIONALES</div>
+          <h1 class="perfil-h1">Tu perfil personal y académico</h1>
+          <p class="perfil-desc">
+            Completa tus datos para coordinar viajes con la comunidad universitaria.
+          </p>
         </div>
 
-        <!-- DISTRITO DE PARTIDA Y RANGO DE HORAS -->
-        <div class="two-col-grid">
-          <div class="field-box">
-            <label class="field-label" for="select-distrito">Distrito de origen (Tu residencia)</label>
-            <mat-form-field appearance="outline">
-              <mat-icon matPrefix class="input-icon">home</mat-icon>
-              <mat-select id="select-distrito" formControlName="distrito">
-                @for (distrito of distritos; track distrito) {
-                  <mat-option [value]="distrito">{{ distrito }}</mat-option>
+        <form [formGroup]="perfilForm" class="perfil-form" (ngSubmit)="guardar()">
+          <div class="two-col-grid">
+            <mat-form-field appearance="outline"
+              ><mat-label>Nombre</mat-label
+              ><input matInput formControlName="nombre" autocomplete="given-name" /><mat-error
+                >El nombre es obligatorio; comprueba el valor ingresado.</mat-error
+              ></mat-form-field
+            >
+            <mat-form-field appearance="outline"
+              ><mat-label>Apellidos</mat-label
+              ><input matInput formControlName="apellidos" autocomplete="family-name" /><mat-error
+                >Los apellidos son obligatorios; comprueba el valor ingresado.</mat-error
+              ></mat-form-field
+            >
+          </div>
+          <!-- CARRERA Y SEDE -->
+          <div class="two-col-grid">
+            <div class="field-box">
+              <label class="field-label" for="select-carrera">Carrera universitaria</label>
+              <mat-form-field appearance="outline">
+                <mat-icon matPrefix class="input-icon">school</mat-icon>
+                <input
+                  matInput
+                  id="select-carrera"
+                  formControlName="carrera"
+                  [matAutocomplete]="opcionescarrera"
+                />
+                <mat-autocomplete #opcionescarrera="matAutocomplete">
+                  @for (opcion of carreras; track opcion) {
+                    <mat-option [value]="opcion">{{ opcion }}</mat-option>
+                  }
+                </mat-autocomplete>
+                @if (perfilForm.get('carrera')?.invalid) {
+                  <mat-error>La carrera es obligatoria.</mat-error>
                 }
-              </mat-select>
-              @if (perfilForm.get('distrito')?.hasError('required')) {
-                <mat-error>El distrito de origen es obligatorio.</mat-error>
-              }
-            </mat-form-field>
+              </mat-form-field>
+            </div>
+
+            <div class="field-box">
+              <label class="field-label" for="select-sede">Campus de destino (Sede UPC)</label>
+              <mat-form-field appearance="outline">
+                <mat-icon matPrefix class="input-icon">location_on</mat-icon>
+                <input
+                  matInput
+                  id="select-sede"
+                  formControlName="universidad"
+                  [matAutocomplete]="opcionesuniversidad"
+                />
+                <mat-autocomplete #opcionesuniversidad="matAutocomplete">
+                  @for (opcion of sedesUpc; track opcion) {
+                    <mat-option [value]="opcion">{{ opcion }}</mat-option>
+                  }
+                </mat-autocomplete>
+                @if (perfilForm.get('universidad')?.invalid) {
+                  <mat-error>La sede universitaria es obligatoria.</mat-error>
+                }
+              </mat-form-field>
+            </div>
           </div>
 
-          <div class="field-box">
-            <label class="field-label" for="input-horarios">Horario habitual de clases</label>
-            <mat-form-field appearance="outline">
-              <mat-icon matPrefix class="input-icon">schedule</mat-icon>
-              <input
-                id="input-horarios"
-                matInput
-                type="text"
-                formControlName="horariosDisponibles"
-                placeholder="07:00 - 13:00"
-              />
-              @if (perfilForm.get('horariosDisponibles')?.hasError('required')) {
-                <mat-error>El horario disponible es obligatorio.</mat-error>
-              }
-            </mat-form-field>
-          </div>
-        </div>
-
-        <!-- DÍAS DISPONIBLES DE VIAJE -->
-        <div class="field-box">
-          <label class="field-label">Días que asistes al campus</label>
-          <div class="days-chips-row">
-            @for (dia of diasSemana; track dia.label) {
-              <button
-                type="button"
-                class="day-chip"
-                [class.active]="dia.selected"
-                (click)="toggleDia(dia)"
+          <!-- DISTRITO DE PARTIDA Y RANGO DE HORAS -->
+          <div class="two-col-grid">
+            <div class="field-box">
+              <label class="field-label" for="select-distrito"
+                >Distrito de origen (Tu residencia)</label
               >
-                {{ dia.label }}
-              </button>
-            }
-          </div>
-        </div>
+              <mat-form-field appearance="outline">
+                <mat-icon matPrefix class="input-icon">home</mat-icon>
+                <input
+                  matInput
+                  id="select-distrito"
+                  formControlName="distrito"
+                  [matAutocomplete]="opcionesdistrito"
+                />
+                <mat-autocomplete #opcionesdistrito="matAutocomplete">
+                  @for (opcion of distritos; track opcion) {
+                    <mat-option [value]="opcion">{{ opcion }}</mat-option>
+                  }
+                </mat-autocomplete>
+                @if (perfilForm.get('distrito')?.invalid) {
+                  <mat-error>El distrito de origen es obligatorio.</mat-error>
+                }
+              </mat-form-field>
+            </div>
 
-        <!-- FECHAS DE CICLO ACADÉMICO -->
-        <div class="two-col-grid">
+            <div class="field-box">
+              <label class="field-label" for="input-horarios">Horario habitual de clases</label>
+              <mat-form-field appearance="outline">
+                <mat-icon matPrefix class="input-icon">schedule</mat-icon>
+                <input
+                  id="input-horarios"
+                  matInput
+                  type="text"
+                  formControlName="horariosDisponibles"
+                  placeholder="07:00 - 13:00"
+                />
+                @if (perfilForm.get('horariosDisponibles')?.invalid) {
+                  <mat-error>El horario disponible es obligatorio.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- DÍAS DISPONIBLES DE VIAJE -->
           <div class="field-box">
-            <label class="field-label" for="input-fecha-inicio">Inicio de clases</label>
-            <mat-form-field appearance="outline">
-              <mat-icon matPrefix class="input-icon">event</mat-icon>
-              <input
-                id="input-fecha-inicio"
-                matInput
-                type="date"
-                formControlName="fechaInicioClases"
-              />
-            </mat-form-field>
-          </div>
-
-          <div class="field-box">
-            <label class="field-label" for="input-fecha-fin">Fin de ciclo / exámenes</label>
-            <mat-form-field appearance="outline">
-              <mat-icon matPrefix class="input-icon">event_available</mat-icon>
-              <input
-                id="input-fecha-fin"
-                matInput
-                type="date"
-                formControlName="fechaFinClases"
-              />
-            </mat-form-field>
-          </div>
-        </div>
-
-        <!-- COMPENSACIÓN FAVORITA (CONDUCTOR) -->
-        <div class="field-box">
-          <label class="field-label" for="select-compensacion">
-            Método de compensación preferido (Como conductor)
-          </label>
-          <mat-form-field appearance="outline">
-            <mat-icon matPrefix class="input-icon">payments</mat-icon>
-            <mat-select id="select-compensacion" formControlName="metodoCompensacionFavorito">
-              @for (metodo of metodosCompensacion; track metodo.value) {
-                <mat-option [value]="metodo.value">{{ metodo.label }}</mat-option>
+            <label class="field-label">Días que asistes al campus</label>
+            <div class="days-chips-row">
+              @for (dia of diasSemana; track dia.label) {
+                <button
+                  type="button"
+                  class="day-chip"
+                  [class.active]="diaSeleccionado(dia)"
+                  [attr.aria-pressed]="diaSeleccionado(dia)"
+                  [disabled]="saving()"
+                  (click)="toggleDia(dia)"
+                >
+                  {{ dia.label }}
+                </button>
               }
-            </mat-select>
-          </mat-form-field>
-        </div>
+            </div>
+          </div>
 
-        <div class="form-actions-row">
-          <a mat-stroked-button routerLink="/auth/registro">
-            <mat-icon>arrow_back</mat-icon>
-            <span>Volver</span>
-          </a>
-
-          <a
-            mat-flat-button
-            class="btn-primary"
-            routerLink="/auth/info-adicional"
-            [class.disabled-link]="perfilForm.invalid"
+          <mat-form-field appearance="outline"
+            ><mat-label>Días disponibles</mat-label
+            ><input matInput formControlName="diasDisponibles" /><mat-hint
+              >Puedes seleccionar los días o escribir tu disponibilidad.</mat-hint
+            ><mat-error>Indica tus días disponibles.</mat-error></mat-form-field
           >
-            <span>Guardar y Continuar</span>
-            <mat-icon>arrow_forward</mat-icon>
-          </a>
-        </div>
-      </form>
-    </mat-card>
+          <!-- FECHAS DE CICLO ACADÉMICO -->
+          <div class="two-col-grid">
+            <div class="field-box">
+              <label class="field-label" for="input-fecha-inicio">Inicio de clases</label>
+              <mat-form-field appearance="outline">
+                <mat-icon matPrefix class="input-icon">event</mat-icon>
+                <input
+                  id="input-fecha-inicio"
+                  matInput
+                  type="date"
+                  formControlName="fechaInicioClases"
+                /><mat-error>Ingresa una fecha válida.</mat-error>
+              </mat-form-field>
+            </div>
 
-    <!-- COLUMNA LATERAL: BENEFICIOS ACADÉMICOS -->
-    <aside class="perfil-sidebar">
-      <div class="sidebar-card">
-        <div class="sidebar-icon">
-          <mat-icon>commute</mat-icon>
-        </div>
-        <h3>Destino automatizado</h3>
-        <p>Al seleccionar tu campus UPC, todas tus rutas publicadas o búsquedas tendrán como punto de llegada oficial tu sede universitaria.</p>
-      </div>
+            <div class="field-box">
+              <label class="field-label" for="input-fecha-fin">Fin de ciclo / exámenes</label>
+              <mat-form-field appearance="outline">
+                <mat-icon matPrefix class="input-icon">event_available</mat-icon>
+                <input
+                  id="input-fecha-fin"
+                  matInput
+                  type="date"
+                  formControlName="fechaFinClases"
+                /><mat-error>Ingresa una fecha válida.</mat-error>
+              </mat-form-field>
+            </div>
+          </div>
 
-      <div class="sidebar-card highlight-card">
-        <div class="sidebar-icon green">
-          <mat-icon>group</mat-icon>
+          @if (perfilForm.hasError('rango')) {
+            <p role="alert" class="ur-message ur-message--danger">
+              La fecha de fin no puede ser anterior al inicio de clases.
+            </p>
+          }
+          <!-- COMPENSACIÓN FAVORITA (CONDUCTOR) -->
+          <div class="field-box">
+            <label class="field-label" for="select-compensacion">
+              Tipo de compensación preferido
+              {{ auth.isConductor() ? '(obligatorio)' : '(opcional)' }}
+            </label>
+            <mat-form-field appearance="outline">
+              <mat-icon matPrefix class="input-icon">payments</mat-icon>
+              <mat-select id="select-compensacion" formControlName="metodoCompensacionFavorito">
+                @if (auth.isPasajero()) {
+                  <mat-option [value]="null">Sin preferencia</mat-option>
+                }
+                @for (metodo of metodosCompensacion; track metodo.value) {
+                  <mat-option [value]="metodo.value">{{ metodo.label }}</mat-option>
+                }
+              </mat-select>
+              <mat-error
+                >Selecciona DINERO, GASOLINA o FAVOR. Es obligatorio para conductor.</mat-error
+              ></mat-form-field
+            >
+          </div>
+
+          <div class="form-actions-row">
+            <a mat-stroked-button routerLink="/configuracion">Volver a Configuración</a
+            ><button
+              type="submit"
+              mat-flat-button
+              class="btn-primary"
+              [disabled]="perfilForm.invalid || saving()"
+            >
+              {{
+                saving() ? 'Guardando...' : onboarding() ? 'Guardar y continuar' : 'Guardar cambios'
+              }}
+            </button>
+          </div>
+        </form>
+      </mat-card>
+
+      <!-- COLUMNA LATERAL: BENEFICIOS ACADÉMICOS -->
+      <aside class="perfil-sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-icon">
+            <mat-icon>commute</mat-icon>
+          </div>
+          <h3>Destino automatizado</h3>
+          <p>
+            Tu universidad se utiliza como destino al publicar rutas. Revisa que el dato esté
+            actualizado.
+          </p>
         </div>
-        <h3>Compatibilidad 100%</h3>
-        <p>Los algoritmos de UniRide comparan tus horarios de clase con otros estudiantes para que nunca viajes solo ni tengas que esperar.</p>
-      </div>
-    </aside>
-  </div>
+
+        <div class="sidebar-card highlight-card">
+          <div class="sidebar-icon green">
+            <mat-icon>group</mat-icon>
+          </div>
+          <h3>Datos actualizados</h3>
+          <p>
+            Puedes editar tu disponibilidad cuando cambie tu ciclo académico desde Configuración.
+          </p>
+        </div>
+      </aside>
+    </div>
+  }
 </div>

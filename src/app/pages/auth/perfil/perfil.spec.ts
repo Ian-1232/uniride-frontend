@@ -1,42 +1,50 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PerfilComponent } from './perfil';
-
-describe('PerfilComponent (US04 - Completar Perfil Académico)', () => {
-  let component: PerfilComponent;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+import { PERFIL_TEST } from '../../../testing/perfil-fixtures';
+describe('PerfilComponent real HTTP', () => {
+  let fixture: ComponentFixture<PerfilComponent>;
+  let http: HttpTestingController;
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       imports: [PerfilComponent],
-      providers: [provideRouter([])]
-    }).compileComponents();
-
-    const fixture = TestBed.createComponent(PerfilComponent);
-    component = fixture.componentInstance;
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(PerfilComponent);
     fixture.detectChanges();
-  }, 30000);
-
-  it('debe crearse correctamente', () => {
-    expect(component).toBeTruthy();
   });
-
-  it('debe tener las listas de sedes UPC, carreras y distritos de Lima', () => {
-    expect(component.sedesUpc.length).toBeGreaterThan(0);
-    expect(component.sedesUpc).toContain('UPC - Campus San Miguel');
-    expect(component.sedesUpc).toContain('UPC - Campus Monterrico (Surco)');
-    expect(component.carreras).toContain('Ingeniería de Software');
+  afterEach(() => http.verify());
+  it('starts loading without fabricated personal or academic values', () => {
+    expect(fixture.componentInstance.loading()).toBe(true);
+    expect(fixture.componentInstance.perfilForm.controls.carrera.value).toBe('');
+    http.expectOne('/api/perfil').flush(PERFIL_TEST);
   });
-
-  it('debe permitir seleccionar y deseleccionar chips de días de semana', () => {
-    const diaLunes = component.diasSemana.find(d => d.label === 'Lun');
-    expect(diaLunes).toBeDefined();
-    const estadoInicial = diaLunes!.selected;
-
-    component.toggleDia(diaLunes!);
-    expect(diaLunes!.selected).toBe(!estadoInicial);
+  it('retains the existing suggestions and accepts actual server values outside them', () => {
+    http.expectOne('/api/perfil').flush(PERFIL_TEST);
+    expect(fixture.componentInstance.sedesUpc).toContain('UPC - Campus San Miguel');
+    expect(fixture.componentInstance.perfilForm.controls.carrera.value).toBe('Carrera de prueba');
   });
-
-  it('el formulario debe ser válido con la información académica por defecto', () => {
-    expect(component.perfilForm.valid).toBe(true);
+  it('serializes selected day chips in the actual form payload', () => {
+    http.expectOne('/api/perfil').flush(PERFIL_TEST);
+    const c = fixture.componentInstance;
+    c.toggleDia(c.diasSemana[0]);
+    expect(c.perfilForm.controls.diasDisponibles.value).toBe('Miércoles');
+    c.toggleDia(c.diasSemana[6]);
+    expect(c.perfilForm.controls.diasDisponibles.value).toBe('Miércoles, Domingo');
+  });
+  it('treats the missing-profile 404 as empty and requires real academic values', () => {
+    http
+      .expectOne('/api/perfil')
+      .flush(
+        { mensaje: 'Aún no has completado tu perfil' },
+        { status: 404, statusText: 'Not Found' },
+      );
+    expect(fixture.componentInstance.onboarding()).toBe(true);
+    expect(fixture.componentInstance.perfilForm.invalid).toBe(true);
+    fixture.componentInstance.guardar();
+    http.expectNone((r) => r.method === 'PUT');
   });
 });
