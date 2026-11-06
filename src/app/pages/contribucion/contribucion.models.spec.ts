@@ -1,49 +1,33 @@
-import { FormControl } from '@angular/forms';
-import { describe, expect, it } from 'vitest';
+import { FormControl, Validators } from '@angular/forms';
 import {
   integerMinOneValidator,
-  resolveContribucionState,
-  SUGERENCIA_DOS_PASAJEROS,
-  SUGERENCIA_UN_PASAJERO,
+  formatContributionDate,
+  formatContributionTime,
 } from './contribucion.models';
 
-describe('contribucion models', () => {
-  it('keeps every field expected by SugerenciaContribucionRespuesta', () => {
-    expect(Object.keys(SUGERENCIA_DOS_PASAJEROS.respuesta)).toEqual([
-      'viajeId',
-      'origen',
-      'destino',
-      'dia',
-      'fecha',
-      'hora',
-      'pasajeros',
-      'esHoraPico',
-      'costoTotalEstimado',
-      'aporteEstimado',
-      'litrosGasolinaAprox',
-      'sugerenciaFavor',
-      'nota',
-    ]);
+describe('Contribution presentation and validation', () => {
+  it.each([1, 2, 3, 19, 100, 2147483647])('accepts positive integer %s', (value) => {
+    expect(new FormControl(value, integerMinOneValidator).valid).toBe(true);
   });
-
-  it('uses independent fixtures for one and two passengers', () => {
-    expect(SUGERENCIA_DOS_PASAJEROS.respuesta).not.toBe(
-      SUGERENCIA_UN_PASAJERO.respuesta,
-    );
-    expect(SUGERENCIA_DOS_PASAJEROS.respuesta.aporteEstimado).toBe(6);
-    expect(SUGERENCIA_UN_PASAJERO.respuesta.aporteEstimado).toBe(12);
-    expect(SUGERENCIA_DOS_PASAJEROS.respuesta.litrosGasolinaAprox).toBe(1.11);
-    expect(SUGERENCIA_UN_PASAJERO.respuesta.litrosGasolinaAprox).toBe(2.22);
+  it.each([0, -1, 1.5, NaN, Infinity])('rejects invalid passenger quantity %s', (value) => {
+    expect(new FormControl(value, integerMinOneValidator).invalid).toBe(true);
   });
-
-  it('validates integer passenger quantities with a minimum of one', () => {
+  it('requires a quantity in the actual form without making the optional validator required', () => {
     expect(new FormControl(null, integerMinOneValidator).valid).toBe(true);
-    expect(new FormControl(0, integerMinOneValidator).hasError('min')).toBe(true);
-    expect(new FormControl(1.5, integerMinOneValidator).hasError('integer')).toBe(true);
-    expect(new FormControl(1, integerMinOneValidator).valid).toBe(true);
+    expect(new FormControl(null, [Validators.required, integerMinOneValidator]).invalid).toBe(true);
   });
-
-  it('falls back from an unknown demonstration state', () => {
-    expect(resolveContribucionState('desconocido')).toBe('disponible');
+  it.each([
+    ['2026-11-01', '1/11/2026'],
+    ['2026-01-01', '1/1/2026'],
+    ['2024-02-29', '29/2/2024'],
+  ])('formats LocalDate %s without UTC conversion', (input, output) => {
+    expect(formatContributionDate(input)).toBe(output);
+  });
+  it.each([
+    ['00:05:00', '00:05'],
+    ['23:59', '23:59'],
+    ['07:30:00.123456', '07:30'],
+  ])('formats local time %s', (input, output) => {
+    expect(formatContributionTime(input)).toBe(output);
   });
 });

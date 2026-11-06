@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -10,4 +11,6 @@ import { RouterLink, RouterOutlet } from '@angular/router';
   templateUrl: './contribucion-shell.html',
   styleUrl: './contribucion-shell.css',
 })
-export class ContribucionShell {}
+export class ContribucionShell {
+  readonly authService = inject(AuthService);
+}

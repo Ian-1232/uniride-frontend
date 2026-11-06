@@ -87,8 +87,9 @@ describe('Coordinación de viajes', () => {
   });
   function flushReports() {
     const http = TestBed.inject(HttpTestingController);
-    for (const req of http.match(r => r.url.startsWith('/api/estadisticas') || r.url === '/api/metodos-compensacion')) {
-      if (req.request.url === '/api/metodos-compensacion') req.flush([]);
+    for (const req of http.match(r => r.url.startsWith('/api/estadisticas') || r.url === '/api/metodos-compensacion' || r.url.endsWith('/sugerencia-contribucion'))) {
+      if (req.request.url.endsWith('/sugerencia-contribucion')) req.flush({ mensaje: 'El viaje aún no tiene pasajeros aceptados; indica la cantidad de pasajeros para calcular la sugerencia' }, { status: 400, statusText: 'Bad Request' });
+      else if (req.request.url === '/api/metodos-compensacion') req.flush([]);
       else if (req.request.url.endsWith('/semana')) req.flush({ suficientesDatos: false, mensaje: 'Sin viajes', viajesPorDia: [], canceladosPorMi: 0, canceladosPorTerceros: 0 });
       else if (req.request.url.endsWith('/rutas')) req.flush({ suficientesDatos: false, mensaje: 'Sin rutas', ranking: [] });
       else req.flush({ viajesComoConductor: 0, viajesComoPasajero: 0, viajesCancelados: 0, penalidadesAcumuladas: 0 });
