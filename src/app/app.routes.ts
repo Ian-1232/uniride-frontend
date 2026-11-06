@@ -62,77 +62,95 @@ export const routes: Routes = [
   {
     path: 'reportes',
     loadComponent: () =>
-      import('./pages/reportes/reportes-shell/reportes-shell').then(
-        (component) => component.ReportesShell,
+      import('./layouts/conductor-layout/conductor-layout').then(
+        (module) => module.ConductorLayout,
       ),
     children: [
       {
         path: '',
-        pathMatch: 'full',
-        redirectTo: 'resumen',
-      },
-      {
-        path: 'resumen',
         loadComponent: () =>
-          import('./pages/reportes/resumen-actividad/resumen-actividad').then(
-            (component) => component.ResumenActividad,
+          import('./pages/reportes/reportes-shell/reportes-shell').then(
+            (component) => component.ReportesShell,
           ),
-      },
-      {
-        path: 'frecuencia',
-        loadComponent: () =>
-          import('./pages/reportes/frecuencia-semanal/frecuencia-semanal').then(
-            (component) => component.FrecuenciaSemanal,
-          ),
-      },
-      {
-        path: 'rutas',
-        loadComponent: () =>
-          import('./pages/reportes/rutas-frecuentes/rutas-frecuentes').then(
-            (component) => component.RutasFrecuentes,
-          ),
-      },
-      {
-        path: 'exportar',
-        loadComponent: () =>
-          import('./pages/reportes/exportar-historial/exportar-historial').then(
-            (component) => component.ExportarHistorial,
-          ),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            redirectTo: 'resumen',
+          },
+          {
+            path: 'resumen',
+            loadComponent: () =>
+              import('./pages/reportes/resumen-actividad/resumen-actividad').then(
+                (component) => component.ResumenActividad,
+              ),
+          },
+          {
+            path: 'frecuencia',
+            loadComponent: () =>
+              import('./pages/reportes/frecuencia-semanal/frecuencia-semanal').then(
+                (component) => component.FrecuenciaSemanal,
+              ),
+          },
+          {
+            path: 'rutas',
+            loadComponent: () =>
+              import('./pages/reportes/rutas-frecuentes/rutas-frecuentes').then(
+                (component) => component.RutasFrecuentes,
+              ),
+          },
+          {
+            path: 'exportar',
+            loadComponent: () =>
+              import('./pages/reportes/exportar-historial/exportar-historial').then(
+                (component) => component.ExportarHistorial,
+              ),
+          },
+        ],
       },
     ],
   },
   {
     path: 'compensaciones',
     loadComponent: () =>
-      import('./pages/compensaciones/compensaciones-shell/compensaciones-shell').then(
-        (component) => component.CompensacionesShell,
+      import('./layouts/conductor-layout/conductor-layout').then(
+        (module) => module.ConductorLayout,
       ),
     children: [
       {
         path: '',
-        pathMatch: 'full',
-        redirectTo: 'metodos',
-      },
-      {
-        path: 'metodos/nuevo',
         loadComponent: () =>
-          import('./pages/compensaciones/metodo-formulario/metodo-formulario').then(
-            (component) => component.MetodoFormulario,
+          import('./pages/compensaciones/compensaciones-shell/compensaciones-shell').then(
+            (component) => component.CompensacionesShell,
           ),
-      },
-      {
-        path: 'metodos/:id/editar',
-        loadComponent: () =>
-          import('./pages/compensaciones/metodo-formulario/metodo-formulario').then(
-            (component) => component.MetodoFormulario,
-          ),
-      },
-      {
-        path: 'metodos',
-        loadComponent: () =>
-          import('./pages/compensaciones/metodos-listado/metodos-listado').then(
-            (component) => component.MetodosListado,
-          ),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            redirectTo: 'metodos',
+          },
+          {
+            path: 'metodos/nuevo',
+            loadComponent: () =>
+              import('./pages/compensaciones/metodo-formulario/metodo-formulario').then(
+                (component) => component.MetodoFormulario,
+              ),
+          },
+          {
+            path: 'metodos/:id/editar',
+            loadComponent: () =>
+              import('./pages/compensaciones/metodo-formulario/metodo-formulario').then(
+                (component) => component.MetodoFormulario,
+              ),
+          },
+          {
+            path: 'metodos',
+            loadComponent: () =>
+              import('./pages/compensaciones/metodos-listado/metodos-listado').then(
+                (component) => component.MetodosListado,
+              ),
+          },
+        ],
       },
     ],
   },
