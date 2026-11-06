@@ -13,7 +13,7 @@ import { MatMenuModule } from '@angular/material/menu';
 })
 export class ConductorLayout {
   readonly menu: { nombre: string; icono: string; ruta?: string }[] = [
-    { nombre: 'Dashboard', icono: 'dashboard' },
+    { nombre: 'Dashboard', icono: 'dashboard', ruta: '/conductor/dashboard' },
     { nombre: 'Rutas', icono: 'rutas', ruta: '/conductor/rutas' },
     { nombre: 'Viajes', icono: 'viajes', ruta: '/conductor/viajes' },
     { nombre: 'Compensaciones', icono: 'compensaciones', ruta: '/compensaciones' },

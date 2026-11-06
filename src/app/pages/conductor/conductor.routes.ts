@@ -4,7 +4,8 @@ import { ConductorLayout } from '../../layouts/conductor-layout/conductor-layout
 export const CONDUCTOR_ROUTES: Routes = [{
   path: '', component: ConductorLayout, children: [
     // Módulo 2 — Rutas
-    { path: '', pathMatch: 'full', redirectTo: 'rutas' },
+    { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+    { path: 'dashboard', title: 'Dashboard · Conductor UniRide', loadComponent: () => import('./dashboard/conductor-dashboard').then(m => m.ConductorDashboard) },
     { path: 'rutas', title: 'Mis rutas · UniRide', loadComponent: () => import('./rutas/mis-rutas/mis-rutas').then(m => m.MisRutas) },
     { path: 'rutas/publicar', title: 'Publicar ruta · UniRide', loadComponent: () => import('./rutas/publicar-ruta/publicar-ruta').then(m => m.PublicarRuta) },
     { path: 'rutas/editar/:id', title: 'Editar ruta · UniRide', loadComponent: () => import('./rutas/editar-ruta/editar-ruta').then(m => m.EditarRuta) },

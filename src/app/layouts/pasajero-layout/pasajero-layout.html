@@ -9,10 +9,10 @@
     </div>
 
     <nav class="pasajero-nav" aria-label="Secciones del pasajero">
-      <span class="nav-item nav-item--pending">
+      <a class="nav-item" routerLink="/pasajero/dashboard" routerLinkActive="is-active">
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
         <span>Dashboard</span>
-      </span>
+      </a>
       <span class="nav-item nav-item--pending">
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">alt_route</mat-icon>
         <span>Rutas</span>
@@ -21,10 +21,10 @@
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">local_taxi</mat-icon>
         <span>Viajes</span>
       </a>
-      <span class="nav-item nav-item--pending">
+      <a class="nav-item" routerLink="/compensaciones" routerLinkActive="is-active">
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">payments</mat-icon>
         <span>Compensaciones</span>
-      </span>
+      </a>
       <a class="nav-item" routerLink="/reportes" routerLinkActive="is-active">
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
         <span>Reportes</span>
@@ -71,10 +71,10 @@
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
         <span>Reportes</span>
       </a>
-      <span mat-menu-item disabled>
+      <a mat-menu-item routerLink="/pasajero/dashboard">
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
         <span>Dashboard</span>
-      </span>
+      </a>
       <span mat-menu-item disabled>
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">alt_route</mat-icon>
         <span>Rutas</span>

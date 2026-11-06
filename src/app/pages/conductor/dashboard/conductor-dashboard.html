@@ -1,0 +1,343 @@
+<div class="dashboard-container">
+  <!-- Feedback Alert -->
+  @if (feedbackMensaje()) {
+    <div class="feedback-banner" role="status">
+      <span>{{ feedbackMensaje() }}</span>
+      <button type="button" class="btn-close-banner" (click)="cerrarFeedback()" aria-label="Cerrar aviso">✕</button>
+    </div>
+  }
+
+  <!-- Page Heading -->
+  <header class="page-heading">
+    <div class="heading-meta">
+      <nav class="breadcrumb" aria-label="Miga de pan">
+        <span>UniRide</span>
+        <span aria-hidden="true">/</span>
+        <span>Conductor</span>
+        <span aria-hidden="true">/</span>
+        <span class="active">Dashboard</span>
+      </nav>
+      <h1>Centro de Control del Conductor 🚗</h1>
+      <p class="subtitle">Monitorea tus viajes programados, gestiona solicitudes y revisa tus métricas de ahorro de combustible.</p>
+    </div>
+    <div class="heading-actions">
+      <a mat-stroked-button class="btn-outline" routerLink="/reportes/exportar">
+        <mat-icon fontSet="material-symbols-outlined">picture_as_pdf</mat-icon>
+        Exportar PDF
+      </a>
+      <a mat-flat-button class="btn-primary" routerLink="/conductor/rutas/publicar">
+        <mat-icon fontSet="material-symbols-outlined">add_road</mat-icon>
+        Publicar Nueva Ruta
+      </a>
+    </div>
+  </header>
+
+  <!-- Bento Grid Architecture -->
+  <div class="bento-grid">
+
+    <!-- 1. HERO COCKPIT: VIAJE DE HOY + CAR CABIN SEATS (Span 8) -->
+    <section class="bento-card col-hero" aria-labelledby="hero-title">
+      <div class="hero-top">
+        <div>
+          <span class="status-badge badge-today">
+            <span class="pulse-indicator" aria-hidden="true"></span>
+            HOY • SALIDA {{ viajeHoy().horaSalida }}
+          </span>
+          <h2 id="hero-title" class="trip-title">{{ viajeHoy().origen }} ➔ {{ viajeHoy().destino }}</h2>
+        </div>
+        <a mat-flat-button class="btn-start" [routerLink]="['/conductor/viajes', viajeHoy().id]">
+          <mat-icon fontSet="material-symbols-outlined">directions_car</mat-icon>
+          Gestionar Viaje
+        </a>
+      </div>
+
+      <!-- Trazado de Ruta Visual -->
+      <div class="route-tracker">
+        <div class="route-point">
+          <span class="point-label">Punto de Partida</span>
+          <p class="point-val">{{ viajeHoy().origen }}</p>
+        </div>
+        <div class="route-connector">
+          <span class="connector-pill">{{ viajeHoy().duracionEstimada }}</span>
+          <div class="connector-line"></div>
+          <span class="traffic-tag">Tráfico {{ viajeHoy().trafico }}</span>
+        </div>
+        <div class="route-point text-right">
+          <span class="point-label">Destino Universitario</span>
+          <p class="point-val">{{ viajeHoy().destino }}</p>
+        </div>
+      </div>
+
+      <!-- Car Cabin Seat Visualizer -->
+      <div class="cabin-container">
+        <div class="cabin-info">
+          <p class="car-spec">{{ vehiculo().modelo }} • {{ vehiculo().color }} ({{ vehiculo().placa }})</p>
+          <p class="seats-counter">
+            Capacidad:
+            <strong [class.full]="!tieneCupoLibre()">
+              {{ cuposOcupados() }} de {{ vehiculo().capacidadMaxima }} asientos ocupados
+            </strong>
+          </p>
+        </div>
+        <div class="seats-visual" aria-label="Distribución de asientos en el vehículo">
+          <!-- Conductor -->
+          <div class="seat-box seat-driver" title="Conductor: Juan Pérez (Tú)">
+            <span class="seat-role">VOL</span>
+            <span class="seat-name">Tú</span>
+          </div>
+          <!-- Pasajeros Confirmados -->
+          @for (pasajero of pasajerosConfirmados(); track pasajero; let idx = $index) {
+            <div class="seat-box seat-occupied" [title]="'Pasajero ' + (idx + 1) + ': ' + pasajero">
+              <span class="seat-icon">👤</span>
+              <span class="seat-name">P{{ idx + 1 }}</span>
+            </div>
+          }
+          <!-- Asiento Disponible si queda cupo -->
+          @if (tieneCupoLibre()) {
+            <div class="seat-box seat-available" title="¡Cupo disponible para hoy!">
+              <span class="seat-icon">➕</span>
+              <span class="seat-name">Libre</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Mini Mapa Vectorial SVG -->
+      <div class="route-svg-box" aria-hidden="true">
+        <svg width="100%" height="100%" viewBox="0 0 600 100" preserveAspectRatio="none">
+          <path d="M 0,70 Q 150,20 300,60 T 600,30" fill="none" stroke="#E2E8F0" stroke-width="6"/>
+          <path d="M 0,70 Q 150,20 300,60 T 600,30" fill="none" stroke="var(--ur-color-primary, #4F46E5)" stroke-width="3" stroke-dasharray="8 4"/>
+          <!-- Origin Pin -->
+          <circle cx="50" cy="55" r="7" fill="var(--ur-color-primary, #4F46E5)"/>
+          <circle cx="50" cy="55" r="3" fill="#FFFFFF"/>
+          <text x="65" y="60" font-size="11" font-weight="700" fill="#1E293B">San Borja (Salida)</text>
+          <!-- Destination Pin -->
+          <circle cx="530" cy="35" r="7" fill="var(--ur-color-accent, #10B981)"/>
+          <circle cx="530" cy="35" r="3" fill="#FFFFFF"/>
+          <text x="440" y="22" font-size="11" font-weight="700" fill="#047857">UPC Campus Monterrico 🏛️</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 2. KPI METRICS CARDS (Span 4 - GET /api/estadisticas) -->
+    <div class="col-kpis">
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Viajes Completados</span>
+          <p class="kpi-number">{{ metricas().viajesCompletados }}</p>
+          <span class="kpi-trend positive">↑ +4 vs semana pasada</span>
+        </div>
+        <div class="kpi-icon-wrap icon-indigo">
+          <mat-icon fontSet="material-symbols-outlined">sports_score</mat-icon>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Compensación Recibida</span>
+          <p class="kpi-number text-accent">S/ {{ metricas().compensacionTotal | number:'1.2-2' }}</p>
+          <span class="kpi-sub">Compartido en gasolina</span>
+        </div>
+        <div class="kpi-icon-wrap icon-emerald">
+          <mat-icon fontSet="material-symbols-outlined">local_gas_station</mat-icon>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Huella de CO₂ Evitada</span>
+          <p class="kpi-number">{{ metricas().co2EvitadoKg }} kg</p>
+          <span class="kpi-sub eco">Insignia Eco-Driver UPC 🌱</span>
+        </div>
+        <div class="kpi-icon-wrap icon-green">
+          <mat-icon fontSet="material-symbols-outlined">eco</mat-icon>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. GRAFICO DE FRECUENCIA SEMANAL (Span 7 - GET /api/estadisticas/semana) -->
+    <section class="bento-card col-chart" aria-labelledby="chart-title">
+      <div class="card-header-row">
+        <div>
+          <h2 id="chart-title" class="card-title">Frecuencia de Viajes por Día (US20)</h2>
+          <p class="card-subtitle">Datos agregados del servicio semanal</p>
+        </div>
+        <span class="badge-tag">0% Cancelaciones</span>
+      </div>
+
+      <!-- SVG Bar Chart -->
+      <svg class="svg-bar-chart" viewBox="0 0 500 170" role="img" aria-label="Gráfico de barras de viajes por día">
+        <line x1="30" y1="30" x2="470" y2="30" stroke="#E2E8F0" stroke-dasharray="4"/>
+        <line x1="30" y1="75" x2="470" y2="75" stroke="#E2E8F0" stroke-dasharray="4"/>
+        <line x1="30" y1="120" x2="470" y2="120" stroke="#E2E8F0" stroke-dasharray="4"/>
+
+        @for (item of frecuenciaSemana(); track item.dia; let idx = $index) {
+          <g class="chart-col">
+            <rect
+              [attr.x]="60 + (idx * 85)"
+              [attr.y]="120 - item.alturaPx * 0.8"
+              width="42"
+              [attr.height]="item.alturaPx * 0.8"
+              rx="6"
+              [attr.fill]="item.esPico ? 'var(--ur-color-primary, #4F46E5)' : '#818CF8'"
+            />
+            <text
+              [attr.x]="81 + (idx * 85)"
+              [attr.y]="112 - item.alturaPx * 0.8"
+              font-size="12"
+              font-weight="700"
+              fill="#4F46E5"
+              text-anchor="middle"
+            >
+              {{ item.cantidad }}
+            </text>
+            <text
+              [attr.x]="81 + (idx * 85)"
+              y="145"
+              font-size="12"
+              [attr.font-weight]="item.esPico ? '700' : '500'"
+              [attr.fill]="item.esPico ? '#1E293B' : '#64748B'"
+              text-anchor="middle"
+            >
+              {{ item.dia }}{{ item.esPico ? ' ★' : '' }}
+            </text>
+          </g>
+        }
+      </svg>
+      <div class="chart-footer-note">
+        <mat-icon fontSet="material-symbols-outlined">info</mat-icon>
+        <span>Miércoles es tu día de mayor afluencia hacia el campus universitario.</span>
+      </div>
+    </section>
+
+    <!-- 4. DONUT CHART DE METODOS DE PAGO (Span 5 - GET /api/metodos-compensacion) -->
+    <section class="bento-card col-donut" aria-labelledby="donut-title">
+      <div class="card-header-row">
+        <div>
+          <h2 id="donut-title" class="card-title">Métodos de Cobro (US26)</h2>
+          <p class="card-subtitle">Contribuciones de gasolina</p>
+        </div>
+        <a class="link-action" routerLink="/compensaciones">Gestionar →</a>
+      </div>
+
+      <div class="donut-flex">
+        <!-- SVG Donut -->
+        <svg class="donut-svg" width="110" height="110" viewBox="0 0 42 42" role="img" aria-label="Distribución de métodos">
+          <circle cx="21" cy="21" r="15.9" fill="#fff"></circle>
+          <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#E2E8F0" stroke-width="5"></circle>
+          <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#7C3AED" stroke-width="5" stroke-dasharray="65 35" stroke-dashoffset="25"></circle>
+          <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#06B6D4" stroke-width="5" stroke-dasharray="35 65" stroke-dashoffset="60"></circle>
+          <text x="21" y="23" font-size="8" font-weight="700" fill="#1E293B" text-anchor="middle">100%</text>
+        </svg>
+
+        <ul class="donut-legend">
+          <li>
+            <span class="legend-color dot-yape"></span>
+            <span><strong>Yape (65%)</strong> • S/ 92.50</span>
+          </li>
+          <li>
+            <span class="legend-color dot-plin"></span>
+            <span><strong>Plin (35%)</strong> • S/ 50.00</span>
+          </li>
+          <li class="legend-check">
+            <mat-icon fontSet="material-symbols-outlined">verified</mat-icon>
+            <span>2 billeteras activas</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 5. SOLICITUDES DE PASAJEROS PENDIENTES (Span 7 - GET /api/viajes/{id}/solicitudes) -->
+    <section class="bento-card col-requests" aria-labelledby="requests-title">
+      <div class="card-header-row">
+        <div>
+          <h2 id="requests-title" class="card-title">Solicitudes por Responder ({{ solicitudes().length }})</h2>
+          <p class="card-subtitle">Estudiantes de tu campus solicitando cupo</p>
+        </div>
+        <a class="link-action" [routerLink]="['/conductor/viajes', viajeHoy().id, 'solicitudes']">Ver todas →</a>
+      </div>
+
+      @if (solicitudes().length === 0) {
+        <div class="empty-state">
+          <mat-icon fontSet="material-symbols-outlined">task_alt</mat-icon>
+          <p>No tienes solicitudes pendientes por responder.</p>
+        </div>
+      } @else {
+        <div class="requests-list">
+          @for (solicitud of solicitudes(); track solicitud.id) {
+            <article class="request-item">
+              <div class="req-passenger-meta">
+                <div class="req-avatar">{{ solicitud.nombre.substring(0, 2).toUpperCase() }}</div>
+                <div class="req-details">
+                  <p class="req-name">
+                    {{ solicitud.nombre }}
+                    <span class="req-rating">★ {{ solicitud.calificacion }}</span>
+                  </p>
+                  <p class="req-campus">{{ solicitud.carrera }} • {{ solicitud.recojo }}</p>
+                  <p class="req-fare">S/ {{ solicitud.monto | number:'1.2-2' }} vía {{ solicitud.metodo }}</p>
+                </div>
+              </div>
+              <div class="req-actions">
+                <button
+                  type="button"
+                  mat-flat-button
+                  class="btn-accept"
+                  [disabled]="!tieneCupoLibre()"
+                  (click)="aceptarSolicitud(solicitud)"
+                >
+                  ✓ Aceptar
+                </button>
+                <button
+                  type="button"
+                  mat-stroked-button
+                  class="btn-decline"
+                  (click)="rechazarSolicitud(solicitud)"
+                >
+                  ✕ Rechazar
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- 6. RUTAS POPULARES (Span 5 - GET /api/estadisticas/rutas) -->
+    <section class="bento-card col-ranking" aria-labelledby="ranking-title">
+      <div class="card-header-row">
+        <div>
+          <h2 id="ranking-title" class="card-title">Rutas Más Concurridas (US21)</h2>
+          <p class="card-subtitle">Ranking de demanda universitaria</p>
+        </div>
+        <a class="link-action" routerLink="/conductor/rutas">Mis Rutas →</a>
+      </div>
+
+      <div class="rank-list">
+        <div class="rank-item">
+          <div class="rank-meta">
+            <span>San Borja ➔ UPC Monterrico</span>
+            <strong class="rank-percent">68%</strong>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width: 68%;"></div></div>
+        </div>
+
+        <div class="rank-item">
+          <div class="rank-meta">
+            <span>Surco / Higuereta ➔ UPC Monterrico</span>
+            <strong class="rank-percent">54%</strong>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width: 54%;"></div></div>
+        </div>
+
+        <div class="rank-item">
+          <div class="rank-meta">
+            <span>Miraflores ➔ UPC San Isidro</span>
+            <strong class="rank-percent">40%</strong>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width: 40%;"></div></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
