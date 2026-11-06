@@ -6,7 +6,12 @@
 
   <div class="trip-card__body">
     <p>{{ linea1() }}</p>
-    <p>Punto de encuentro: {{ viaje().puntoEncuentro }}</p>
+    @if (viaje().puntosReferencia) {
+      <p>Referencias de ruta: {{ viaje().puntosReferencia }}</p>
+    }
+    @if (viaje().conductorNombre) {
+      <p>Conductor: {{ viaje().conductorNombre }}</p>
+    }
   </div>
 
   <button

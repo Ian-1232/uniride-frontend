@@ -1,98 +1,164 @@
 <article class="viajes-page">
   <header class="page-heading">
     <div>
-      <p class="breadcrumb">{{ seccion() }} / Detalle</p>
+      <p class="breadcrumb">Pasajero / Viajes / Detalle</p>
       <h1>Detalle del viaje</h1>
-      <p>{{ subtitulo() }}</p>
+      <p>Consulta la información recibida y tu solicitud personal.</p>
     </div>
   </header>
-
-  @if (viaje(); as viaje) {
+  @if (notice()) {
+    <app-reportes-state-panel
+      title="Resultado de la operación"
+      role="status"
+      [message]="notice()"
+      tone="success"
+    />
+  }
+  @if (status() === 'loading') {
+    <app-reportes-state-panel
+      title="Cargando detalle"
+      role="status"
+      message="Estamos consultando tus solicitudes."
+      [loading]="true"
+    />
+  } @else if (status() === 'error') {
+    <app-reportes-state-panel
+      title="No se pudo consultar"
+      role="alert"
+      [message]="error()"
+      tone="danger"
+      actionLabel="Reintentar"
+      (action)="refresh()"
+    />
+  } @else if (viaje(); as trip) {
     <section class="ur-card trip-summary" aria-label="Resumen del viaje">
       <div class="summary-head">
-        <h3>{{ viaje.origen }} → {{ viaje.destino }}</h3>
-        <span [class]="'ur-status ur-status--' + badgeDetalle(viaje, solicitud()).tono">
-          {{ badgeDetalle(viaje, solicitud()).etiqueta }}
-        </span>
+        <h3>{{ trip.origen }} → {{ trip.destino }}</h3>
+        @if (solicitud(); as request) {
+          <span class="ur-status ur-status--info">{{ labels[request.estado] }}</span>
+        }
       </div>
       <dl class="summary-grid">
         <div>
           <dt>Salida</dt>
-          <dd>{{ salidaTexto(viaje) }}</dd>
+          <dd>{{ salida(trip) }}</dd>
         </div>
         <div>
           <dt>Ruta</dt>
-          <dd>{{ viaje.ruta }}</dd>
+          <dd>{{ trip.origen }} → {{ trip.destino }}</dd>
         </div>
-        <div>
-          <dt>Asientos disponibles</dt>
-          <dd>{{ asientosDetalle(viaje, solicitud()) }}</dd>
-        </div>
+        @if (trip.capacidadMaxima !== null) {
+          <div>
+            <dt>Capacidad total</dt>
+            <dd>{{ trip.capacidadMaxima }} asientos. Ocupación no informada.</dd>
+          </div>
+        }
       </dl>
+      @if (trip.puntosReferencia) {
+        <p>Referencias de ruta: {{ trip.puntosReferencia }}</p>
+      }
+      @if (trip.zonasSinParada) {
+        <p>Zonas sin parada: {{ trip.zonasSinParada }}</p>
+      }
+      @if (historico(); as history) {
+        <p>Estado del viaje: {{ history.estadoViaje }} · Solo lectura</p>
+      } @else {
+        <p class="ur-caption">
+          La disponibilidad puede cambiar. Se confirma al enviar tu solicitud.
+        </p>
+      }
     </section>
-
     <section class="ur-card driver-card">
-      <h3>Tu conductor</h3>
+      <h3>Conductor</h3>
       <div class="driver-row">
-        <span class="avatar" aria-hidden="true">{{ viaje.conductor.iniciales }}</span>
+        @if (trip.conductorNombre) {
+          <span class="avatar" aria-hidden="true">{{ trip.conductorNombre.slice(0, 1) }}</span>
+        }
         <div>
-          <p class="ur-body-strong">{{ viaje.conductor.nombre }}</p>
-          <p class="ur-caption">{{ viaje.conductor.detalle }}</p>
+          <p class="ur-body-strong">
+            {{
+              trip.conductorNombre ?? 'Información del conductor no disponible en este registro.'
+            }}
+          </p>
         </div>
       </div>
     </section>
-
     <section class="ur-card contribution-card">
       <h3>Contribución sugerida</h3>
-      <p class="ur-body-strong">S/ {{ viaje.contribucion }} sugeridos por pasajero</p>
-      <p class="ur-caption">La contribución final se coordina con el conductor.</p>
-    </section>
-
-    <div class="action-area">
-      @switch (accion()) {
-        @case ('unirse') {
-          <button class="ur-button" type="button" (click)="abrirDialogo(viaje)">
-            Unirse al viaje
-          </button>
-        }
-        @case ('cancelar-solicitud') {
-          <button
-            class="ur-button ur-button--destructive"
-            type="button"
-            (click)="cancelarSolicitud(viaje)"
-          >
-            Cancelar solicitud
-          </button>
-          <p class="ur-caption">Tu solicitud aún no ha sido aceptada por el conductor.</p>
-        }
-        @case ('cancelar-viaje') {
-          <div class="ur-message ur-message--warning cancel-warning">
-            <p class="ur-body-strong">Antes de cancelar</p>
-            <p>Revisa la penalidad aplicable. La cancelación se comunicará a los involucrados.</p>
-          </div>
-          <button
-            class="ur-button ur-button--destructive"
-            type="button"
-            (click)="cancelarViaje(viaje)"
-          >
-            Cancelar viaje
-          </button>
-        }
-        @default {
-          <div class="ur-message ur-message--danger">
-            <p class="ur-body-strong">Viaje cancelado</p>
-            <p>La cancelación se comunicó a los involucrados.</p>
-          </div>
-          <button class="ur-button ur-button--secondary" type="button" (click)="volver()">
-            Volver a mis viajes
-          </button>
-        }
+      @if (trip.notaContribucion) {
+        <p>{{ trip.notaContribucion }}</p>
       }
+      <p class="ur-caption">La contribución final se coordina con el conductor.</p>
+      <a class="ur-button ur-button--secondary" [routerLink]="['/contribucion/sugerencia', trip.id]"
+        >Consultar sugerencia de contribución</a
+      >
+    </section>
+    @if (solicitud(); as request) {
+      @if (request.motivoRechazo) {
+        <p>Motivo de rechazo: {{ request.motivoRechazo }}</p>
+      }
+      @if (request.advertencia) {
+        <p>{{ request.advertencia }}</p>
+      }
+      @if (request.metodoCompensacionDescripcion) {
+        <p>Método personal: {{ request.metodoCompensacionDescripcion }}</p>
+      }
+      @if (request.acuerdoTerminos) {
+        <section class="ur-card">
+          <h3>Acuerdo {{ request.acuerdoEstado }}</h3>
+          <p>{{ request.acuerdoTerminos }}</p>
+        </section>
+      }
+    }
+    @if (historico(); as history) {
+      @for (penalty of history.penalidades; track penalty.id) {
+        <p>Penalidad propia {{ penalty.tipo }}: {{ penalty.motivo }}</p>
+      }
+    }
+    @if (error()) {
+      <app-reportes-state-panel title="Verificación limitada" [message]="error()" tone="warning" />
+    }
+    <div class="action-area">
+      @if (canJoin()) {
+        <button class="ur-button" type="button" [disabled]="dialogOpen()" (click)="join()">
+          Unirse al viaje
+        </button>
+      }
+      @if (canCancel()) {
+        <button
+          class="ur-button ur-button--destructive"
+          type="button"
+          [disabled]="dialogOpen()"
+          (click)="cancelRequest()"
+        >
+          Cancelar solicitud
+        </button>
+      }
+      @if (solicitud()?.estado === 'ACEPTADA' && !readonlyHistory()) {
+        <p>
+          Solicitud aceptada. La cancelación de un viaje completo no se realiza desde este módulo.
+        </p>
+      }
+      <button
+        class="ur-button ur-button--secondary"
+        type="button"
+        [disabled]="dialogOpen()"
+        (click)="refresh()"
+      >
+        Actualizar datos
+      </button>
     </div>
   } @else {
-    <p class="empty-state">No encontramos el viaje solicitado.</p>
-    <button class="ur-button ur-button--secondary" type="button" (click)="volver()">
-      Volver a mis viajes
-    </button>
+    <p class="empty-state">
+      No se pudo recuperar este detalle. Selecciona el viaje desde la búsqueda o una solicitud de
+      Mis viajes.
+    </p>
   }
+  <div class="action-area">
+    <a class="ur-button ur-button--secondary" routerLink="/pasajero/viajes/buscar"
+      >Volver a buscar viajes</a
+    ><a class="ur-button ur-button--secondary" routerLink="/pasajero/viajes/mis-viajes"
+      >Volver a mis viajes</a
+    >
+  </div>
 </article>

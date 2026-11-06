@@ -1,6 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { Viaje } from '../../viajes.models';
-
+import { salidaTexto, Viaje } from '../../viajes.models';
 @Component({
   selector: 'app-viaje-card',
   templateUrl: './viaje-card.html',
@@ -13,10 +12,7 @@ export class ViajeCard {
   readonly metaExtra = input('');
   readonly accion = input.required<string>();
   readonly seleccion = output<Viaje>();
-
-  protected readonly linea1 = computed(() => {
-    const viaje = this.viaje();
-    const extra = this.metaExtra();
-    return `${viaje.fecha} · ${viaje.hora}${extra ? ` · ${extra}` : ''}`;
-  });
+  protected readonly linea1 = computed(
+    () => salidaTexto(this.viaje()) + (this.metaExtra() ? ' · ' + this.metaExtra() : ''),
+  );
 }

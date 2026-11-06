@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>Cancelar solicitud</h2>
+<mat-dialog-content
+  ><p>{{ solicitud.origen }} → {{ solicitud.destino }}</p>
+  <p>Esta acción cancela solo tu solicitud pendiente. No cancela el viaje completo.</p>
+  @if (busy()) {
+    <p role="status">Cancelando solicitud...</p>
+  }
+  @if (error()) {
+    <app-reportes-state-panel
+      role="alert"
+      title="No se pudo cancelar"
+      [message]="error()"
+      tone="danger"
+    />
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end"
+  ><button
+    class="ur-button ur-button--secondary"
+    type="button"
+    [disabled]="busy()"
+    (click)="cancelar()"
+  >
+    Conservar solicitud
+  </button>
+  @if (missing()) {
+    <button class="ur-button" type="button" (click)="actualizar()">Actualizar datos</button>
+  } @else {
+    <button
+      class="ur-button ur-button--destructive"
+      type="button"
+      [disabled]="busy()"
+      (click)="confirmar()"
+    >
+      Confirmar cancelación
+    </button>
+  }
+</mat-dialog-actions>

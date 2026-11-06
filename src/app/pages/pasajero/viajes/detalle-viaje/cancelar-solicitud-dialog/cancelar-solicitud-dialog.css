@@ -1,0 +1,9 @@
+mat-dialog-actions {
+  gap: var(--ur-space-12);
+  padding: var(--ur-space-16);
+}
+@media (max-width: 767px) {
+  mat-dialog-actions {
+    display: grid;
+  }
+}
