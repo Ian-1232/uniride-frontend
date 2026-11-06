@@ -1,0 +1,46 @@
+<section class="metrics-section" aria-label="Tu actividad">
+  @if (consulta.state().status === 'cargando') {
+    <app-reportes-state-panel
+      title="Cargando actividad"
+      message="Estamos consultando tus estadísticas."
+      [loading]="true"
+      role="status"
+    />
+  } @else if (consulta.state().status === 'error') {
+    <app-reportes-state-panel
+      title="No se pudo cargar tu actividad"
+      [message]="consulta.state().message"
+      tone="danger"
+      actionLabel="Reintentar"
+      (action)="consulta.retry()"
+      role="alert"
+    />
+  } @else if (consulta.state().data; as datos) {
+    <div class="kpi-card">
+      <div>
+        <h2 class="kpi-label">
+          Viajes como {{ rol() === 'CONDUCTOR' ? 'conductor' : 'pasajero' }}
+        </h2>
+        <p class="kpi-number" data-testid="completados">
+          {{ rol() === 'CONDUCTOR' ? datos.viajesComoConductor : datos.viajesComoPasajero }}
+        </p>
+        <p class="muted">Completados en este rol</p>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div>
+        <h2 class="kpi-label">Viajes cancelados</h2>
+        <p class="kpi-number" data-testid="cancelados">{{ datos.viajesCancelados }}</p>
+        <p class="muted">Tu historial en ambos roles</p>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div>
+        <h2 class="kpi-label">Penalidades acumuladas</h2>
+        <p class="kpi-number" data-testid="penalidades">{{ datos.penalidadesAcumuladas }}</p>
+        <p class="muted">Registradas en tu cuenta</p>
+      </div>
+    </div>
+  }
+  <a class="link-action" routerLink="/reportes/resumen">Ver resumen de actividad</a>
+</section>

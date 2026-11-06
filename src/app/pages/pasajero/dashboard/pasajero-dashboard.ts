@@ -1,106 +1,88 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
-
-export interface RutaSugerida {
-  id: number;
-  conductor: string;
-  calificacion: number;
-  origen: string;
-  destino: string;
-  hora: string;
-  cupos: number;
-  precio: number;
-}
+import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { DashboardViajesService } from '../../../core/services/dashboard-viajes.service';
+import { ViajesPasajeroService } from '../../../core/services/viajes-pasajero.service';
+import { ViajePasajeroContextoService } from '../../../core/services/viaje-pasajero-contexto.service';
+import { consultaDashboard } from '../../dashboard/dashboard-query';
+import { crearPaginatorIntl } from '../../../core/services/paginator-intl';
+import {
+  BusquedaRespuesta,
+  BusquedaResumenRespuesta,
+  desdeBusqueda,
+  desdeSolicitud,
+} from '../viajes/viajes.models';
+import { pasajeroQuery } from '../viajes/shared/pasajero-query';
+import { ReportesStatePanel } from '../../reportes/shared/reportes-state-panel/reportes-state-panel';
+import { DashboardMetricas } from '../../dashboard/dashboard-metricas/dashboard-metricas';
+import { DashboardFrecuencia } from '../../dashboard/dashboard-frecuencia/dashboard-frecuencia';
+import { DashboardMetodos } from '../../dashboard/dashboard-metodos/dashboard-metodos';
+import {
+  fechaDashboard,
+  horaDashboard,
+  idReal,
+  salidaValida,
+} from '../../dashboard/dashboard.models';
 
 @Component({
   selector: 'app-pasajero-dashboard',
-  standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatCardModule],
+  imports: [
+    RouterLink,
+    MatButtonModule,
+    MatPaginatorModule,
+    ReportesStatePanel,
+    DashboardMetricas,
+    DashboardFrecuencia,
+    DashboardMetodos,
+  ],
+  providers: [{ provide: MatPaginatorIntl, useFactory: () => crearPaginatorIntl('Viajes') }],
   templateUrl: './pasajero-dashboard.html',
-  styleUrl: './pasajero-dashboard.css',
+  styleUrls: ['../../dashboard/dashboard.css', './pasajero-dashboard.css'],
 })
 export class PasajeroDashboard {
-  readonly viajeConfirmado = signal({
-    id: 1,
-    conductor: 'Rodrigo Morales',
-    carrera: 'Ing. Civil (8vo ciclo)',
-    calificacion: 4.9,
-    viajesConductor: 42,
-    auto: 'Nissan Versa Azul Marino',
-    placa: 'B7X-412',
-    origen: 'Óvalo Higuereta (Frente a Metro)',
-    destino: 'UPC Campus Monterrico (Puerta 2)',
-    horaSalida: '07:20 AM',
-    horaLlegada: '07:55 AM',
-    minutosParaSalida: 35,
-    asientoAsignado: '#2 (Ventana Trasera)',
-    contribucion: 5.0,
-    metodoPago: 'Yape',
-    estado: 'CONFIRMADO',
-  });
-
-  readonly metricas = signal({
-    ahorroTotal: 380.0,
-    viajesRealizados: 24,
-    co2EvitadoKg: 42.6,
-    puntualidadPorcentaje: 100,
-  });
-
-  readonly rutasSugeridas = signal<RutaSugerida[]>([
-    {
-      id: 201,
-      conductor: 'Andrea Paredes',
-      calificacion: 4.9,
-      origen: 'Miraflores',
-      destino: 'UPC Monterrico',
-      hora: '07:15 AM',
-      cupos: 2,
-      precio: 6.0,
-    },
-    {
-      id: 202,
-      conductor: 'Diego Alarcón',
-      calificacion: 4.8,
-      origen: 'San Borja Sur',
-      destino: 'UPC Monterrico',
-      hora: '07:25 AM',
-      cupos: 1,
-      precio: 4.5,
-    },
-    {
-      id: 203,
-      conductor: 'Valeria Castro',
-      calificacion: 5.0,
-      origen: 'Surquillo',
-      destino: 'UPC Monterrico',
-      hora: '07:30 AM',
-      cupos: 3,
-      precio: 5.0,
-    },
-  ]);
-
-  readonly feedbackMensaje = signal<string | null>(null);
-
-  solicitarCupo(ruta: RutaSugerida): void {
-    this.rutasSugeridas.update((rutas) =>
-      rutas.map((r) => (r.id === ruta.id ? { ...r, cupos: r.cupos - 1 } : r)),
-    );
-    this.feedbackMensaje.set(
-      `✓ Solicitud de cupo enviada a ${ruta.conductor}. Recibirás notificación cuando acepte.`,
-    );
+  private readonly service = inject(DashboardViajesService);
+  private readonly busqueda = inject(ViajesPasajeroService);
+  private readonly contexto = inject(ViajePasajeroContextoService);
+  private readonly router = inject(Router);
+  readonly proxima = consultaDashboard(() => this.service.proximaSolicitud());
+  readonly disponibles = pasajeroQuery<number, BusquedaResumenRespuesta>((page) =>
+    this.busqueda.buscar({}, page, 3),
+  );
+  readonly fecha = fechaDashboard;
+  readonly hora = horaDashboard;
+  readonly salidaValida = salidaValida;
+  readonly idReal = idReal;
+  private paginaActual = 0;
+  readonly siguiente = computed(() => this.proxima.state().data?.proxima ?? null);
+  constructor() {
+    this.disponibles.run(0);
   }
-
-  cancelarViaje(): void {
-    this.feedbackMensaje.set(
-      'Has solicitado la cancelación del viaje con Rodrigo Morales sin penalidad (> 24 h).',
-    );
+  paginar(event: PageEvent): void {
+    this.paginaActual = event.pageIndex;
+    this.disponibles.run(this.paginaActual);
   }
-
-  cerrarFeedback(): void {
-    this.feedbackMensaje.set(null);
+  reintentarDisponibles(): void {
+    this.disponibles.run(this.paginaActual);
+  }
+  verDisponible(dto: BusquedaRespuesta): void {
+    if (
+      !idReal(dto.viajeId) ||
+      !salidaValida(dto) ||
+      !this.disponibles.state().data?.viajes.content.some((v) => v === dto)
+    )
+      return;
+    this.contexto.seleccionar({ viaje: desdeBusqueda(dto) });
+    void this.router.navigate(['/pasajero/viajes', dto.viajeId]);
+  }
+  verSolicitud(): void {
+    const actual = this.siguiente();
+    if (!actual) return;
+    this.contexto.seleccionar({
+      viaje: desdeSolicitud(actual.solicitud),
+      solicitud: actual.solicitud,
+      consulta: actual.consulta,
+    });
+    void this.router.navigate(['/pasajero/viajes', actual.solicitud.viajeId]);
   }
 }

@@ -1,0 +1,55 @@
+<section class="bento-card" aria-labelledby="frecuencia-title">
+  <div class="card-header-row">
+    <div>
+      <h2 id="frecuencia-title">Frecuencia de viajes por día</h2>
+      <p class="muted">Historial de viajes completados en ambos roles.</p>
+    </div>
+    <a class="link-action" routerLink="/reportes/frecuencia">Ver análisis</a>
+  </div>
+  @if (consulta.state().status === 'cargando') {
+    <app-reportes-state-panel
+      title="Cargando frecuencia"
+      message="Estamos consultando tus viajes completados."
+      [loading]="true"
+      role="status"
+    />
+  } @else if (consulta.state().status === 'error') {
+    <app-reportes-state-panel
+      title="No se pudo cargar la frecuencia"
+      [message]="consulta.state().message"
+      tone="danger"
+      actionLabel="Reintentar"
+      (action)="consulta.retry()"
+      role="alert"
+    />
+  } @else if (consulta.state().data; as datos) {
+    @if (!datos.suficientesDatos) {
+      <app-reportes-state-panel
+        title="Todavía no hay datos suficientes"
+        [message]="datos.mensaje || 'Completa más viajes para consultar la frecuencia por día.'"
+        tone="neutral"
+      />
+    } @else if (!dias().length || total() === 0) {
+      <p class="empty-state">No hay viajes registrados en la frecuencia por día.</p>
+    } @else {
+      <p class="chart-scale">Escala: 0 a {{ maximo() }} viajes · {{ total() }} en el historial</p>
+      <ul class="weekly-chart" aria-label="Viajes completados por día de la semana">
+        @for (dia of dias(); track $index) {
+          <li [attr.aria-label]="dia.etiqueta + ': ' + dia.cantidad + ' viajes'">
+            <span>{{ dia.etiqueta }}</span
+            ><span class="bar-track" aria-hidden="true"
+              ><span
+                class="bar-fill"
+                [style.width.%]="(dia.cantidad / maximo()) * 100"
+              ></span></span
+            ><strong>{{ dia.cantidad }}</strong>
+          </li>
+        }
+      </ul>
+    }
+    <p class="muted">
+      Cancelados por ti: {{ datos.canceladosPorMi }} · Por terceros:
+      {{ datos.canceladosPorTerceros }}
+    </p>
+  }
+</section>
