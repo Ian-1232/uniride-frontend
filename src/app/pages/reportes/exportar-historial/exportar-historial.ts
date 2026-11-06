@@ -1,5 +1,8 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, defer, finalize, from, map, switchMap, tap, timeout } from 'rxjs';
+import { ReportesService } from '../../../core/services/reportes.service';
+import { downloadPdf, historyExportError, preparePdf } from './historial-pdf';
 import {
   FormControl,
   FormGroup,
@@ -20,12 +23,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { ActivatedRoute } from '@angular/router';
-import { resolveViewState } from '../reportes.models';
 import { ReportesStatePanel } from '../shared/reportes-state-panel/reportes-state-panel';
 import {
   dateRangeValidator,
-  HISTORY_EXPORT_STATES,
   HistoryExportState,
   HistoryTripType,
 } from './exportar-historial.models';
@@ -77,10 +77,8 @@ const UNIRIDE_DATE_FORMATS: MatDateFormats = {
   styleUrl: './exportar-historial.css',
 })
 export class ExportarHistorial {
-  private readonly route = inject(ActivatedRoute);
-  private readonly queryParams = toSignal(this.route.queryParamMap, {
-    initialValue: this.route.snapshot.queryParamMap,
-  });
+  private readonly service = inject(ReportesService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly form = new FormGroup<HistoryExportForm>(
     {
@@ -91,59 +89,37 @@ export class ExportarHistorial {
     { validators: dateRangeValidator },
   );
   protected readonly rangeErrorStateMatcher = new DateRangeErrorStateMatcher();
-  protected readonly integrationNoticeVisible = signal(false);
-  protected readonly state = computed(() =>
-    resolveViewState(
-      this.queryParams().get('estado'),
-      HISTORY_EXPORT_STATES,
-      'disponible',
-    ),
-  );
+  protected readonly state = signal<HistoryExportState>('disponible');
+  protected readonly message = signal('');
   protected readonly isPreparing = computed(() => this.state() === 'preparando');
-
-  constructor() {
-    effect(() => this.applyDemonstrationState(this.state()));
-  }
 
   protected hasDateRangeError(): boolean {
     return this.form.hasError('dateRange');
   }
 
-  protected submitDemonstration(): void {
-    this.integrationNoticeVisible.set(false);
-
+  protected exportPdf(): void {
+    if (this.isPreparing()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-
-    this.integrationNoticeVisible.set(true);
-  }
-
-  private applyDemonstrationState(state: HistoryExportState): void {
-    this.integrationNoticeVisible.set(false);
-
-    switch (state) {
-      case 'filtrado':
-        this.setFormValues(new Date(2026, 9, 1), new Date(2026, 9, 31), 'conductor');
-        break;
-      case 'fechas-invalidas':
-        this.setFormValues(new Date(2026, 10, 30), new Date(2026, 10, 1), 'todos');
-        this.form.markAllAsTouched();
-        break;
-      case 'sin-resultados':
-        this.setFormValues(new Date(2026, 9, 1), new Date(2026, 9, 31), 'pasajero');
-        break;
-      default:
-        this.setFormValues(null, null, 'todos');
-    }
-  }
-
-  private setFormValues(
-    desde: Date | null,
-    hasta: Date | null,
-    tipo: HistoryTripType,
-  ): void {
-    this.form.reset({ desde, hasta, tipo });
+    const filters = this.form.getRawValue();
+    this.state.set('preparando');
+    this.message.set('');
+    this.form.disable({ emitEvent: false });
+    defer(() => this.service.exportarHistorial(filters)).pipe(
+      timeout(30000),
+      switchMap(response => from(preparePdf(response))),
+      tap(file => downloadPdf(file.blob, file.filename)),
+      map(file => ({ state: 'descargado' as const, message: 'Descarga iniciada: ' + file.filename + '. Revisa las descargas de tu navegador.' })),
+      catchError(error => from(historyExportError(error))),
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        if (!this.destroyRef.destroyed) this.form.enable({ emitEvent: false });
+      }),
+    ).subscribe(result => {
+      this.state.set(result.state);
+      this.message.set(result.message);
+    });
   }
 }
