@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatCardModule } from '@angular/material/card';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-info-adicional',
@@ -27,6 +28,8 @@ import { MatCardModule } from '@angular/material/card';
   styleUrl: './info-adicional.css'
 })
 export class InfoAdicionalComponent {
+  readonly authService = inject(AuthService);
+
   infoForm = new FormGroup({
     gustos: new FormControl('Rock alternativo, Indie, Podcasts de tecnología'),
     hobbies: new FormControl('Programación, Videojuegos, Gimnasio'),

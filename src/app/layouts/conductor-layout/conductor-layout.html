@@ -1,9 +1,15 @@
 <a class="skip-link" href="#contenido">Saltar al contenido</a>
-<aside class="sidebar" aria-label="Panel del conductor">
-  <a class="brand" routerLink="/conductor/rutas" queryParamsHandling="merge"><img src="assets/uniride/brand-dot.svg" alt="" />UniRide</a>
-  <p class="panel-label">Panel del conductor</p>
+<aside class="sidebar" [attr.aria-label]="authService.panelLabel()">
+  <a
+    class="brand"
+    [routerLink]="authService.isConductor() ? '/conductor/dashboard' : '/pasajero/dashboard'"
+    queryParamsHandling="merge"
+  >
+    <img src="assets/uniride/brand-dot.svg" alt="" />UniRide
+  </a>
+  <p class="panel-label">{{ authService.panelLabel() }}</p>
   <mat-nav-list aria-label="Navegación principal">
-    @for (item of menu; track item.icono) {
+    @for (item of menu(); track item.icono) {
       @if (item.ruta) {
         <a
           mat-list-item
@@ -24,17 +30,23 @@
       }
     }
   </mat-nav-list>
-  <div class="sidebar-user"><span class="avatar">JP</span><div>Juan Pérez<small>CONDUCTOR</small></div></div>
+  <div class="sidebar-user">
+    <span class="avatar">{{ authService.currentUser().iniciales }}</span>
+    <div>
+      {{ authService.currentUser().nombre }}
+      <small>{{ authService.currentRole() }}</small>
+    </div>
+  </div>
 </aside>
 <mat-toolbar class="mobile-toolbar">
-  <a class="brand" routerLink="/conductor/rutas">
+  <a class="brand" [routerLink]="authService.isConductor() ? '/conductor/dashboard' : '/pasajero/dashboard'">
     <img src="assets/uniride/brand-dot.svg" alt="" />UniRide
   </a>
-  <span class="role-label">Conductor</span>
+  <span class="role-label">{{ authService.isConductor() ? 'Conductor' : 'Pasajero' }}</span>
   <button matButton="text" [matMenuTriggerFor]="mobileMenu" aria-label="Abrir navegación">Menú</button>
 </mat-toolbar>
 <mat-menu #mobileMenu="matMenu" aria-label="Navegación móvil">
-  @for (item of menu; track item.icono) {
+  @for (item of menu(); track item.icono) {
     @if (item.ruta) { <a mat-menu-item [routerLink]="item.ruta">{{ item.nombre }}</a> }
   }
 </mat-menu>

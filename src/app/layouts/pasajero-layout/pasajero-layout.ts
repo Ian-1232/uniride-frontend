@@ -1,20 +1,27 @@
-import { Component } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { MatListModule } from '@angular/material/list';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-pasajero-layout',
-  imports: [
-    MatButtonModule,
-    MatIconModule,
-    MatMenuModule,
-    RouterLink,
-    RouterLinkActive,
-    RouterOutlet,
-  ],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatListModule, MatToolbarModule, MatButtonModule, MatMenuModule],
   templateUrl: './pasajero-layout.html',
   styleUrl: './pasajero-layout.css',
 })
-export class PasajeroLayout {}
+export class PasajeroLayout {
+  readonly authService = inject(AuthService);
+
+  readonly menu = [
+    { nombre: 'Dashboard', icono: 'dashboard', ruta: '/pasajero/dashboard' },
+    { nombre: 'Rutas', icono: 'rutas' },
+    { nombre: 'Viajes', icono: 'viajes', ruta: '/pasajero/viajes' },
+    { nombre: 'Compensaciones', icono: 'compensaciones', ruta: '/compensaciones' },
+    { nombre: 'Reportes', icono: 'reportes', ruta: '/reportes' },
+    { nombre: 'Horarios', icono: 'horarios' },
+    { nombre: 'Configuración', icono: 'configuracion' },
+  ];
+}

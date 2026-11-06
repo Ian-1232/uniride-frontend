@@ -25,7 +25,7 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'pasajero/viajes',
+    path: 'pasajero',
     loadComponent: () =>
       import('./layouts/pasajero-layout/pasajero-layout').then(
         (component) => component.PasajeroLayout,
@@ -34,28 +34,46 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        redirectTo: 'mis-viajes',
+        redirectTo: 'dashboard',
       },
       {
-        path: 'mis-viajes',
+        path: 'dashboard',
+        title: 'Dashboard · Pasajero UniRide',
         loadComponent: () =>
-          import('./pages/pasajero/viajes/mis-viajes/mis-viajes').then(
-            (component) => component.MisViajes,
+          import('./pages/pasajero/dashboard/pasajero-dashboard').then(
+            (component) => component.PasajeroDashboard,
           ),
       },
       {
-        path: 'buscar',
-        loadComponent: () =>
-          import('./pages/pasajero/viajes/buscar-viaje/buscar-viaje').then(
-            (component) => component.BuscarViaje,
-          ),
-      },
-      {
-        path: ':id',
-        loadComponent: () =>
-          import('./pages/pasajero/viajes/detalle-viaje/detalle-viaje').then(
-            (component) => component.DetalleViaje,
-          ),
+        path: 'viajes',
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            redirectTo: 'mis-viajes',
+          },
+          {
+            path: 'mis-viajes',
+            loadComponent: () =>
+              import('./pages/pasajero/viajes/mis-viajes/mis-viajes').then(
+                (component) => component.MisViajes,
+              ),
+          },
+          {
+            path: 'buscar',
+            loadComponent: () =>
+              import('./pages/pasajero/viajes/buscar-viaje/buscar-viaje').then(
+                (component) => component.BuscarViaje,
+              ),
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./pages/pasajero/viajes/detalle-viaje/detalle-viaje').then(
+                (component) => component.DetalleViaje,
+              ),
+          },
+        ],
       },
     ],
   },

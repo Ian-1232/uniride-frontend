@@ -124,6 +124,7 @@ app-pasajero-layout {
 
 :where(app-conductor-layout, app-pasajero-layout) .sidebar .mat-mdc-list-item .mdc-list-item__primary-text {
   font: 14px var(--ur-font-family);
+  font-weight: 500;
 }
 
 :where(app-conductor-layout, app-pasajero-layout) .sidebar .mat-mdc-list-item img {
@@ -137,6 +138,10 @@ app-pasajero-layout {
 :where(app-conductor-layout, app-pasajero-layout) .sidebar .active {
   background: var(--primary);
   --mat-list-list-item-label-text-color: var(--ur-color-surface);
+}
+
+:where(app-conductor-layout, app-pasajero-layout) .sidebar .active img {
+  filter: brightness(0) invert(1);
 }
 
 :where(app-conductor-layout, app-pasajero-layout) .sidebar-user {
@@ -160,6 +165,8 @@ app-pasajero-layout {
   display: block;
   color: var(--accent);
   font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 :where(app-conductor-layout, app-pasajero-layout) .mobile-toolbar {

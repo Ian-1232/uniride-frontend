@@ -107,6 +107,8 @@
   color: #ffffff !important;
   border-radius: var(--radius-md) !important;
   font-weight: 600 !important;
+  height: 40px !important;
+  padding: 0 18px !important;
 }
 
 .active-nav {
@@ -170,4 +172,14 @@
     flex-direction: column;
     text-align: center;
   }
+}
+
+
+.header-nav > a[mat-button],
+.header-nav > a[mat-flat-button] {
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
 }

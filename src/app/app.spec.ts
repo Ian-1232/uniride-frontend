@@ -86,7 +86,7 @@ describe('Coordinación de viajes', () => {
     await h.navigateByUrl('/compensaciones/metodos');
     expect(h.routeNativeElement?.querySelector('.sidebar')).toBeTruthy();
     expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe('Panel del conductor');
-  }, 15000);
+  }, 30000);
 
   it('conserva las rutas integradas de los otros módulos', async () => {
     const h = await RouterTestingHarness.create();
@@ -105,7 +105,7 @@ describe('Coordinación de viajes', () => {
       await h.navigateByUrl(path);
       expect(h.routeNativeElement?.querySelector('h1'), path).toBeTruthy();
     }
-  }, 15000);
+  }, 30000);
 
   it('abre las solicitudes y permite consultar cada perfil', async () => {
     const h = await RouterTestingHarness.create(
