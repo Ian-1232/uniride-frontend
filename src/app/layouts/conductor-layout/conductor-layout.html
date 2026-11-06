@@ -30,8 +30,8 @@
       }
     }
   </mat-nav-list>
-  <button mat-button type="button" (click)="authService.logout()">Cerrar sesión</button>
   <app-role-selector />
+  <button mat-button type="button" (click)="authService.logout()">Cerrar sesión</button>
   <div class="sidebar-user">
     <span class="avatar">{{ authService.currentUser()?.iniciales }}</span>
     <div>

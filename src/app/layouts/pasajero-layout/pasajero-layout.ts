@@ -27,7 +27,6 @@ export class PasajeroLayout {
 
   readonly menu = [
     { nombre: 'Dashboard', icono: 'dashboard', ruta: '/pasajero/dashboard' },
-    { nombre: 'Rutas', icono: 'rutas' },
     { nombre: 'Viajes', icono: 'viajes', ruta: '/pasajero/viajes' },
     { nombre: 'Compensaciones', icono: 'compensaciones', ruta: '/compensaciones' },
     { nombre: 'Reportes', icono: 'reportes', ruta: '/reportes' },
