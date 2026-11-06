@@ -1,3 +1,4 @@
+import { prepararPerfil } from '../../../testing/perfil-fixtures';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -63,6 +64,7 @@ describe('US26/US28 authenticated HTTP list and deletion', () => {
         mensaje: 'OK',
         usuario: { id: 9, nombre: 'Test', correo: 'test@upc.edu.pe', rol, cuentaVerificada: true },
       });
+    prepararPerfil();
   }
   function loaded() {
     http.expectOne(url).flush([method, inactive]);
@@ -269,14 +271,15 @@ describe('US26/US28 authenticated HTTP list and deletion', () => {
     h.detectChanges();
     expect(h.routeNativeElement?.querySelector('.method-card')).toBeNull();
   });
-  it.each(['anonymous', 'PASAJERO'])('keeps route protection for %s', async (role) => {
+  it.each(['anonymous', 'PASAJERO'])('enforces current shared route policy for %s', async (role) => {
     loaded();
     if (role === 'anonymous') auth.clearSession();
     else authenticate(role);
     await RouterTestingHarness.create('/compensaciones/metodos');
     expect(TestBed.inject(Router).url).toBe(
-      role === 'anonymous' ? '/auth/login' : '/pasajero/dashboard',
+      role === 'anonymous' ? '/auth/login' : '/compensaciones/metodos',
     );
-    http.expectNone(url);
+    if (role === 'anonymous') http.expectNone(url);
+    else http.expectOne(url).flush([]);
   });
 });

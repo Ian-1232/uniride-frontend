@@ -1,3 +1,4 @@
+import { RoleSelector } from '../../shared/role-selector/role-selector';
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
@@ -8,7 +9,16 @@ import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-conductor-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatListModule, MatToolbarModule, MatButtonModule, MatMenuModule],
+  imports: [
+    RoleSelector,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    MatListModule,
+    MatToolbarModule,
+    MatButtonModule,
+    MatMenuModule,
+  ],
   templateUrl: './conductor-layout.html',
   styleUrl: './conductor-layout.css',
 })
@@ -44,7 +54,7 @@ export class ConductorLayout {
         ruta: '/reportes',
       },
       { nombre: 'Horarios', icono: 'horarios' },
-      { nombre: 'Configuración', icono: 'configuracion' },
+      { nombre: 'Configuración', icono: 'configuracion', ruta: '/configuracion' },
     ];
   });
 }

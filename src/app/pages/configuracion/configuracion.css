@@ -1,0 +1,19 @@
+article {
+  display: grid;
+  gap: var(--ur-space-24);
+  max-width: var(--ur-content-width);
+  margin-inline: auto;
+}
+mat-card {
+  padding: var(--ur-space-24);
+  display: grid;
+  gap: var(--ur-space-12);
+}
+a {
+  justify-self: start;
+}
+@media (max-width: 767px) {
+  a {
+    width: 100%;
+  }
+}

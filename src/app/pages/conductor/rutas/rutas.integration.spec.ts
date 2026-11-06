@@ -1,3 +1,4 @@
+import { prepararPerfil } from '../../../testing/perfil-fixtures';
 import { Type } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -131,6 +132,7 @@ describe('Módulo 2 HTTP integration', () => {
         cuentaVerificada: true,
       },
     });
+    prepararPerfil();
   }
 
   function expectListadoRutas() {

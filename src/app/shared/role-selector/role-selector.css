@@ -1,0 +1,36 @@
+:host {
+  display: block;
+  min-width: 0;
+  color: inherit;
+  position: relative;
+}
+button {
+  color: inherit !important;
+  max-width: 100%;
+  font: inherit;
+}
+p {
+  margin: var(--ur-space-4) 0;
+  white-space: normal;
+  font-size: var(--ur-type-caption-size);
+  line-height: var(--ur-type-caption-line-height);
+}
+@media (max-width: 767px) {
+  button {
+    font-size: var(--ur-type-caption-size);
+    padding-inline: var(--ur-space-4);
+  }
+  .role-prefix {
+    display: none;
+  }
+  p {
+    position: fixed;
+    top: 4rem;
+    inset-inline: var(--ur-space-16);
+    padding: var(--ur-space-12);
+    z-index: 30;
+    background: var(--ur-color-danger-soft);
+    color: var(--ur-color-danger);
+    border-radius: var(--ur-radius-8);
+  }
+}

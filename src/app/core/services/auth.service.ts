@@ -1,8 +1,8 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError, timeout } from 'rxjs';
-import { AuthRespuesta, LoginRequest, RegistroRequest, UserSession, UsuarioRespuesta, VerificarCodigoRequest } from '../models/auth.models';
+import { Observable, catchError, defer, finalize, map, of, shareReplay, tap, throwError, timeout } from 'rxjs';
+import { AuthRespuesta, LoginRequest, RegistroRequest, RoleType, UserSession, UsuarioRespuesta, VerificarCodigoRequest } from '../models/auth.models';
 import { environment } from '../../../environments/environment';
 
 const TOKEN_KEY = 'uniride_token';
@@ -30,6 +30,11 @@ export class AuthService {
   private readonly user = signal<UserSession | null>(null);
   private token: string | null = null;
   private revision = 0;
+  private readonly sessionRevision = signal(0);
+  readonly sessionVersion = this.sessionRevision.asReadonly();
+  private readonly roleBusy = signal(false);
+  readonly changingRole = this.roleBusy.asReadonly();
+  private roleOperation = 0;
   private restoration?: Observable<boolean>;
   private recoveredStorage?: Storage;
   private expiryTimer?: ReturnType<typeof setTimeout>;
@@ -48,6 +53,9 @@ export class AuthService {
   clearSession(): void {
     clearTimeout(this.expiryTimer);
     this.revision++;
+    this.sessionRevision.update(value => value + 1);
+    this.roleOperation++;
+    this.roleBusy.set(false);
     this.token = null;
     this.user.set(null);
     for (const storage of this.storages()) {
@@ -115,6 +123,32 @@ export class AuthService {
   }
   reenviarCodigo(correo: string): Observable<AuthRespuesta> {
     return this.http.post<AuthRespuesta>(`${this.apiUrl}/auth/reenviar-codigo`, { correo }).pipe(timeout(15000));
+  }
+  cambiarRol(rol: RoleType): Observable<UsuarioRespuesta> {
+    return defer(() => {
+      const current = this.user();
+      if (!current || !usableJwt(this.token)) return throwError(() => new Error('Sesión inválida'));
+      if (!['CONDUCTOR', 'PASAJERO'].includes(rol)) return throwError(() => new Error('Rol inválido'));
+      if (this.roleBusy()) return throwError(() => new Error('Cambio de rol en curso'));
+      if (rol === current.rol) return of(current);
+      const revision = this.revision;
+      const operation = ++this.roleOperation;
+      this.roleBusy.set(true);
+      return this.http.put<UsuarioRespuesta>(`${this.apiUrl}/usuarios/rol`, { rol }).pipe(
+        timeout(15000),
+        tap(user => {
+          if (revision !== this.revision || !validUser(user) || user.id !== current.id ||
+              user.correo !== current.correo || user.rol !== rol) throw new Error('Respuesta de usuario inválida');
+          this.acceptUser(user);
+        }),
+        finalize(() => { if (operation === this.roleOperation) this.roleBusy.set(false); }),
+      );
+    });
+  }
+  /** Names only, from the confirmed PUT /perfil response; never grants a role locally. */
+  actualizarNombrePerfil(datos: { nombre: string; apellidos: string }): void {
+    const current = this.user();
+    if (current) this.acceptUser({ ...current, nombre: datos.nombre, apellidos: datos.apellidos });
   }
   private acceptUser(user: UsuarioRespuesta): void {
     const iniciales = ((user.nombre[0] ?? '') + (user.apellidos?.[0] ?? '')).toUpperCase();

@@ -1,0 +1,35 @@
+<button
+  mat-button
+  type="button"
+  [matMenuTriggerFor]="roles"
+  [disabled]="auth.changingRole() || perfil.saving()"
+  [attr.aria-busy]="auth.changingRole()"
+  aria-label="Cambiar rol activo"
+>
+  @if (auth.changingRole()) {
+    Cambiando rol...
+  } @else {
+    <span class="role-prefix">Rol activo: </span>{{ auth.isConductor() ? 'Conductor' : 'Pasajero' }}
+  }
+</button>
+<mat-menu #roles="matMenu" aria-label="Seleccionar rol">
+  <button
+    mat-menu-item
+    type="button"
+    [disabled]="auth.changingRole() || auth.isConductor()"
+    (click)="cambiar('CONDUCTOR')"
+  >
+    Modo conductor {{ auth.isConductor() ? '(activo)' : '' }}
+  </button>
+  <button
+    mat-menu-item
+    type="button"
+    [disabled]="auth.changingRole() || auth.isPasajero()"
+    (click)="cambiar('PASAJERO')"
+  >
+    Modo pasajero {{ auth.isPasajero() ? '(activo)' : '' }}
+  </button>
+</mat-menu>
+@if (error()) {
+  <p role="alert">{{ error() }}</p>
+}
