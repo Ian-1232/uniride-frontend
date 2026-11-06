@@ -1,186 +1,355 @@
-import { Signal } from '@angular/core';
-import { FormGroup } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { FormGroup } from '@angular/forms';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { SugerenciaContribucionFixture } from '../contribucion.models';
+import { AuthService } from '../../../core/services/auth.service';
+import { ContribucionService } from '../../../core/services/contribucion.service';
+import { jwtInterceptor } from '../../../core/interceptors/jwt.interceptor';
+import { routes } from '../../../app.routes';
+import { MISSING_PASSENGERS } from '../contribucion.models';
 import { SugerenciaContribucion } from './sugerencia-contribucion';
 
-interface SugerenciaAccess {
-  readonly form: FormGroup;
-  readonly result: Signal<SugerenciaContribucionFixture | null>;
-}
+// Contract fixtures exist only in tests; deliberately distinct amounts detect hardcoded calculations.
+const suggestion = {
+  viajeId: 74,
+  origen: 'Campus Norte',
+  destino: 'Biblioteca Universitaria',
+  dia: 'Domingo',
+  fecha: '2026-11-01',
+  hora: '00:05:00',
+  pasajeros: 7,
+  esHoraPico: false,
+  costoTotalEstimado: 123.45,
+  aporteEstimado: 17.29,
+  litrosGasolinaAprox: 3.2,
+  sugerenciaFavor: 'Apoyo acordado con el conductor',
+  nota: 'Nota referencial recibida del servidor.',
+};
+const endpoint = '/api/viajes/74/sugerencia-contribucion';
 
-describe('SugerenciaContribucion', () => {
+describe('US29 authenticated REST integration', () => {
+  let http: HttpTestingController;
+  let auth: AuthService;
+  let harness: RouterTestingHarness;
+  let component: SugerenciaContribucion;
+  let token: string;
   beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([
-          {
-            path: 'contribucion/sugerencia/:viajeId',
-            component: SugerenciaContribucion,
-          },
-        ]),
+        provideRouter(routes),
+        provideHttpClient(withInterceptors([jwtInterceptor])),
+        provideHttpClientTesting(),
       ],
     });
+    http = TestBed.inject(HttpTestingController);
+    auth = TestBed.inject(AuthService);
+    authenticate();
   });
-
-  async function render(url: string): Promise<{
-    harness: RouterTestingHarness;
-    access: SugerenciaAccess;
-  }> {
-    const harness = await RouterTestingHarness.create();
-    const component = await harness.navigateByUrl(url, SugerenciaContribucion);
-    harness.detectChanges();
-    return { harness, access: component as unknown as SugerenciaAccess };
+  afterEach(() => {
+    http.verify();
+    auth.clearSession();
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  function authenticate(rol = 'PASAJERO') {
+    token =
+      'eyJhbGciOiJIUzI1NiJ9.' +
+      btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) +
+      '.signature';
+    auth.login({ correo: 'pasajera@upc.edu.pe', contrasena: 'Password1!' }).subscribe();
+    http
+      .expectOne('/api/auth/login')
+      .flush({
+        token,
+        mensaje: 'OK',
+        usuario: {
+          id: 18,
+          nombre: 'Lucia',
+          apellidos: 'Torres',
+          correo: 'pasajera@upc.edu.pe',
+          rol,
+          cuentaVerificada: true,
+        },
+      });
   }
-
-  it('renders the main screen with the selected trip data', async () => {
-    const { harness } = await render('/contribucion/sugerencia/35');
-    const text = harness.routeNativeElement?.textContent ?? '';
-
-    expect(text).toContain('Sugerencia de contribución');
-    expect(text).toContain('San Borja → UPC');
-    expect(text).toContain('Viernes 6/11/2026');
-    expect(text).toContain('2 pasajeros');
-  });
-
-  it('shows S/ 6.00 and 1.11 L for the two-passenger fixture', async () => {
-    const { harness } = await render('/contribucion/sugerencia/35?estado=disponible');
-    const text = harness.routeNativeElement?.textContent ?? '';
-
-    expect(text).toContain('S/ 6.00');
-    expect(text).toContain('1.11 L');
-  });
-
-  it('shows S/ 12.00 and 2.22 L for the single-passenger fixture', async () => {
-    const { harness } = await render(
-      '/contribucion/sugerencia/35?estado=unico-pasajero',
-    );
-    const text = harness.routeNativeElement?.textContent ?? '';
-
-    expect(text).toContain('S/ 12.00');
-    expect(text).toContain('2.22 L');
-    expect(text).toContain('Aporte de un único pasajero');
-  });
-
-  it('keeps the backend reference note visible in successful states', async () => {
-    const { harness } = await render('/contribucion/sugerencia/35');
-    const text = harness.routeNativeElement?.textContent ?? '';
-
-    expect(text).toContain('Estimación referencial');
-    expect(text).toContain('el monto final puede variar según la ruta');
-  });
-
-  it('shows an actionable validation state when information is insufficient', async () => {
-    const { harness, access } = await render(
-      '/contribucion/sugerencia/35?estado=insuficiente',
-    );
-    const text = harness.routeNativeElement?.textContent ?? '';
-
-    expect(text).toContain('Falta cantidad');
-    expect(access.form.invalid).toBe(true);
-    expect(
-      harness.routeNativeElement?.querySelector<HTMLButtonElement>('button[type="submit"]')
-        ?.disabled,
-    ).toBe(true);
-  });
-
-  it('rejects zero and decimal passenger quantities', async () => {
-    const { access } = await render('/contribucion/sugerencia/35?estado=insuficiente');
-    const control = access.form.controls['pasajeros'];
-
-    control.setValue(0);
-    expect(control.hasError('min')).toBe(true);
-
-    control.setValue(1.5);
-    expect(control.hasError('integer')).toBe(true);
-  });
-
-  it('selects the explicit one-passenger mock without calculating values', async () => {
-    const { harness, access } = await render(
-      '/contribucion/sugerencia/35?estado=insuficiente',
-    );
-    access.form.controls['pasajeros'].setValue(1);
+  async function render(path = '/contribucion/sugerencia/74') {
+    harness = await RouterTestingHarness.create(path);
+    component = harness.fixture.debugElement.query(
+      By.directive(SugerenciaContribucion),
+    )?.componentInstance;
     harness.detectChanges();
-
-    harness.routeNativeElement
-      ?.querySelector<HTMLButtonElement>('button[type="submit"]')
-      ?.click();
+  }
+  function root(): HTMLElement {
+    return harness.routeNativeElement!;
+  }
+  function text() {
+    return root().textContent ?? '';
+  }
+  function form(): FormGroup {
+    return (component as unknown as { form: FormGroup }).form;
+  }
+  function request(id = 74) {
+    return http.expectOne((req) => req.url === '/api/viajes/' + id + '/sugerencia-contribucion');
+  }
+  function submit(value: number | null) {
+    form().controls['pasajeros'].setValue(value);
     harness.detectChanges();
-
-    expect(harness.routeNativeElement?.textContent).toContain('S/ 12.00');
-    expect(access.result()?.respuesta.pasajeros).toBe(1);
-  });
-
-  it('does not invent a result for a passenger count without a fixture', async () => {
-    const { harness, access } = await render(
-      '/contribucion/sugerencia/35?estado=insuficiente',
-    );
-    access.form.controls['pasajeros'].setValue(3);
+    root()
+      .querySelector('form')
+      ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     harness.detectChanges();
-
-    harness.routeNativeElement
-      ?.querySelector<HTMLButtonElement>('button[type="submit"]')
-      ?.click();
+  }
+  function retry() {
+    (root().querySelector('app-contribucion-state-panel button') as HTMLButtonElement).click();
     harness.detectChanges();
-
-    expect(harness.routeNativeElement?.textContent).toContain('Sin datos de demostración');
-    expect(harness.routeNativeElement?.textContent).not.toContain('S/ 6.00');
-  });
-
-  it('shows confirmed passengers as read-only data', async () => {
-    const { harness } = await render(
-      '/contribucion/sugerencia/35?estado=pasajeros-confirmados',
-    );
-
-    expect(harness.routeNativeElement?.textContent).toContain(
-      'Cantidad confirmada por el viaje',
-    );
-    expect(harness.routeNativeElement?.querySelector('input')).toBeNull();
-  });
-
-  it('represents a trip that is no longer available without a result', async () => {
-    const { harness } = await render(
-      '/contribucion/sugerencia/35?estado=viaje-no-disponible',
-    );
-    const text = harness.routeNativeElement?.textContent ?? '';
-
-    expect(text).toContain('Viaje no disponible');
-    expect(text).not.toContain('S/ 6.00');
-  });
-
-  it('represents an unknown trip as not found', async () => {
-    const { harness } = await render('/contribucion/sugerencia/999');
-
-    expect(harness.routeNativeElement?.textContent).toContain('Viaje no encontrado');
-    expect(harness.routeNativeElement?.textContent).not.toContain('S/ 6.00');
-  });
-
-  it('keeps the restricted state mutually exclusive from success', async () => {
-    const restricted = await render('/contribucion/sugerencia/35?estado=restringido');
-    expect(restricted.harness.routeNativeElement?.textContent).toContain('Acceso restringido');
-    expect(restricted.harness.routeNativeElement?.textContent).not.toContain('S/ 6.00');
-  });
-
-  it('keeps the general error state mutually exclusive from success', async () => {
-    const error = await render('/contribucion/sugerencia/35?estado=error');
-    expect(error.harness.routeNativeElement?.textContent).toContain('Error de consulta');
-    expect(error.harness.routeNativeElement?.textContent).not.toContain('S/ 6.00');
-  });
-
-  it('does not show the missing quantity warning when the form is valid', async () => {
-    const { harness, access } = await render(
-      '/contribucion/sugerencia/35?estado=insuficiente',
-    );
-
-    access.form.controls['pasajeros'].setValue(2);
+  }
+  async function missing() {
+    await render();
+    request().flush({ mensaje: MISSING_PASSENGERS }, { status: 400, statusText: 'Bad Request' });
     harness.detectChanges();
-
-    const text = harness.routeNativeElement?.textContent ?? '';
-
-    expect(text).toContain('Datos listos para consultar');
-    expect(text).not.toContain('Falta cantidad');
+  }
+  it('automatically GETs without pasajeros, sends Bearer and renders only the backend values', async () => {
+    await render();
+    expect(text()).toContain('Cargando sugerencia');
+    expect(root().querySelector('.amount-value')).toBeNull();
+    const req = request();
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer ' + token);
+    expect(req.request.body).toBeNull();
+    req.flush(suggestion);
+    harness.detectChanges();
+    expect(root().querySelector('.amount-value')?.textContent).toContain('S/ 17.29');
+    expect(text()).toContain('S/ 123.45');
+    expect(text()).toContain('3.20 L');
+    expect(text()).toContain('Domingo 1/11/2026');
+    expect(text()).toContain('00:05');
+    expect(text()).toContain(suggestion.sugerenciaFavor);
+    expect(text()).toContain(suggestion.nota);
+    expect(text()).toContain('7 pasajeros');
+    expect(text()).toContain('Cantidad confirmada por el viaje');
+    expect(text()).not.toContain('S/ 6.00');
+    expect(text()).not.toContain('S/ 12.00');
+    expect(root().querySelector('input')).toBeNull();
+    expect(root().querySelector('.ur-status--warning')).toBeNull();
+  });
+  it('shows returned peak-hour status and never computes the contribution from a local tariff', async () => {
+    await render();
+    request().flush({ ...suggestion, esHoraPico: true, pasajeros: 1, aporteEstimado: 51.07 });
+    harness.detectChanges();
+    expect(text()).toContain('Hora pico');
+    expect(text()).toContain('51.07');
+    expect(text()).toContain('123.45');
+    expect(text()).toContain('1 pasajero');
+  });
+  it('only the documented missing-passenger error opens an empty form, without fictitious trip data', async () => {
+    await missing();
+    expect(text()).toContain(MISSING_PASSENGERS);
+    expect(form().controls['pasajeros'].value).toBeNull();
+    expect(root().querySelector('form')).toBeTruthy();
+    expect(root().querySelector('.trip-card')).toBeNull();
+    expect(root().querySelector('.amount-value')).toBeNull();
+    expect(text()).not.toContain('San Borja');
+  });
+  it.each([1, 2, 3, 19, 100])(
+    'queries the real endpoint with any positive integer %s',
+    async (pasajeros) => {
+      await missing();
+      submit(pasajeros);
+      const req = request();
+      expect(req.request.params.get('pasajeros')).toBe(String(pasajeros));
+      expect(req.request.params.keys()).toEqual(['pasajeros']);
+      req.flush({ ...suggestion, pasajeros });
+      harness.detectChanges();
+      expect(text()).toContain('17.29');
+      expect(root().querySelector('.passenger-count')?.textContent).toContain(String(pasajeros));
+      expect(root().querySelector('input')).toBeNull();
+    },
+  );
+  it.each([null, 0, -3, 1.5, NaN, Infinity])(
+    'does not query with invalid passenger count %s',
+    async (value) => {
+      await missing();
+      submit(value);
+      expect(form().invalid).toBe(true);
+      http.expectNone((req) => req.url.endsWith('/sugerencia-contribucion'));
+      expect(root().querySelector('.amount-value')).toBeNull();
+    },
+  );
+  it('honors the backend when it overrides the supplied passenger count', async () => {
+    await missing();
+    submit(19);
+    request().flush({ ...suggestion, pasajeros: 5 });
+    harness.detectChanges();
+    expect(root().querySelector('.passenger-count')?.textContent).toContain('5 pasajeros');
+    expect(root().querySelector('input')).toBeNull();
+    expect(text()).toContain('17.29');
+  });
+  it('does not mistake an unrelated initial HTTP 400 for missing passengers', async () => {
+    await render();
+    request().flush(
+      { mensaje: 'Private server details' },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    harness.detectChanges();
+    expect(text()).toContain('Revisa la cantidad');
+    expect(text()).not.toContain('Private server');
+    expect(root().querySelector('form')).toBeNull();
+  });
+  it('retains a manual quantity after a server validation error and lets it be corrected', async () => {
+    await missing();
+    submit(2147483648);
+    request().flush({}, { status: 400, statusText: 'Bad Request' });
+    harness.detectChanges();
+    expect(form().controls['pasajeros'].value).toBe(2147483648);
+    expect(root().querySelector('input')).toBeTruthy();
+    submit(8);
+    request().flush({ ...suggestion, pasajeros: 8 });
+    harness.detectChanges();
+    expect(text()).toContain('8 pasajeros');
+  });
+  it.each([0, 403, 404, 409, 500])(
+    'handles HTTP %s without an amount and retries via HTTP',
+    async (status) => {
+      await render();
+      const req = request();
+      if (!status) req.error(new ProgressEvent('error'));
+      else req.flush({ mensaje: 'Private SQL detail' }, { status, statusText: 'Error' });
+      harness.detectChanges();
+      expect(root().querySelector('.amount-value')).toBeNull();
+      expect(text()).not.toContain('Private SQL');
+      expect(text()).toContain(
+        status === 404
+          ? 'Viaje no encontrado'
+          : status === 409
+            ? 'Viaje no disponible'
+            : status === 403
+              ? 'Acceso restringido'
+              : status === 0
+                ? 'conectar'
+                : 'Error de consulta',
+      );
+      if (status === 403) expect(auth.isAuthenticated()).toBe(true);
+      retry();
+      const next = request();
+      expect(next.request.params.keys()).toEqual([]);
+      next.flush(suggestion);
+      harness.detectChanges();
+      expect(text()).toContain('17.29');
+    },
+  );
+  it('retries a manual quantity instead of dropping the parameter', async () => {
+    await missing();
+    submit(9);
+    request().error(new ProgressEvent('error'));
+    harness.detectChanges();
+    expect(form().controls['pasajeros'].value).toBe(9);
+    retry();
+    const req = request();
+    expect(req.request.params.get('pasajeros')).toBe('9');
+    req.flush({ ...suggestion, pasajeros: 9 });
+    harness.detectChanges();
+    expect(text()).toContain('9 pasajeros');
+  });
+  it('401 uses the existing interceptor logout and never shows an amount', async () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    await render();
+    request().flush({}, { status: 401, statusText: 'Unauthorized' });
+    harness.detectChanges();
+    expect(auth.isAuthenticated()).toBe(false);
+    expect(navigate).toHaveBeenCalledWith(['/auth/login']);
+    expect(text()).toContain('Inicia sesión');
+    expect(root().querySelector('.amount-value')).toBeNull();
+  });
+  it('prevents duplicate clicks during the active request', async () => {
+    await missing();
+    submit(7);
+    (component as unknown as { submit(): void; retry(): void }).submit();
+    (component as unknown as { retry(): void }).retry();
+    request().flush(suggestion);
+    harness.detectChanges();
+    http.expectNone((req) => req.url.endsWith('/sugerencia-contribucion'));
+  });
+  it('cancels the obsolete request when the route ID changes', async () => {
+    await render();
+    const pending = request();
+    await harness.navigateByUrl('/contribucion/sugerencia/99');
+    expect(pending.cancelled).toBe(true);
+    request(99).flush({ ...suggestion, viajeId: 99, origen: 'Nuevo viaje' });
+    harness.detectChanges();
+    expect(text()).toContain('Nuevo viaje');
+    expect(text()).not.toContain('Campus Norte');
+  });
+  it('cancels a pending manual request when leaving the screen', async () => {
+    await missing();
+    submit(6);
+    const pending = request();
+    await harness.navigateByUrl('/pasajero/dashboard');
+    expect(pending.cancelled).toBe(true);
+    expect(root().querySelector('.amount-value')).toBeNull();
+  });
+  it.each(['0', '-1', 'abc', '1.2', '1e3', '9007199254740999'])(
+    'rejects invalid route ID %s without HTTP',
+    async (id) => {
+      await render('/contribucion/sugerencia/' + id);
+      expect(text()).toContain('Viaje no encontrado');
+      http.expectNone((req) => req.url.endsWith('/sugerencia-contribucion'));
+    },
+  );
+  it.each(['disponible', 'unico-pasajero', 'pasajeros-confirmados', 'insuficiente', 'error'])(
+    'ignores ?estado=%s',
+    async (estado) => {
+      await render('/contribucion/sugerencia/74?estado=' + estado);
+      expect(text()).toContain('Cargando');
+      expect(root().querySelector('.amount-value')).toBeNull();
+      request().flush(suggestion);
+      harness.detectChanges();
+      expect(text()).toContain('17.29');
+    },
+  );
+  it('the shell uses the session user and no hardcoded trip links', async () => {
+    await render();
+    request().flush(suggestion);
+    harness.detectChanges();
+    expect(text()).toContain('Lucia');
+    expect(text()).not.toContain('Juan Pérez');
+    expect(root().querySelector('a[href="/contribucion/sugerencia/35"]')).toBeNull();
+    expect(root().querySelector('.return-button')?.getAttribute('href')).toBe(
+      '/pasajero/viajes/mis-viajes',
+    );
+    expect(root().querySelector('a[href="/pasajero/viajes/74"]')).toBeNull();
+  });
+  it.each(['anonymous', 'CONDUCTOR'])('preserves route restrictions for %s', async (role) => {
+    if (role === 'anonymous') auth.clearSession();
+    else authenticate(role);
+    await render();
+    expect(TestBed.inject(Router).url).toBe(
+      role === 'anonymous' ? '/auth/login' : '/conductor/dashboard',
+    );
+    http.expectNone((req) => req.url.endsWith('/sugerencia-contribucion'));
+  });
+  it('rejects a mismatched trip or malformed estimated values without fabricated fallback', async () => {
+    await render();
+    request().flush({ ...suggestion, viajeId: 99 });
+    harness.detectChanges();
+    expect(root().querySelector('.amount-value')).toBeNull();
+    retry();
+    request().flush({ ...suggestion, aporteEstimado: null });
+    harness.detectChanges();
+    expect(root().querySelector('.amount-value')).toBeNull();
+    expect(text()).toContain('respuesta de estimación inválida');
+  });
+  it('the service has no user ID or manual Authorization additions', () => {
+    TestBed.inject(ContribucionService).sugerencia(208, 4).subscribe();
+    const req = request(208);
+    expect(req.request.params.keys()).toEqual(['pasajeros']);
+    expect(req.request.body).toBeNull();
+    expect(req.request.headers.get('Authorization')).toBe('Bearer ' + token);
+    req.flush({ ...suggestion, viajeId: 208, pasajeros: 4 });
   });
 });

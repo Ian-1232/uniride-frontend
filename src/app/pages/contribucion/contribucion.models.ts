@@ -21,80 +21,26 @@ export interface ContribucionApiError {
   readonly campos: Readonly<Record<string, string>> | null;
 }
 
-export interface SugerenciaContribucionFixture {
-  readonly respuesta: SugerenciaContribucionRespuesta;
-  readonly fechaVisible: string;
-  readonly horaVisible: string;
-}
-
 export type SugerenciaContribucionState =
   | 'disponible'
-  | 'unico-pasajero'
   | 'insuficiente'
-  | 'pasajeros-confirmados'
   | 'viaje-no-disponible'
   | 'no-encontrado'
   | 'restringido'
   | 'cargando'
   | 'error';
 
-export const SUGERENCIA_CONTRIBUCION_STATES: readonly SugerenciaContribucionState[] = [
-  'disponible',
-  'unico-pasajero',
-  'insuficiente',
-  'pasajeros-confirmados',
-  'viaje-no-disponible',
-  'no-encontrado',
-  'restringido',
-  'cargando',
-  'error',
-];
+export const MISSING_PASSENGERS =
+  'El viaje aún no tiene pasajeros aceptados; indica la cantidad de pasajeros para calcular la sugerencia';
 
-const SUGERENCIA_FAVOR =
-  'Un favor acordado con el conductor de valor equivalente al aporte estimado';
-
-const NOTA_REFERENCIAL =
-  'Estimación referencial basada en la hora del viaje y la cantidad de pasajeros; el monto final puede variar según la ruta y el acuerdo entre conductor y pasajeros.';
-
-export const SUGERENCIA_DOS_PASAJEROS: SugerenciaContribucionFixture = {
-  respuesta: {
-    viajeId: 35,
-    origen: 'San Borja',
-    destino: 'UPC',
-    dia: 'Viernes',
-    fecha: '2026-11-06',
-    hora: '07:30',
-    pasajeros: 2,
-    esHoraPico: true,
-    costoTotalEstimado: 12,
-    aporteEstimado: 6,
-    litrosGasolinaAprox: 1.11,
-    sugerenciaFavor: SUGERENCIA_FAVOR,
-    nota: NOTA_REFERENCIAL,
-  },
-  fechaVisible: '6/11/2026',
-  horaVisible: '07:30',
-};
-
-export const SUGERENCIA_UN_PASAJERO: SugerenciaContribucionFixture = {
-  respuesta: {
-    viajeId: 35,
-    origen: 'San Borja',
-    destino: 'UPC',
-    dia: 'Viernes',
-    fecha: '2026-11-06',
-    hora: '07:30',
-    pasajeros: 1,
-    esHoraPico: true,
-    costoTotalEstimado: 12,
-    aporteEstimado: 12,
-    litrosGasolinaAprox: 2.22,
-    sugerenciaFavor: SUGERENCIA_FAVOR,
-    nota: NOTA_REFERENCIAL,
-  },
-  fechaVisible: '6/11/2026',
-  horaVisible: '07:30',
-};
+// LocalDate and LocalTime are calendar strings, not instants in UTC.
+export function formatContributionDate(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return match ? Number(match[3]) + '/' + Number(match[2]) + '/' + match[1] : value;
+}
+export function formatContributionTime(value: string): string {
+  return value.slice(0, 5);
+}
 
 export const integerMinOneValidator: ValidatorFn = (
   control: AbstractControl<number | null>,
@@ -111,14 +57,3 @@ export const integerMinOneValidator: ValidatorFn = (
 
   return value >= 1 ? null : { min: { min: 1, actual: value } };
 };
-
-export function resolveContribucionState(
-  value: string | null,
-  fallback: SugerenciaContribucionState = 'disponible',
-): SugerenciaContribucionState {
-  return value !== null && SUGERENCIA_CONTRIBUCION_STATES.includes(
-    value as SugerenciaContribucionState,
-  )
-    ? (value as SugerenciaContribucionState)
-    : fallback;
-}
