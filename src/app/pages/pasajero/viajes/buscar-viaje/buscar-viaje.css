@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.viajes-page {
+  display: grid;
+  gap: var(--ur-space-32);
+  width: min(100%, var(--ur-content-width));
+  margin-inline: auto;
+}
+
+.page-heading {
+  display: grid;
+  gap: var(--ur-space-4);
+}
+
+.breadcrumb,
+.page-heading p {
+  color: var(--ur-color-muted);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ur-space-16);
+}
+
+.list-section {
+  display: grid;
+  gap: var(--ur-space-16);
+}
+
+.trips-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ur-space-16);
+}
+
+.empty-state {
+  padding: var(--ur-space-24);
+  border: var(--ur-border);
+  border-radius: var(--ur-radius-12);
+  background: var(--ur-color-surface);
+  color: var(--ur-color-muted);
+}
+
+@media (max-width: 767px) {
+  .filters,
+  .trips-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

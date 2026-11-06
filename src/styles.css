@@ -254,7 +254,9 @@ h3,
   color: var(--ur-color-surface);
   cursor: pointer;
   font-weight: var(--ur-font-weight-medium);
-  transition: filter var(--ur-transition-fast), background var(--ur-transition-fast);
+  transition:
+    filter var(--ur-transition-fast),
+    background var(--ur-transition-fast);
 }
 
 .ur-button:hover:not(:disabled) {
@@ -536,4 +538,613 @@ button[mat-flat-button].btn-primary:hover {
 .alert-banner.success {
   background-color: var(--accent-light);
   color: #065f46;
+}
+
+:root {
+  /* Tokens de la paleta UniRide */
+  --uni-primario: #4f46e5;
+  --uni-secundario: #1e293b;
+  --uni-acento: #10b981;
+  --uni-fondo: #f8fafc;
+  --uni-borde: #e2e8ee;
+  --uni-borde-fuerte: #cbd5e1;
+  --uni-texto-suave: #64748b;
+  --uni-nota-bg: #edf0fc;
+  --uni-nota-texto: #3f38c7;
+
+  /* Tokens del diseño de inicio de sesión */
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #eff4ff;
+  --primary-badge: #e2dfff;
+  --secondary-color: #1e293b;
+  --secondary-dark: #0b1c30;
+  --accent-color: #10b981;
+  --accent-light: #d1fae5;
+  --background-color: #f8fafc;
+  --surface-color: #ffffff;
+  --surface-border: #e2e8f0;
+  --text-main: #0b1c30;
+  --text-muted: #545f73;
+  --text-light: #777587;
+  --error-color: #ba1a1a;
+  --error-bg: #ffdad6;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+  /* Tokens de Material afinados al Figma */
+  --mat-sys-outline-variant: #e2e8ee;
+  --mat-sys-outline: #cbd5e1;
+  --mat-button-filled-container-shape: 8px;
+  --mat-button-filled-disabled-container-color: #a5b4fc;
+  --mat-button-filled-disabled-label-text-color: #ffffff;
+  --mat-button-outlined-container-shape: 8px;
+  --mat-button-text-container-shape: 8px;
+  --mat-form-field-outlined-container-shape: 8px;
+  --mat-form-field-outlined-label-text-color: #1e293b;
+  --mat-form-field-outlined-label-text-size: 13px;
+  --mat-form-field-outlined-label-text-weight: 600;
+  --mat-card-outlined-container-shape: 10px;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Estructura común de las 5 pantallas del Módulo 2
+   -------------------------------------------------------------------------- */
+
+.page {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 30px 32px 56px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.page-title {
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--uni-secundario);
+}
+
+.page-subtitle {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--uni-texto-suave);
+}
+
+/* Miga de pan: «← Volver / detalle» */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--uni-primario);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-sep,
+.breadcrumb-current {
+  color: var(--uni-texto-suave);
+}
+
+.breadcrumb .mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Tarjetas (mat-card con aspecto «outlined» del Figma)
+   -------------------------------------------------------------------------- */
+
+.mat-mdc-card.uni-card {
+  --mat-card-outlined-container-color: #ffffff;
+  --mat-card-outlined-outline-color: var(--uni-borde);
+  --mat-card-outlined-outline-width: 1px;
+  --mat-card-outlined-container-elevation: 0;
+  padding: 16px 20px;
+}
+
+.uni-card mat-card-content {
+  margin: 0;
+  padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Botones
+   -------------------------------------------------------------------------- */
+
+.mat-mdc-button > .mat-icon,
+.mat-mdc-unelevated-button > .mat-icon,
+.mat-mdc-outlined-button > .mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+/* Etiqueta de acción peligrosa (Eliminar) */
+.btn-danger {
+  --mat-button-text-label-text-color: #dc2626;
+}
+
+/* Botón de acento (Completar) */
+.btn-accent {
+  --mat-button-filled-container-color: var(--uni-acento);
+  --mat-button-filled-label-text-color: #ffffff;
+  --mat-button-filled-state-layer-color: var(--uni-acento);
+  --mat-button-filled-ripple-color: #ffffff;
+}
+
+/* Variante trazada en color primario (Ver solicitudes) */
+.btn-outline-primary {
+  --mat-button-outlined-outline-color: var(--uni-primario);
+  --mat-button-outlined-label-text-color: var(--uni-primario);
+}
+
+/* --------------------------------------------------------------------------
+   Chips
+   -------------------------------------------------------------------------- */
+
+.chip-nota {
+  --mat-chip-elevated-container-color: var(--uni-nota-bg);
+  --mat-chip-label-text-color: var(--uni-nota-texto);
+  --mat-mdc-chip-label-text-color: var(--uni-nota-texto);
+  --mat-chip-container-height: 28px;
+  --mat-chip-container-shape-radius: 6px;
+  --mat-chip-label-text-size: 12px;
+  --mat-chip-label-text-weight: 500;
+}
+
+.estado-chip {
+  --mat-chip-container-height: 26px;
+  --mat-chip-container-shape-radius: 6px;
+  --mat-chip-label-text-size: 11px;
+  --mat-chip-label-text-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.estado-chip.chip-programado {
+  --mat-chip-elevated-container-color: #e0e4fe;
+  --mat-chip-label-text-color: #3f38c7;
+}
+
+.estado-chip.chip-en-progreso,
+.estado-chip.chip-completado {
+  --mat-chip-elevated-container-color: #d8faec;
+  --mat-chip-label-text-color: #047857;
+}
+
+.estado-chip.chip-cancelado {
+  --mat-chip-elevated-container-color: #fee8e8;
+  --mat-chip-label-text-color: #dc2626;
+}
+
+.estado-chip.chip-vencido {
+  --mat-chip-elevated-container-color: #fef3c7;
+  --mat-chip-label-text-color: #b45309;
+}
+
+/* --------------------------------------------------------------------------
+   mat-paginator: rango a la izquierda, botones circulares a la derecha
+   -------------------------------------------------------------------------- */
+
+mat-paginator.uni-paginator {
+  background: transparent;
+}
+
+.uni-paginator .mat-mdc-paginator-container {
+  justify-content: space-between;
+  padding: 0;
+  min-height: 48px;
+}
+
+.uni-paginator .mat-mdc-paginator-page-size {
+  display: none;
+}
+
+.uni-paginator .mat-mdc-paginator-range-label {
+  color: var(--uni-texto-suave);
+  font-size: 14px;
+}
+
+.uni-paginator .mat-mdc-paginator-container > button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid var(--uni-borde);
+  color: #475569;
+}
+
+.uni-paginator .mat-mdc-paginator-container > button[disabled] {
+  background-color: #f1f5f9;
+  border-color: var(--uni-borde);
+  color: #cbd5e1;
+}
+
+/* --------------------------------------------------------------------------
+   mat-table (Viajes de la ruta)
+   -------------------------------------------------------------------------- */
+
+.uni-table-card {
+  background: #ffffff;
+  border: 1px solid var(--uni-borde);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.uni-table .mat-mdc-table {
+  width: 100%;
+  background: #ffffff;
+}
+
+.uni-table .mat-mdc-header-cell {
+  background-color: #f2f4f7;
+  color: var(--uni-texto-suave);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--uni-borde);
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.uni-table .mat-mdc-cell {
+  font-size: 14px;
+  color: var(--uni-secundario);
+  border-bottom: 1px solid #eef1f5;
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.uni-table .mat-mdc-row:last-child .mat-mdc-cell {
+  border-bottom: 0;
+}
+
+.uni-table .mat-mdc-row:hover {
+  background-color: #f8fafc;
+}
+
+.cell-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cell-with-icon .mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--uni-texto-suave);
+}
+
+/* --------------------------------------------------------------------------
+   Resumen de ruta (M2.4 y M2.5)
+   -------------------------------------------------------------------------- */
+
+.route-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.summary-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.summary-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 10px;
+  background: #eef1fe;
+  color: var(--uni-primario);
+  font-size: 22px;
+}
+
+.summary-icon.is-plain {
+  background: transparent;
+  width: auto;
+  height: auto;
+  flex: 0 0 auto;
+  font-size: 20px;
+}
+
+.summary-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--uni-secundario);
+}
+
+.summary-detail {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--uni-texto-suave);
+}
+
+.summary-box {
+  background: var(--uni-fondo);
+  border: 1px solid var(--uni-borde);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+/* Estadísticas del resumen (M2.4) */
+.stats {
+  display: flex;
+  gap: 34px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat-value.is-primario {
+  color: var(--uni-primario);
+}
+
+.stat-value.is-acento {
+  color: var(--uni-acento);
+}
+
+.stat-value.is-alerta {
+  color: #b45309;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--uni-texto-suave);
+}
+
+/* --------------------------------------------------------------------------
+   Banner informativo (M2.2 y M2.5)
+   -------------------------------------------------------------------------- */
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--uni-nota-bg);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--uni-nota-texto);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.banner .mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+}
+
+.banner strong {
+  display: block;
+  font-weight: 700;
+}
+
+.banner.banner-error {
+  margin-bottom: 16px;
+  background: #fee8e8;
+  color: #b91c1c;
+}
+
+/* Aviso en línea para estados de carga o listas vacías */
+.state-note {
+  padding: 28px 20px;
+  border: 1px dashed var(--uni-borde-fuerte);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--uni-texto-suave);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Acciones de tarjeta (M2.1)
+   -------------------------------------------------------------------------- */
+
+.route-actions .mat-mdc-button {
+  --mat-button-text-label-text-color: var(--uni-primario);
+}
+
+.route-actions .mat-mdc-button.btn-danger {
+  --mat-button-text-label-text-color: #dc2626;
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .page {
+    padding: 20px 16px 40px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header > a[mat-flat-button],
+  .page-header > button[mat-flat-button] {
+    width: 100%;
+  }
+
+  .stats {
+    gap: 20px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Móvil (≤767 px): el resumen apila ruta sobre las estadísticas
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  .route-summary {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .stats {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .stat {
+    flex: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Móvil (≤767 px): las tablas (M2.4 y Mis viajes) pasan a tarjetas apiladas
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  .uni-table-card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  /* La tabla completa pasa a flujo de bloques para que cada fila crezca */
+  .uni-table .mat-mdc-table,
+  .uni-table .mat-mdc-table tbody {
+    display: block;
+    background: transparent;
+  }
+
+  .uni-table .mat-mdc-header-row {
+    display: none;
+  }
+
+  .uni-table .mat-mdc-row {
+    display: block;
+    height: auto;
+    min-height: 0;
+    margin-bottom: 12px;
+    padding: 14px 16px;
+    background: #ffffff;
+    border: 1px solid var(--uni-borde);
+    border-radius: 12px;
+  }
+
+  .uni-table .mat-mdc-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 0;
+    height: auto;
+    overflow: visible;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .uni-table .mat-mdc-cell::before {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--uni-texto-suave);
+  }
+
+  .uni-table .mat-column-ruta::before {
+    content: 'Ruta';
+  }
+
+  .uni-table .mat-column-fecha::before {
+    content: 'Fecha';
+  }
+
+  .uni-table .mat-column-hora::before {
+    content: 'Hora';
+  }
+
+  .uni-table .mat-column-estado::before {
+    content: 'Estado';
+  }
+
+  .uni-table .mat-column-pasajeros::before {
+    content: 'Pasajeros';
+  }
+
+  .uni-table .mat-column-acciones::before {
+    content: 'Acciones';
+  }
+
+  /* La ruta ocupa su propia línea y las acciones van debajo, a ancho completo */
+  .uni-table .mat-column-ruta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .uni-table .mat-column-acciones {
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .uni-table .mat-column-acciones .row-actions {
+    flex: 1 0 100%;
+  }
+
+  .uni-table .row-actions > * {
+    flex: 1 1 auto;
+    min-height: 48px;
+    justify-content: center;
+  }
 }

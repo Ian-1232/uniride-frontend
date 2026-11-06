@@ -4,7 +4,7 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'conductor/viajes/1/solicitudes',
+    redirectTo: 'home',
   },
   {
     path: 'home',
@@ -23,6 +23,41 @@ export const routes: Routes = [
     path: 'registro',
     redirectTo: 'auth/registro',
     pathMatch: 'full',
+  },
+  {
+    path: 'pasajero/viajes',
+    loadComponent: () =>
+      import('./layouts/pasajero-layout/pasajero-layout').then(
+        (component) => component.PasajeroLayout,
+      ),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'mis-viajes',
+      },
+      {
+        path: 'mis-viajes',
+        loadComponent: () =>
+          import('./pages/pasajero/viajes/mis-viajes/mis-viajes').then(
+            (component) => component.MisViajes,
+          ),
+      },
+      {
+        path: 'buscar',
+        loadComponent: () =>
+          import('./pages/pasajero/viajes/buscar-viaje/buscar-viaje').then(
+            (component) => component.BuscarViaje,
+          ),
+      },
+      {
+        path: ':id',
+        loadComponent: () =>
+          import('./pages/pasajero/viajes/detalle-viaje/detalle-viaje').then(
+            (component) => component.DetalleViaje,
+          ),
+      },
+    ],
   },
   {
     path: 'reportes',
@@ -129,28 +164,19 @@ export const routes: Routes = [
       {
         path: 'sugerencia/:viajeId',
         loadComponent: () =>
-          import(
-            './pages/contribucion/sugerencia-contribucion/sugerencia-contribucion'
-          ).then((component) => component.SugerenciaContribucion),
+          import('./pages/contribucion/sugerencia-contribucion/sugerencia-contribucion').then(
+            (component) => component.SugerenciaContribucion,
+          ),
       },
     ],
   },
   {
     path: 'conductor',
     loadChildren: () =>
-      import('./pages/conductor/conductor.routes').then(
-        (module) => module.CONDUCTOR_ROUTES,
-      ),
-  },
-  {
-    path: 'pasajero',
-    loadChildren: () =>
-      import('./pages/pasajero/pasajero.routes').then(
-        (module) => module.PASAJERO_ROUTES,
-      ),
+      import('./pages/conductor/conductor.routes').then((module) => module.CONDUCTOR_ROUTES),
   },
   {
     path: '**',
-    redirectTo: 'conductor/viajes/1/solicitudes',
+    redirectTo: '/conductor/viajes',
   },
 ];

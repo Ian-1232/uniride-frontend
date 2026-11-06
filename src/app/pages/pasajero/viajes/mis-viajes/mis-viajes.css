@@ -1,0 +1,63 @@
+:host {
+  display: block;
+}
+
+.viajes-page {
+  display: grid;
+  gap: var(--ur-space-32);
+  width: min(100%, var(--ur-content-width));
+  margin-inline: auto;
+}
+
+.page-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ur-space-16);
+}
+
+.page-heading > div {
+  display: grid;
+  gap: var(--ur-space-4);
+}
+
+.breadcrumb,
+.page-heading p {
+  color: var(--ur-color-muted);
+}
+
+/* ur-button no define display y <a> es inline: se necesita para que mida como botón. */
+.heading-action {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.list-section {
+  display: grid;
+  gap: var(--ur-space-16);
+}
+
+.trips-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ur-space-16);
+}
+
+.empty-state {
+  padding: var(--ur-space-24);
+  border: var(--ur-border);
+  border-radius: var(--ur-radius-12);
+  background: var(--ur-color-surface);
+  color: var(--ur-color-muted);
+}
+
+@media (max-width: 767px) {
+  .page-heading {
+    flex-direction: column;
+  }
+
+  .trips-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

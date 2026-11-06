@@ -1,15 +1,17 @@
 <a class="skip-link" href="#contenido">Saltar al contenido</a>
 <aside class="sidebar" aria-label="Panel del conductor">
-  <a class="brand" routerLink="/conductor/viajes/1/solicitudes" queryParamsHandling="merge"><img src="assets/uniride/brand-dot.svg" alt="" />UniRide</a>
+  <a class="brand" routerLink="/conductor/rutas" queryParamsHandling="merge"><img src="assets/uniride/brand-dot.svg" alt="" />UniRide</a>
   <p class="panel-label">Panel del conductor</p>
   <mat-nav-list aria-label="Navegación principal">
     @for (item of menu; track item.icono) {
       @if (item.ruta) {
         <a
           mat-list-item
-          [class.active]="isActive(item)"
           [routerLink]="item.ruta"
-          [attr.aria-current]="isActive(item) ? 'page' : null"
+          queryParamsHandling="merge"
+          routerLinkActive="active"
+          #rla="routerLinkActive"
+          [attr.aria-current]="rla.isActive ? 'page' : null"
         >
           <img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" />
           <span matListItemTitle>{{ item.nombre }}</span>
@@ -25,7 +27,7 @@
   <div class="sidebar-user"><span class="avatar">JP</span><div>Juan Pérez<small>CONDUCTOR</small></div></div>
 </aside>
 <mat-toolbar class="mobile-toolbar">
-  <a class="brand" routerLink="/conductor/viajes/1/solicitudes">
+  <a class="brand" routerLink="/conductor/rutas">
     <img src="assets/uniride/brand-dot.svg" alt="" />UniRide
   </a>
   <span class="role-label">Conductor</span>

@@ -4,6 +4,8 @@ import {
   withComponentInputBinding,
   withInMemoryScrolling,
 } from '@angular/router';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -14,5 +16,7 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
     ),
+    provideAnimationsAsync(),
+    provideNativeDateAdapter(),
   ],
 };
