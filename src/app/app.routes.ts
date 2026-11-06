@@ -1,3 +1,4 @@
+import { conductorGuard, pasajeroGuard } from './core/guards/auth.guard';
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
@@ -26,6 +27,8 @@ export const routes: Routes = [
   },
   {
     path: 'pasajero',
+    canActivate: [pasajeroGuard],
+    canActivateChild: [pasajeroGuard],
     loadComponent: () =>
       import('./layouts/pasajero-layout/pasajero-layout').then(
         (component) => component.PasajeroLayout,
@@ -79,6 +82,8 @@ export const routes: Routes = [
   },
   {
     path: 'reportes',
+    canActivate: [conductorGuard],
+    canActivateChild: [conductorGuard],
     loadComponent: () =>
       import('./layouts/conductor-layout/conductor-layout').then(
         (module) => module.ConductorLayout,
@@ -130,6 +135,8 @@ export const routes: Routes = [
   },
   {
     path: 'compensaciones',
+    canActivate: [conductorGuard],
+    canActivateChild: [conductorGuard],
     loadComponent: () =>
       import('./layouts/conductor-layout/conductor-layout').then(
         (module) => module.ConductorLayout,
@@ -174,6 +181,8 @@ export const routes: Routes = [
   },
   {
     path: 'contribucion',
+    canActivate: [pasajeroGuard],
+    canActivateChild: [pasajeroGuard],
     loadComponent: () =>
       import('./pages/contribucion/contribucion-shell/contribucion-shell').then(
         (component) => component.ContribucionShell,
@@ -190,11 +199,13 @@ export const routes: Routes = [
   },
   {
     path: 'conductor',
+    canActivate: [conductorGuard],
+    canActivateChild: [conductorGuard],
     loadChildren: () =>
       import('./pages/conductor/conductor.routes').then((module) => module.CONDUCTOR_ROUTES),
   },
   {
     path: '**',
-    redirectTo: '/conductor/viajes',
+    redirectTo: '/home',
   },
 ];

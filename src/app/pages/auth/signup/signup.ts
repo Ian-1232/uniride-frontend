@@ -1,6 +1,7 @@
+import { authError, retrySeconds } from '../../../core/services/auth-error';
 import { Component, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -52,16 +53,16 @@ export class SignupComponent implements OnDestroy {
   private cooldownInterval: ReturnType<typeof setInterval> | null = null;
 
   signupForm = new FormGroup({
-    nombre: new FormControl('', [Validators.required, Validators.minLength(2)]),
-    apellidos: new FormControl('', [Validators.required, Validators.minLength(2)]),
+    nombre: new FormControl('', [Validators.required, Validators.pattern(/\S/)]),
+    apellidos: new FormControl('', [Validators.required, Validators.pattern(/\S/)]),
     telefono: new FormControl('', [
       Validators.required,
-      Validators.pattern(/^(\+51\s?)?9\d{2}[-\s]?\d{3}[-\s]?\d{3}$/)
+      Validators.pattern(/^\+?[0-9][0-9 ()-]{6,24}$/)
     ]),
     correo: new FormControl('', [
       Validators.required,
       Validators.email,
-      Validators.pattern(/^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?edu(\.pe)?$/)
+      Validators.pattern(/^[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+edu(?:\.[A-Za-z]{2})?$/)
     ]),
     contrasena: new FormControl('', [
       Validators.required,
@@ -72,6 +73,15 @@ export class SignupComponent implements OnDestroy {
     aceptaTerminos: new FormControl(false, [Validators.requiredTrue])
   });
 
+  constructor() {
+    const params = inject(ActivatedRoute).snapshot.queryParamMap;
+    const correo = params.get('correo');
+    if (params.get('verificar') === 'true' && correo) {
+      this.signupForm.controls.correo.setValue(correo);
+      this.showOtpModal = true;
+    }
+  }
+
   ngOnDestroy(): void {
     this.clearCooldownTimer();
   }
@@ -79,7 +89,6 @@ export class SignupComponent implements OnDestroy {
   selectRole(role: 'CONDUCTOR' | 'PASAJERO'): void {
     this.selectedRole = role;
     this.signupForm.patchValue({ rol: role });
-    this.authService.setRole(role);
     this.cdr.detectChanges();
   }
 
@@ -100,16 +109,14 @@ export class SignupComponent implements OnDestroy {
   }
 
   closeOtpModal(): void {
+    if (this.isVerifying || this.isResending) return;
     this.showOtpModal = false;
+    this.otpDigits = ['', '', '', '', '', ''];
     this.otpError = '';
     this.resendSuccessMessage = '';
     this.cdr.detectChanges();
   }
 
-  fillTestCode(): void {
-    this.otpDigits = ['1', '2', '3', '4', '5', '6'];
-    this.cdr.detectChanges();
-  }
 
   submitRegistro(): void {
     if (this.signupForm.invalid || this.isSubmitting) {
@@ -136,40 +143,15 @@ export class SignupComponent implements OnDestroy {
     this.authService.registro(req).subscribe({
       next: () => {
         this.isSubmitting = false;
+        this.signupForm.controls.contrasena.reset();
         this.openOtpModal();
         this.startResendCooldown(60);
         this.cdr.detectChanges();
       },
       error: (err: HttpErrorResponse) => {
         this.isSubmitting = false;
-        // Si el backend no está disponible (status 0: sin PostgreSQL/servidor apagado),
-        // se activa el modo demostración para no bloquear las pruebas visuales del usuario.
-        if (err.status === 0 || err.status === 504 || err.status === 502) {
-          this.authService.setSession({
-            nombre: req.nombre,
-            apellidos: req.apellidos,
-            correo: req.correo,
-            rol: req.rol,
-            telefono: req.telefono,
-            cuentaVerificada: false,
-          }, 'demo-token-offline');
-          this.openOtpModal();
-          this.otpDigits = ['1', '2', '3', '4', '5', '6'];
-          this.resendSuccessMessage = 'Modo Demo (servidor desconectado): Código prellenado 123456.';
-          this.startResendCooldown(60);
-        } else {
-          let errorMsg = err.error?.mensaje || 'No se pudo completar el registro. Verifica los datos ingresados.';
-          if (err.error?.campos && typeof err.error.campos === 'object') {
-            const fieldErrors = Object.values(err.error.campos) as string[];
-            if (fieldErrors.length > 0) {
-              errorMsg = fieldErrors.join('. ');
-            }
-          }
-          this.registroError = errorMsg;
-          if (err.status === 409 || errorMsg.toLowerCase().includes('registrado')) {
-            this.showUnverifiedPrompt = true;
-          }
-        }
+        this.registroError = authError(err, 'No se pudo completar el registro. Verifica los datos ingresados.');
+        this.showUnverifiedPrompt = err.status === 409;
         this.cdr.detectChanges();
       }
     });
@@ -206,7 +188,7 @@ export class SignupComponent implements OnDestroy {
 
   verificarOtp(): void {
     const codigo = this.getOtpCode();
-    if (codigo.length !== 6 || this.isVerifying) {
+    if (!/^\d{6}$/.test(codigo) || this.isVerifying || this.isResending) {
       this.otpError = 'Ingresa el código completo de 6 dígitos.';
       return;
     }
@@ -223,26 +205,21 @@ export class SignupComponent implements OnDestroy {
         this.isVerifying = false;
         this.closeOtpModal();
         this.cdr.detectChanges();
-        this.router.navigate(['/auth/perfil']);
+        this.otpDigits = ['', '', '', '', '', ''];
+        this.signupForm.controls.contrasena.reset();
+        this.router.navigate(['/auth/login'], { queryParams: { verificado: 'true' } });
       },
       error: (err: HttpErrorResponse) => {
         this.isVerifying = false;
-        if (err.status === 0 || err.status === 504 || err.status === 502) {
-          // Backend offline -> Verificación demo simulada
-          this.authService.setSession({ cuentaVerificada: true });
-          this.closeOtpModal();
-          this.cdr.detectChanges();
-          this.router.navigate(['/auth/perfil']);
-        } else {
-          this.otpError = err.error?.mensaje || 'Código de verificación incorrecto o expirado.';
-        }
+        this.otpError = authError(err, 'Código incorrecto o expirado. Solicita uno nuevo si es necesario.');
+        if (err.status === 429) this.startResendCooldown(retrySeconds(err));
         this.cdr.detectChanges();
       }
     });
   }
 
   reenviarCodigo(): void {
-    if (this.resendCooldown > 0 || this.isResending) return;
+    if (this.resendCooldown > 0 || this.isResending || this.isVerifying) return;
 
     const correo = this.signupForm.get('correo')?.value?.trim().toLowerCase();
     if (!correo) return;
@@ -261,12 +238,8 @@ export class SignupComponent implements OnDestroy {
       },
       error: (err: HttpErrorResponse) => {
         this.isResending = false;
-        if (err.status === 0 || err.status === 504 || err.status === 502) {
-          this.resendSuccessMessage = 'Modo Demo: Nuevo código enviado (simulado: 123456).';
-          this.startResendCooldown(60);
-        } else {
-          this.otpError = err.error?.mensaje || 'No se pudo reenviar el código. Intenta nuevamente.';
-        }
+        this.otpError = authError(err, 'No se pudo reenviar el código. Intenta nuevamente.');
+        if (err.status === 429) this.startResendCooldown(retrySeconds(err));
         this.cdr.detectChanges();
       }
     });

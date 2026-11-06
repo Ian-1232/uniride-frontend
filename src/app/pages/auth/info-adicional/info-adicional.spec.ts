@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { InfoAdicionalComponent } from './info-adicional';
@@ -8,7 +9,7 @@ describe('InfoAdicionalComponent (US05 - Completar Información Adicional)', () 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [InfoAdicionalComponent],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), provideHttpClient()]
     }).compileComponents();
 
     const fixture = TestBed.createComponent(InfoAdicionalComponent);

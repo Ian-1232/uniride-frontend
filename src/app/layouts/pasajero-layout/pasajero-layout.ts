@@ -19,8 +19,8 @@ export class PasajeroLayout {
     { nombre: 'Dashboard', icono: 'dashboard', ruta: '/pasajero/dashboard' },
     { nombre: 'Rutas', icono: 'rutas' },
     { nombre: 'Viajes', icono: 'viajes', ruta: '/pasajero/viajes' },
-    { nombre: 'Compensaciones', icono: 'compensaciones', ruta: '/compensaciones' },
-    { nombre: 'Reportes', icono: 'reportes', ruta: '/reportes' },
+    { nombre: 'Compensaciones', icono: 'compensaciones' },
+    { nombre: 'Reportes', icono: 'reportes' },
     { nombre: 'Horarios', icono: 'horarios' },
     { nombre: 'Configuración', icono: 'configuracion' },
   ];

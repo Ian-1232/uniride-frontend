@@ -1,3 +1,6 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { AuthService } from './core/services/auth.service';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -71,9 +74,25 @@ describe('Coordinación de viajes', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes, withComponentInputBinding()),
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     });
+    localStorage.clear(); sessionStorage.clear();
+    authenticate('CONDUCTOR');
   });
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
+    localStorage.clear(); sessionStorage.clear();
+  });
+  function authenticate(rol: 'CONDUCTOR' | 'PASAJERO') {
+    const auth = TestBed.inject(AuthService);
+    auth.login({ correo: 'test@upc.edu.pe', contrasena: 'TestPassword1!' }).subscribe();
+    const token = 'eyJhbGciOiJIUzI1NiJ9.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) + '.signature';
+    TestBed.inject(HttpTestingController).expectOne('/api/auth/login').flush({
+      token, mensaje: 'OK', usuario: { id: 1, correo: 'test@upc.edu.pe', nombre: 'Test', apellidos: 'User', rol, cuentaVerificada: true },
+    });
+  }
 
   it('muestra el sidebar estándar de conductor en reportes y compensaciones', async () => {
     const h = await RouterTestingHarness.create();
@@ -102,6 +121,7 @@ describe('Coordinación de viajes', () => {
       '/pasajero/viajes/1',
       '/conductor/viajes',
     ]) {
+      authenticate(path.startsWith('/pasajero') || path.startsWith('/contribucion') ? 'PASAJERO' : 'CONDUCTOR');
       await h.navigateByUrl(path);
       expect(h.routeNativeElement?.querySelector('h1'), path).toBeTruthy();
     }

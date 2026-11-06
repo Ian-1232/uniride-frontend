@@ -10,16 +10,8 @@ export interface UsuarioRespuesta {
   cuentaVerificada?: boolean;
 }
 
-export interface UserSession {
-  id?: number;
-  nombre: string;
-  apellidos?: string;
+export interface UserSession extends UsuarioRespuesta {
   iniciales: string;
-  correo: string;
-  rol: RoleType;
-  telefono?: string;
-  token?: string;
-  cuentaVerificada?: boolean;
 }
 
 export interface LoginRequest {
@@ -51,9 +43,9 @@ export interface ReenviarCodigoRequest {
 }
 
 export interface AuthRespuesta {
-  token?: string;
+  token?: string | null;
   mensaje: string;
-  usuario?: UsuarioRespuesta;
+  usuario?: UsuarioRespuesta | null;
 }
 
 /** Alias para compatibilidad hacia atrás */

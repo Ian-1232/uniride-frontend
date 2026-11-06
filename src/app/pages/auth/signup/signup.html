@@ -40,7 +40,7 @@
       </div>
 
       <mat-card class="form-card">
-        <form [formGroup]="signupForm" class="signup-form">
+        <form id="signup-form" [formGroup]="signupForm" class="signup-form" (ngSubmit)="submitRegistro()">
           <!-- FILA NOMBRES Y APELLIDOS -->
           <div class="two-column-row">
             <div class="field-item">
@@ -278,14 +278,16 @@
           </div>
         }
 
+        @if (showUnverifiedPrompt) {
+          <button type="button" mat-stroked-button (click)="openOtpModal()">Verificar correo o reenviar código</button>
+        }
         <!-- BOTÓN DE AVANCE A VERIFICACIÓN OTP -->
         <button
           mat-flat-button
-          type="button"
+          type="submit" form="signup-form"
           class="btn-primary btn-submit-role"
           [class.is-submitting]="isSubmitting"
           [disabled]="signupForm.invalid || isSubmitting"
-          (click)="submitRegistro()"
         >
           <span class="btn-content">
             @if (isSubmitting) {
@@ -311,7 +313,7 @@
 
         <h3 class="otp-title">Verifica tu correo institucional</h3>
         <p class="otp-desc">
-          Hemos enviado un código de seguridad de 6 dígitos a:
+          Ingresa el código de 6 dígitos enviado a tu correo, o solicita uno nuevo:
           <br /><strong>{{ signupForm.get('correo')?.value }}</strong>
         </p>
 
@@ -354,7 +356,7 @@
           <button
             type="button"
             class="btn-resend"
-            [disabled]="resendCooldown > 0 || isResending"
+            [disabled]="resendCooldown > 0 || isResending || isVerifying"
             (click)="reenviarCodigo()"
           >
             {{ resendCooldown > 0 ? ('Reenviar código (' + formatCooldown(resendCooldown) + ')') : (isResending ? 'Reenviando...' : 'Reenviar código') }}
@@ -370,14 +372,14 @@
             type="button"
             class="btn-primary"
             [class.is-submitting]="isVerifying"
-            [disabled]="isVerifying || getOtpCode().length !== 6"
+            [disabled]="isVerifying || isResending || getOtpCode().length !== 6"
             (click)="verificarOtp()"
           >
             <span class="btn-content">
               @if (isVerifying) {
                 <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
               }
-              <span>Verificar y Continuar a Perfil</span>
+              <span>Verificar correo e iniciar sesión</span>
               @if (!isVerifying) {
                 <mat-icon iconPositionEnd>arrow_forward</mat-icon>
               }
