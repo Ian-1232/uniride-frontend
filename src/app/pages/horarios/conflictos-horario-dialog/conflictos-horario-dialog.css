@@ -1,0 +1,21 @@
+.conflict {
+  border-top: var(--ur-border);
+  padding-top: var(--ur-space-16);
+  margin-top: var(--ur-space-16);
+}
+h3 {
+  font-size: var(--ur-type-body-size);
+  color: var(--ur-color-muted);
+}
+p {
+  overflow-wrap: anywhere;
+}
+mat-dialog-content {
+  max-height: 65vh;
+}
+@media (max-width: 600px) {
+  button {
+    width: 100%;
+    min-height: var(--ur-control-default);
+  }
+}

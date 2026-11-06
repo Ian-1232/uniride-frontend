@@ -1,0 +1,55 @@
+<h2 mat-dialog-title>Revisa los horarios</h2>
+<mat-dialog-content>
+  @if (data.conflictos.length || data.mensajeServidor) {
+    <p>
+      No puede haber superposiciones de horarios. Los cursos con conflicto no se agregaron; los que
+      sí se confirmaron se conservaron.
+    </p>
+  }
+  @for (conflicto of data.conflictos; track $index) {
+    <section class="conflict">
+      <h3>Curso que intentas agregar</h3>
+      <p>
+        <strong>{{ conflicto.nuevo.nombre }}</strong
+        ><br />{{ dia(conflicto.nuevo.dia) }} · {{ hora(conflicto.nuevo.horaInicio) }}–{{
+          hora(conflicto.nuevo.horaFin)
+        }}
+      </p>
+      <h3>Se superpone con</h3>
+      @for (curso of conflicto.existentes; track curso.id) {
+        <p>
+          <strong>{{ curso.nombre }}</strong
+          ><br />{{ dia(curso.dia) }} · {{ hora(curso.horaInicio) }}–{{ hora(curso.horaFin) }}
+        </p>
+      }
+      @if (!conflicto.existentes.length) {
+        <p>No se pudo recuperar el curso existente actualizado.</p>
+        @if (conflicto.mensajeServidor) {
+          <p>{{ conflicto.mensajeServidor }}</p>
+        }
+      }
+    </section>
+  }
+  @if (data.detalleIncompleto && data.mensajeServidor) {
+    <p>El servidor no devolvió todos los detalles del conflicto. Mensaje recibido:</p>
+    <p>{{ data.mensajeServidor }}</p>
+  }
+  @if (data.fueraDeFranja?.length) {
+    <section class="conflict">
+      <h3>Cursos del horario fuera de la franja 06:00–23:00</h3>
+      <p>
+        La importación terminó y el horario contiene estos cursos. Revísalos en el listado; no se
+        eliminaron automáticamente.
+      </p>
+      @for (curso of data.fueraDeFranja; track curso.id) {
+        <p>
+          <strong>{{ curso.nombre }}</strong
+          ><br />{{ dia(curso.dia) }} · {{ hora(curso.horaInicio) }}–{{ hora(curso.horaFin) }}
+        </p>
+      }
+    </section>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end"
+  ><button mat-flat-button type="button" mat-dialog-close>Entendido</button></mat-dialog-actions
+>

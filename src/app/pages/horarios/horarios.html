@@ -1,0 +1,275 @@
+<article class="horarios-page">
+  <header class="page-heading">
+    <div>
+      <h1>Horarios académicos</h1>
+      <p>Organiza tus cursos y sus horas de clase.</p>
+    </div>
+  </header>
+  @if (notice()) {
+    <p role="status" class="notice">{{ notice() }}</p>
+  }
+  <section class="schedule-section" aria-labelledby="cursos-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="cursos-title">Mis cursos</h2>
+        <p>Consulta los cursos de tu horario académico.</p>
+      </div>
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="lista().status === 'loading' || blocked()"
+        (click)="load()"
+      >
+        Actualizar lista
+      </button>
+    </div>
+    @if (lista().status === 'loading') {
+      <app-reportes-state-panel
+        role="status"
+        title="Cargando cursos"
+        message="Estamos consultando tu horario académico."
+        [loading]="true"
+      />
+    } @else if (lista().status === 'error') {
+      <app-reportes-state-panel
+        role="alert"
+        title="No se pudo cargar el horario"
+        [message]="lista().message"
+        tone="danger"
+        actionLabel="Reintentar"
+        (action)="load()"
+      />
+    } @else if (lista().data; as cursosActuales) {
+      @if (!cursosActuales.length) {
+        <p class="empty-state">
+          Aún no tienes cursos registrados. Agrega tus cursos o importa tu horario.
+        </p>
+      }
+      <mat-accordion multi class="week-accordion">
+        @for (grupo of gruposDia(); track grupo.dia) {
+          <mat-expansion-panel>
+            <mat-expansion-panel-header
+              ><mat-panel-title>{{ grupo.dia }}</mat-panel-title
+              ><mat-panel-description
+                >{{ grupo.cursos.length }} curso(s)</mat-panel-description
+              ></mat-expansion-panel-header
+            >
+            <ng-template matExpansionPanelContent>
+              @if (grupo.cursos.length) {
+                <ul class="courses-list">
+                  @for (curso of grupo.cursos; track curso.id) {
+                    <li class="course-row">
+                      <div>
+                        <h3>{{ curso.nombre }}</h3>
+                        <p>
+                          <span class="time"
+                            >{{ hora(curso.horaInicio) }}–{{ hora(curso.horaFin) }}</span
+                          >
+                        </p>
+                      </div>
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        class="delete-action"
+                        [disabled]="blocked()"
+                        [attr.aria-label]="'Eliminar curso ' + curso.nombre"
+                        (click)="eliminar(curso)"
+                      >
+                        Eliminar
+                      </button>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p>No tienes cursos para este día.</p>
+              }
+            </ng-template>
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+      <p class="list-total">
+        {{ cursosActuales.length }} curso(s) en tu horario semanal. Ordenados de más temprano a más
+        tarde.
+      </p>
+    }
+  </section>
+  <div class="entry-grid">
+    <section class="schedule-section" aria-labelledby="manual-title">
+      <h2 id="manual-title">Registrar cursos</h2>
+      <p>
+        Agrega uno o varios cursos. Se conservarán los que se guarden correctamente y podrás
+        corregir los conflictos.
+      </p>
+      <p>Franja permitida: 06:00 a 23:00.</p>
+      @if (manualError()) {
+        <app-reportes-state-panel
+          role="alert"
+          title="No se pudieron registrar los cursos"
+          [message]="manualError()"
+          tone="danger"
+        />
+      }
+      @if (mutation() === 'registro') {
+        <p role="status">Guardando cursos…</p>
+      }
+      <form [formGroup]="form" (ngSubmit)="guardar()" [attr.aria-busy]="mutation() === 'registro'">
+        <div formArrayName="cursos" class="course-forms">
+          @for (row of cursos.controls; track row; let i = $index) {
+            <fieldset [formGroupName]="i">
+              <legend>Curso {{ i + 1 }}</legend>
+              <mat-form-field appearance="outline"
+                ><mat-label>Nombre del curso</mat-label
+                ><input matInput required formControlName="nombre" /><mat-error
+                  >Ingresa el nombre del curso.</mat-error
+                ></mat-form-field
+              >
+              <mat-form-field appearance="outline"
+                ><mat-label>Día</mat-label
+                ><mat-select required formControlName="dia">
+                  @for (d of dias; track d) {
+                    <mat-option [value]="d">{{ d }}</mat-option>
+                  }</mat-select
+                ><mat-error>Selecciona un día de la semana.</mat-error></mat-form-field
+              >
+              <div class="time-fields">
+                <mat-form-field appearance="outline"
+                  ><mat-label>Hora de inicio</mat-label
+                  ><input matInput formControlName="horaInicio" placeholder="HH:mm" /><mat-hint
+                    >HH:mm o HH:mm:ss, formato 24 h.</mat-hint
+                  ><mat-error>Ingresa una hora válida.</mat-error></mat-form-field
+                >
+                <mat-form-field appearance="outline"
+                  ><mat-label>Hora de fin</mat-label
+                  ><input matInput formControlName="horaFin" placeholder="HH:mm" /><mat-error
+                    >Ingresa una hora válida.</mat-error
+                  ></mat-form-field
+                >
+              </div>
+              @if (row.hasError('franja') && row.touched) {
+                <p role="alert" class="field-error">
+                  El curso debe empezar a partir de las 06:00 y terminar como máximo a las 23:00.
+                </p>
+              }
+              @if (row.hasError('rango') && row.touched) {
+                <p role="alert" class="field-error">La hora de fin debe ser posterior al inicio.</p>
+              }
+              <button
+                mat-button
+                type="button"
+                [disabled]="blocked() || cursos.length === 1"
+                (click)="quitarFila(i)"
+              >
+                Quitar fila {{ i + 1 }}
+              </button>
+            </fieldset>
+          }
+        </div>
+        <div class="form-actions">
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="blocked() || cursos.length >= 500"
+            (click)="agregarFila()"
+          >
+            Agregar otro curso</button
+          ><button
+            mat-flat-button
+            type="submit"
+            [disabled]="blocked() || form.invalid || lista().status === 'loading'"
+          >
+            {{ mutation() === 'registro' ? 'Guardando…' : 'Guardar cursos' }}
+          </button>
+        </div>
+      </form>
+    </section>
+    <section class="schedule-section import-section" aria-labelledby="importar-title">
+      <h2 id="importar-title">Importar horario</h2>
+      <p>
+        Selecciona un archivo PDF o TXT de hasta 1 MB. Revisa los cursos después de importarlos.
+      </p>
+      <p class="hint">
+        Revisa antes de subir que las clases estén entre las 06:00 y las 23:00. En los archivos,
+        esta franja se comprueba al revisar el resultado y no bloquea la carga.
+      </p>
+      <label for="archivo-horario">Archivo de horario</label
+      ><input
+        id="archivo-horario"
+        type="file"
+        accept=".pdf,.txt,application/pdf,text/plain"
+        [disabled]="blocked()"
+        (change)="seleccionarArchivo($event)"
+        aria-describedby="archivo-ayuda"
+      />
+      <p id="archivo-ayuda" class="hint">
+        El TXT debe usar codificación UTF-8. En PDF, el reconocimiento depende de la legibilidad del
+        documento.
+      </p>
+      @if (archivo(); as file) {
+        <p class="selected-file">Seleccionado: {{ file.name }}</p>
+      }
+      <details>
+        <summary>Cómo preparar un TXT</summary>
+        <p>
+          Escribe el día en una línea y, debajo, cada curso con su intervalo de horas. Repite para
+          los demás días.
+        </p>
+        <pre aria-label="Ejemplo de formato TXT">
+Lunes
+Nombre del curso 08:00 - 10:00</pre>
+      </details>
+      @if (archivoError()) {
+        <app-reportes-state-panel
+          role="alert"
+          title="No se pudo importar"
+          [message]="archivoError()"
+          tone="danger"
+        />
+      }
+      @if (mutation() === 'archivo') {
+        <app-reportes-state-panel
+          role="status"
+          title="Procesando archivo"
+          message="La lectura de un PDF puede tardar. Espera antes de volver a enviar."
+          [loading]="true"
+        />
+      }
+      @if (importacion(); as result) {
+        <div class="import-result" role="status">
+          <h3>
+            {{
+              result.cursosImportados > 0
+                ? 'Importación completada'
+                : 'Archivo procesado sin cursos nuevos'
+            }}
+          </h3>
+          <p>{{ result.mensaje }}</p>
+          <dl>
+            <div>
+              <dt>Archivo</dt>
+              <dd>{{ result.nombreArchivo }}</dd>
+            </div>
+            <div>
+              <dt>Cursos importados</dt>
+              <dd>{{ result.cursosImportados }}</dd>
+            </div>
+            <div>
+              <dt>Omitidos por conflicto</dt>
+              <dd>{{ result.cursosOmitidos }}</dd>
+            </div>
+          </dl>
+          <p class="hint">
+            Los duplicados ignorados por el servidor no forman parte de los omitidos por conflicto.
+          </p>
+        </div>
+      }
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="blocked() || !archivoValido()"
+        (click)="importar()"
+      >
+        {{ mutation() === 'archivo' ? 'Importando…' : 'Importar archivo' }}
+      </button>
+    </section>
+  </div>
+</article>
