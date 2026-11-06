@@ -8,7 +8,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Ruta } from '../../../../models/ruta.model';
+import { Ruta } from '../../../../core/models/ruta.model';
 
 // shortcut: datos hardcodeados del Figma M2.5; sustituir por RutasService cuando haya backend
 const RUTA: Ruta = {
@@ -26,7 +26,16 @@ const RUTA: Ruta = {
   selector: 'app-generar-viaje',
   templateUrl: './generar-viaje.html',
   styleUrl: './generar-viaje.css',
-  imports: [RouterLink, ReactiveFormsModule, MatButtonModule, MatCardModule, MatDatepickerModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+  ],
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
 })
 export class GenerarViaje {
@@ -43,10 +52,7 @@ export class GenerarViaje {
     fecha: new FormControl<Date | null>(null, [Validators.required]),
     hora: new FormControl('07:30', {
       nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/),
-      ],
+      validators: [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)],
     }),
   });
 

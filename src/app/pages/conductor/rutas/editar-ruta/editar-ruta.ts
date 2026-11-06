@@ -6,7 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Ruta } from '../../../../models/ruta.model';
+import { Ruta } from '../../../../core/models/ruta.model';
 
 // shortcut: datos hardcodeados del Figma M2.3; sustituir por RutasService.obtenerRuta cuando haya backend
 const RUTA: Ruta = {
@@ -24,7 +24,15 @@ const RUTA: Ruta = {
   selector: 'app-editar-ruta',
   templateUrl: './editar-ruta.html',
   styleUrl: './editar-ruta.css',
-  imports: [RouterLink, ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+  ],
 })
 export class EditarRuta {
   private readonly fb = inject(FormBuilder);
@@ -35,8 +43,14 @@ export class EditarRuta {
 
   readonly form = this.fb.group({
     origen: new FormControl(RUTA.origen, { nonNullable: true, validators: [Validators.required] }),
-    capacidad: new FormControl<number | null>(RUTA.capacidadMaxima, [Validators.required, Validators.min(1)]),
-    puntos: new FormControl(RUTA.puntosReferencia, { nonNullable: true, validators: [Validators.required] }),
+    capacidad: new FormControl<number | null>(RUTA.capacidadMaxima, [
+      Validators.required,
+      Validators.min(1),
+    ]),
+    puntos: new FormControl(RUTA.puntosReferencia, {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     zonas: new FormControl(RUTA.zonasSinParada ?? '', { nonNullable: true }),
     nota: new FormControl(RUTA.notaContribucion ?? '', { nonNullable: true }),
   });
