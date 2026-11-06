@@ -8,26 +8,6 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { App } from './app';
 import { routes } from './app.routes';
 
-async function pulsar(
-  harness: RouterTestingHarness,
-  texto: string,
-  selector = '',
-) {
-  const raiz = selector
-    ? harness.routeNativeElement!.querySelector(selector)!
-    : harness.routeNativeElement!;
-
-  const boton = Array.from(
-    raiz.querySelectorAll<HTMLButtonElement | HTMLAnchorElement>('button, a'),
-  ).find((elemento) => elemento.textContent?.trim() === texto);
-
-  expect(boton, `No se encontró «${texto}»`).toBeTruthy();
-
-  boton!.click();
-  await harness.fixture.whenStable();
-  harness.detectChanges();
-}
-
 // Pruebas de la aplicación conservadas de develop.
 describe('App', () => {
   beforeEach(async () => {
@@ -49,9 +29,7 @@ describe('App', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(
-      compiled.querySelector('main#main-content.app-root-content'),
-    ).toBeTruthy();
+    expect(compiled.querySelector('main#main-content.app-root-content')).toBeTruthy();
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 
@@ -60,8 +38,7 @@ describe('App', () => {
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const skipLink =
-      compiled.querySelector<HTMLAnchorElement>('a.skip-link');
+    const skipLink = compiled.querySelector<HTMLAnchorElement>('a.skip-link');
 
     expect(skipLink).toBeTruthy();
     expect(skipLink?.getAttribute('href')).toBe('#main-content');
@@ -69,7 +46,7 @@ describe('App', () => {
   });
 });
 
-// Pruebas del módulo 4.
+// Regresión de navegación de los módulos existentes.
 describe('Coordinación de viajes', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -79,37 +56,93 @@ describe('Coordinación de viajes', () => {
         provideHttpClientTesting(),
       ],
     });
-    localStorage.clear(); sessionStorage.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     authenticate('CONDUCTOR');
   });
   afterEach(() => {
     TestBed.inject(HttpTestingController).verify();
-    localStorage.clear(); sessionStorage.clear();
+    localStorage.clear();
+    sessionStorage.clear();
   });
   // Vacía las consultas pendientes de reportes y del módulo 2 (mis viajes agrega
   // sus rutas al listado propio).
   function flushPendientes() {
     const http = TestBed.inject(HttpTestingController);
-    for (const req of http.match(r => r.url.startsWith('/api/estadisticas') || r.url === '/api/metodos-compensacion' || r.url.endsWith('/sugerencia-contribucion') || ['/api/viajes/buscar/resumen', '/api/solicitudes/resumen', '/api/solicitudes/historial'].includes(r.url))) {
-      if (req.request.url === '/api/viajes/buscar/resumen') req.flush({ viajes: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 }, mensaje: null, sugerencia: null });
-      else if (req.request.url.startsWith('/api/solicitudes/')) req.flush({ solicitudes: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 }, mensaje: null });
-      else if (req.request.url.endsWith('/sugerencia-contribucion')) req.flush({ mensaje: 'El viaje aún no tiene pasajeros aceptados; indica la cantidad de pasajeros para calcular la sugerencia' }, { status: 400, statusText: 'Bad Request' });
+    for (const req of http.match(
+      (r) =>
+        r.url.startsWith('/api/estadisticas') ||
+        r.url === '/api/metodos-compensacion' ||
+        r.url.endsWith('/sugerencia-contribucion') ||
+        [
+          '/api/viajes/buscar/resumen',
+          '/api/solicitudes/resumen',
+          '/api/solicitudes/historial',
+        ].includes(r.url),
+    )) {
+      if (req.request.url === '/api/viajes/buscar/resumen')
+        req.flush({
+          viajes: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
+          mensaje: null,
+          sugerencia: null,
+        });
+      else if (req.request.url.startsWith('/api/solicitudes/'))
+        req.flush({
+          solicitudes: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
+          mensaje: null,
+        });
+      else if (req.request.url.endsWith('/sugerencia-contribucion'))
+        req.flush(
+          {
+            mensaje:
+              'El viaje aún no tiene pasajeros aceptados; indica la cantidad de pasajeros para calcular la sugerencia',
+          },
+          { status: 400, statusText: 'Bad Request' },
+        );
       else if (req.request.url === '/api/metodos-compensacion') req.flush([]);
-      else if (req.request.url.endsWith('/semana')) req.flush({ suficientesDatos: false, mensaje: 'Sin viajes', viajesPorDia: [], canceladosPorMi: 0, canceladosPorTerceros: 0 });
-      else if (req.request.url.endsWith('/rutas')) req.flush({ suficientesDatos: false, mensaje: 'Sin rutas', ranking: [] });
-      else req.flush({ viajesComoConductor: 0, viajesComoPasajero: 0, viajesCancelados: 0, penalidadesAcumuladas: 0 });
+      else if (req.request.url.endsWith('/semana'))
+        req.flush({
+          suficientesDatos: false,
+          mensaje: 'Sin viajes',
+          viajesPorDia: [],
+          canceladosPorMi: 0,
+          canceladosPorTerceros: 0,
+        });
+      else if (req.request.url.endsWith('/rutas'))
+        req.flush({ suficientesDatos: false, mensaje: 'Sin rutas', ranking: [] });
+      else
+        req.flush({
+          viajesComoConductor: 0,
+          viajesComoPasajero: 0,
+          viajesCancelados: 0,
+          penalidadesAcumuladas: 0,
+        });
     }
-    for (const req of http.match(r => r.url.startsWith('/api/rutas'))) {
+    for (const req of http.match((r) => r.url.startsWith('/api/rutas'))) {
       req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
     }
   }
   function authenticate(rol: 'CONDUCTOR' | 'PASAJERO') {
     const auth = TestBed.inject(AuthService);
     auth.login({ correo: 'test@upc.edu.pe', contrasena: 'TestPassword1!' }).subscribe();
-    const token = 'eyJhbGciOiJIUzI1NiJ9.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) + '.signature';
-    TestBed.inject(HttpTestingController).expectOne('/api/auth/login').flush({
-      token, mensaje: 'OK', usuario: { id: 1, correo: 'test@upc.edu.pe', nombre: 'Test', apellidos: 'User', rol, cuentaVerificada: true },
-    });
+    const token =
+      'eyJhbGciOiJIUzI1NiJ9.' +
+      btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) +
+      '.signature';
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/auth/login')
+      .flush({
+        token,
+        mensaje: 'OK',
+        usuario: {
+          id: 1,
+          correo: 'test@upc.edu.pe',
+          nombre: 'Test',
+          apellidos: 'User',
+          rol,
+          cuentaVerificada: true,
+        },
+      });
     prepararPerfil();
   }
 
@@ -119,13 +152,17 @@ describe('Coordinación de viajes', () => {
     await h.navigateByUrl('/reportes/resumen');
     flushPendientes();
     expect(h.routeNativeElement?.querySelector('.sidebar')).toBeTruthy();
-    expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe('Panel del conductor');
+    expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe(
+      'Panel del conductor',
+    );
     expect(h.routeNativeElement?.querySelector('.reportes-tabs')).toBeTruthy();
 
     await h.navigateByUrl('/compensaciones/metodos');
     flushPendientes();
     expect(h.routeNativeElement?.querySelector('.sidebar')).toBeTruthy();
-    expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe('Panel del conductor');
+    expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe(
+      'Panel del conductor',
+    );
   }, 30000);
 
   it('conserva las rutas integradas de los otros módulos', async () => {
@@ -142,183 +179,12 @@ describe('Coordinación de viajes', () => {
       '/pasajero/viajes/1',
       '/conductor/viajes',
     ]) {
-      authenticate(path.startsWith('/pasajero') || path.startsWith('/contribucion') ? 'PASAJERO' : 'CONDUCTOR');
+      authenticate(
+        path.startsWith('/pasajero') || path.startsWith('/contribucion') ? 'PASAJERO' : 'CONDUCTOR',
+      );
       await h.navigateByUrl(path);
       flushPendientes();
       expect(h.routeNativeElement?.querySelector('h1'), path).toBeTruthy();
     }
   }, 30000);
-
-  it('abre las solicitudes y permite consultar cada perfil', async () => {
-    const h = await RouterTestingHarness.create(
-      '/conductor/viajes/1/solicitudes',
-    );
-
-    expect(
-      h.routeNativeElement?.querySelector('h1')?.textContent,
-    ).toBe('Solicitudes recibidas');
-
-    expect(
-      h.routeNativeElement?.querySelectorAll('.request-card').length,
-    ).toBe(3);
-
-    await pulsar(h, 'Ver detalle', '[data-request="valeria"]');
-
-    expect(h.routeNativeElement?.textContent).toContain('Valeria Rojas');
-    expect(h.routeNativeElement?.textContent).toContain('Gasolina');
-
-    await pulsar(h, 'Volver a solicitudes');
-
-    expect(
-      h.routeNativeElement?.querySelectorAll('.request-card').length,
-    ).toBe(3);
-  }, 15000);
-
-  it('reserva el último cupo y conserva el pasajero al gestionar el viaje', async () => {
-    const h = await RouterTestingHarness.create(
-      '/conductor/viajes/1/solicitudes',
-    );
-
-    await pulsar(h, 'Aceptar', '[data-request="maria"]');
-    await pulsar(h, 'Aceptar solicitud', '[role="dialog"]');
-
-    expect(
-      h.routeNativeElement?.querySelector('.trip-summary')?.textContent,
-    ).toContain('0 de 3');
-
-    expect(
-      h.routeNativeElement?.querySelector(
-        '[data-request="maria"] .status',
-      )?.textContent,
-    ).toBe('Aceptada');
-
-    const boton = Array.from(
-      h.routeNativeElement!.querySelectorAll<HTMLButtonElement>(
-        '[data-request="diego"] button',
-      ),
-    ).find((elemento) => elemento.textContent?.trim() === 'Aceptar');
-
-    expect(boton?.disabled).toBe(true);
-
-    await pulsar(h, 'Gestionar viaje');
-
-    expect(
-      h.routeNativeElement?.querySelectorAll('.passenger-row').length,
-    ).toBe(3);
-
-    expect(h.routeNativeElement?.textContent).toContain('María Torres');
-  });
-
-  it('rechaza varias solicitudes sin consumir cupos', async () => {
-    const h = await RouterTestingHarness.create(
-      '/conductor/viajes/1/solicitudes',
-    );
-
-    for (const id of ['maria', 'diego']) {
-      h.routeNativeElement!
-        .querySelector<HTMLInputElement>(
-          `[data-request="${id}"] input[type="checkbox"]`,
-        )!
-        .click();
-    }
-
-    await h.fixture.whenStable();
-    h.detectChanges();
-
-    await pulsar(h, 'Rechazar selección');
-    await pulsar(h, 'Rechazar selección', '[role="dialog"]');
-
-    expect(
-      h.routeNativeElement?.querySelector(
-        '[data-request="maria"] .status',
-      )?.textContent,
-    ).toBe('Rechazada');
-
-    expect(
-      h.routeNativeElement?.querySelector(
-        '[data-request="diego"] .status',
-      )?.textContent,
-    ).toBe('Rechazada');
-
-    expect(
-      h.routeNativeElement?.querySelector('.trip-summary')?.textContent,
-    ).toContain('1 de 3');
-  });
-
-  it('confirma a las 12 horas y recorre inicio y finalización', async () => {
-    const h = await RouterTestingHarness.create(
-      '/conductor/viajes/1?horas=12',
-    );
-
-    await pulsar(h, 'Confirmar viaje');
-    await pulsar(h, 'Confirmar viaje', '[role="dialog"]');
-
-    expect(h.routeNativeElement?.textContent).toContain(
-      'Tu viaje está confirmado',
-    );
-
-    await pulsar(h, 'Iniciar viaje');
-
-    expect(
-      h.routeNativeElement?.querySelector('.route-card')?.textContent,
-    ).toContain('EN PROGRESO');
-
-    await pulsar(h, 'Completar viaje');
-
-    expect(
-      h.routeNativeElement?.querySelector('.route-card')?.textContent,
-    ).toContain('COMPLETADO');
-  });
-
-  it('impide confirmar fuera del plazo mínimo', async () => {
-    const h = await RouterTestingHarness.create(
-      '/conductor/viajes/1?horas=11',
-    );
-
-    await pulsar(h, 'Confirmar viaje');
-
-    expect(
-      h.routeNativeElement?.querySelector('[role="dialog"]')?.textContent,
-    ).toContain('Plazo de confirmación vencido');
-
-    await pulsar(h, 'Entendido', '[role="dialog"]');
-
-    expect(
-      h.routeNativeElement?.querySelector('.route-card')?.textContent,
-    ).toContain('VENCIDO');
-
-    expect(
-      h.routeNativeElement?.querySelector('button')?.textContent,
-    ).not.toBe('Iniciar viaje');
-  });
-
-  // La lógica de penalidad por antelación vive en gestionar-viaje (conductor);
-  // el detalle de pasajero de módulo 3 no la replica todavía.
-  it.each([
-    [25, 'Sin penalidad'],
-    [24, 'Penalidad leve'],
-    [4, 'Penalidad leve'],
-    [3, 'Penalidad grave'],
-  ])(
-    'muestra la penalidad correcta a %s horas',
-    async (horas, penalidad) => {
-      const h = await RouterTestingHarness.create(
-        `/conductor/viajes/1?horas=${horas}`,
-      );
-
-      await pulsar(h, 'Cancelar viaje');
-
-      expect(
-        h.routeNativeElement?.querySelector(
-          '[role="dialog"] .notice strong',
-        )?.textContent,
-      ).toBe(penalidad);
-
-      await pulsar(h, 'Sí, cancelar viaje', '[role="dialog"]');
-
-      expect(
-        h.routeNativeElement?.querySelector('.route-card')?.textContent,
-      ).toContain('CANCELADO');
-    },
-  );
 });

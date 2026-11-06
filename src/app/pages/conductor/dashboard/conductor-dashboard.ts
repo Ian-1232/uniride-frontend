@@ -5,17 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 
-export interface SolicitudPendiente {
-  id: number;
-  nombre: string;
-  carrera: string;
-  recojo: string;
-  calificacion: number;
-  metodo: string;
-  monto: number;
-  estado: 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA';
-}
-
 @Component({
   selector: 'app-conductor-dashboard',
   standalone: true,
@@ -48,29 +37,6 @@ export class ConductorDashboard {
     'Sofía Morales',
   ]);
 
-  readonly solicitudes = signal<SolicitudPendiente[]>([
-    {
-      id: 101,
-      nombre: 'Mateo Valdivia',
-      carrera: 'Ing. Sistemas (Ciclo V)',
-      recojo: 'Trébol Javier Prado',
-      calificacion: 4.9,
-      metodo: 'Yape',
-      monto: 5.0,
-      estado: 'PENDIENTE',
-    },
-    {
-      id: 102,
-      nombre: 'Lucía Benavides',
-      carrera: 'Comunicaciones (Ciclo III)',
-      recojo: 'Av. El Derby con Manuel Olguín',
-      calificacion: 5.0,
-      metodo: 'Plin',
-      monto: 4.5,
-      estado: 'PENDIENTE',
-    },
-  ]);
-
   readonly metricas = signal({
     viajesCompletados: 18,
     compensacionTotal: 142.5,
@@ -92,34 +58,8 @@ export class ConductorDashboard {
 
   // Computados
   readonly cuposOcupados = computed(() => this.pasajerosConfirmados().length);
-  readonly cuposLibres = computed(
-    () => this.vehiculo().capacidadMaxima - this.cuposOcupados(),
-  );
+  readonly cuposLibres = computed(() => this.vehiculo().capacidadMaxima - this.cuposOcupados());
   readonly tieneCupoLibre = computed(() => this.cuposLibres() > 0);
-
-  aceptarSolicitud(solicitud: SolicitudPendiente): void {
-    if (!this.tieneCupoLibre()) {
-      this.feedbackMensaje.set('No quedan cupos libres en este vehículo.');
-      return;
-    }
-
-    this.pasajerosConfirmados.update((pasajeros) => [...pasajeros, solicitud.nombre]);
-    this.solicitudes.update((lista) =>
-      lista.filter((item) => item.id !== solicitud.id),
-    );
-    this.feedbackMensaje.set(
-      `✓ Solicitud de ${solicitud.nombre} aceptada. Cupo reservado.`,
-    );
-  }
-
-  rechazarSolicitud(solicitud: SolicitudPendiente): void {
-    this.solicitudes.update((lista) =>
-      lista.filter((item) => item.id !== solicitud.id),
-    );
-    this.feedbackMensaje.set(
-      `Solicitud de ${solicitud.nombre} rechazada. El cupo sigue disponible.`,
-    );
-  }
 
   cerrarFeedback(): void {
     this.feedbackMensaje.set(null);

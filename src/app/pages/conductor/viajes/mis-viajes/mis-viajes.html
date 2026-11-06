@@ -129,9 +129,12 @@
                 <a
                   mat-stroked-button
                   class="btn-outline-primary"
-                  [routerLink]="['/conductor/rutas', viaje.ruta.id, 'viajes']"
+                  [routerLink]="['/conductor/viajes', viaje.id]"
                 >
-                  Ver viajes
+                  Gestionar viaje
+                </a>
+                <a mat-stroked-button [routerLink]="['/conductor/viajes', viaje.id, 'solicitudes']">
+                  Ver solicitudes
                 </a>
               </div>
             </td>

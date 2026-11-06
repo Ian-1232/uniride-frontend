@@ -3,7 +3,14 @@
   @if (feedbackMensaje()) {
     <div class="feedback-banner" role="status">
       <span>{{ feedbackMensaje() }}</span>
-      <button type="button" class="btn-close-banner" (click)="cerrarFeedback()" aria-label="Cerrar aviso">✕</button>
+      <button
+        type="button"
+        class="btn-close-banner"
+        (click)="cerrarFeedback()"
+        aria-label="Cerrar aviso"
+      >
+        ✕
+      </button>
     </div>
   }
 
@@ -18,7 +25,10 @@
         <span class="active">Dashboard</span>
       </nav>
       <h1>Centro de Control del Conductor 🚗</h1>
-      <p class="subtitle">Monitorea tus viajes programados, gestiona solicitudes y revisa tus métricas de ahorro de combustible.</p>
+      <p class="subtitle">
+        Monitorea tus viajes programados, gestiona solicitudes y revisa tus métricas de ahorro de
+        combustible.
+      </p>
     </div>
     <div class="heading-actions">
       <a mat-stroked-button class="btn-outline" routerLink="/reportes/exportar">
@@ -34,7 +44,6 @@
 
   <!-- Bento Grid Architecture -->
   <div class="bento-grid">
-
     <!-- 1. HERO COCKPIT: VIAJE DE HOY + CAR CABIN SEATS (Span 8) -->
     <section class="bento-card col-hero" aria-labelledby="hero-title">
       <div class="hero-top">
@@ -43,9 +52,11 @@
             <span class="pulse-indicator" aria-hidden="true"></span>
             HOY • SALIDA {{ viajeHoy().horaSalida }}
           </span>
-          <h2 id="hero-title" class="trip-title">{{ viajeHoy().origen }} ➔ {{ viajeHoy().destino }}</h2>
+          <h2 id="hero-title" class="trip-title">
+            {{ viajeHoy().origen }} ➔ {{ viajeHoy().destino }}
+          </h2>
         </div>
-        <a mat-flat-button class="btn-start" [routerLink]="['/conductor/viajes', viajeHoy().id]">
+        <a mat-flat-button class="btn-start" routerLink="/conductor/viajes">
           <mat-icon fontSet="material-symbols-outlined">directions_car</mat-icon>
           Gestionar Viaje
         </a>
@@ -71,7 +82,9 @@
       <!-- Car Cabin Seat Visualizer -->
       <div class="cabin-container">
         <div class="cabin-info">
-          <p class="car-spec">{{ vehiculo().modelo }} • {{ vehiculo().color }} ({{ vehiculo().placa }})</p>
+          <p class="car-spec">
+            {{ vehiculo().modelo }} • {{ vehiculo().color }} ({{ vehiculo().placa }})
+          </p>
           <p class="seats-counter">
             Capacidad:
             <strong [class.full]="!tieneCupoLibre()">
@@ -105,16 +118,26 @@
       <!-- Mini Mapa Vectorial SVG -->
       <div class="route-svg-box" aria-hidden="true">
         <svg width="100%" height="100%" viewBox="0 0 600 100" preserveAspectRatio="none">
-          <path d="M 0,70 Q 150,20 300,60 T 600,30" fill="none" stroke="#E2E8F0" stroke-width="6"/>
-          <path d="M 0,70 Q 150,20 300,60 T 600,30" fill="none" stroke="var(--ur-color-primary, #4F46E5)" stroke-width="3" stroke-dasharray="8 4"/>
+          <path d="M 0,70 Q 150,20 300,60 T 600,30" fill="none" stroke="#E2E8F0" stroke-width="6" />
+          <path
+            d="M 0,70 Q 150,20 300,60 T 600,30"
+            fill="none"
+            stroke="var(--ur-color-primary, #4F46E5)"
+            stroke-width="3"
+            stroke-dasharray="8 4"
+          />
           <!-- Origin Pin -->
-          <circle cx="50" cy="55" r="7" fill="var(--ur-color-primary, #4F46E5)"/>
-          <circle cx="50" cy="55" r="3" fill="#FFFFFF"/>
-          <text x="65" y="60" font-size="11" font-weight="700" fill="#1E293B">San Borja (Salida)</text>
+          <circle cx="50" cy="55" r="7" fill="var(--ur-color-primary, #4F46E5)" />
+          <circle cx="50" cy="55" r="3" fill="#FFFFFF" />
+          <text x="65" y="60" font-size="11" font-weight="700" fill="#1E293B">
+            San Borja (Salida)
+          </text>
           <!-- Destination Pin -->
-          <circle cx="530" cy="35" r="7" fill="var(--ur-color-accent, #10B981)"/>
-          <circle cx="530" cy="35" r="3" fill="#FFFFFF"/>
-          <text x="440" y="22" font-size="11" font-weight="700" fill="#047857">UPC Campus Monterrico 🏛️</text>
+          <circle cx="530" cy="35" r="7" fill="var(--ur-color-accent, #10B981)" />
+          <circle cx="530" cy="35" r="3" fill="#FFFFFF" />
+          <text x="440" y="22" font-size="11" font-weight="700" fill="#047857">
+            UPC Campus Monterrico 🏛️
+          </text>
         </svg>
       </div>
     </section>
@@ -135,7 +158,9 @@
       <div class="kpi-card">
         <div class="kpi-content">
           <span class="kpi-label">Compensación Recibida</span>
-          <p class="kpi-number text-accent">S/ {{ metricas().compensacionTotal | number:'1.2-2' }}</p>
+          <p class="kpi-number text-accent">
+            S/ {{ metricas().compensacionTotal | number: '1.2-2' }}
+          </p>
           <span class="kpi-sub">Compartido en gasolina</span>
         </div>
         <div class="kpi-icon-wrap icon-emerald">
@@ -166,15 +191,20 @@
       </div>
 
       <!-- SVG Bar Chart -->
-      <svg class="svg-bar-chart" viewBox="0 0 500 170" role="img" aria-label="Gráfico de barras de viajes por día">
-        <line x1="30" y1="30" x2="470" y2="30" stroke="#E2E8F0" stroke-dasharray="4"/>
-        <line x1="30" y1="75" x2="470" y2="75" stroke="#E2E8F0" stroke-dasharray="4"/>
-        <line x1="30" y1="120" x2="470" y2="120" stroke="#E2E8F0" stroke-dasharray="4"/>
+      <svg
+        class="svg-bar-chart"
+        viewBox="0 0 500 170"
+        role="img"
+        aria-label="Gráfico de barras de viajes por día"
+      >
+        <line x1="30" y1="30" x2="470" y2="30" stroke="#E2E8F0" stroke-dasharray="4" />
+        <line x1="30" y1="75" x2="470" y2="75" stroke="#E2E8F0" stroke-dasharray="4" />
+        <line x1="30" y1="120" x2="470" y2="120" stroke="#E2E8F0" stroke-dasharray="4" />
 
         @for (item of frecuenciaSemana(); track item.dia; let idx = $index) {
           <g class="chart-col">
             <rect
-              [attr.x]="60 + (idx * 85)"
+              [attr.x]="60 + idx * 85"
               [attr.y]="120 - item.alturaPx * 0.8"
               width="42"
               [attr.height]="item.alturaPx * 0.8"
@@ -182,7 +212,7 @@
               [attr.fill]="item.esPico ? 'var(--ur-color-primary, #4F46E5)' : '#818CF8'"
             />
             <text
-              [attr.x]="81 + (idx * 85)"
+              [attr.x]="81 + idx * 85"
               [attr.y]="112 - item.alturaPx * 0.8"
               font-size="12"
               font-weight="700"
@@ -192,7 +222,7 @@
               {{ item.cantidad }}
             </text>
             <text
-              [attr.x]="81 + (idx * 85)"
+              [attr.x]="81 + idx * 85"
               y="145"
               font-size="12"
               [attr.font-weight]="item.esPico ? '700' : '500'"
@@ -222,12 +252,46 @@
 
       <div class="donut-flex">
         <!-- SVG Donut -->
-        <svg class="donut-svg" width="110" height="110" viewBox="0 0 42 42" role="img" aria-label="Distribución de métodos">
+        <svg
+          class="donut-svg"
+          width="110"
+          height="110"
+          viewBox="0 0 42 42"
+          role="img"
+          aria-label="Distribución de métodos"
+        >
           <circle cx="21" cy="21" r="15.9" fill="#fff"></circle>
-          <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#E2E8F0" stroke-width="5"></circle>
-          <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#7C3AED" stroke-width="5" stroke-dasharray="65 35" stroke-dashoffset="25"></circle>
-          <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#06B6D4" stroke-width="5" stroke-dasharray="35 65" stroke-dashoffset="60"></circle>
-          <text x="21" y="23" font-size="8" font-weight="700" fill="#1E293B" text-anchor="middle">100%</text>
+          <circle
+            cx="21"
+            cy="21"
+            r="15.9"
+            fill="transparent"
+            stroke="#E2E8F0"
+            stroke-width="5"
+          ></circle>
+          <circle
+            cx="21"
+            cy="21"
+            r="15.9"
+            fill="transparent"
+            stroke="#7C3AED"
+            stroke-width="5"
+            stroke-dasharray="65 35"
+            stroke-dashoffset="25"
+          ></circle>
+          <circle
+            cx="21"
+            cy="21"
+            r="15.9"
+            fill="transparent"
+            stroke="#06B6D4"
+            stroke-width="5"
+            stroke-dasharray="35 65"
+            stroke-dashoffset="60"
+          ></circle>
+          <text x="21" y="23" font-size="8" font-weight="700" fill="#1E293B" text-anchor="middle">
+            100%
+          </text>
         </svg>
 
         <ul class="donut-legend">
@@ -247,59 +311,14 @@
       </div>
     </section>
 
-    <!-- 5. SOLICITUDES DE PASAJEROS PENDIENTES (Span 7 - GET /api/viajes/{id}/solicitudes) -->
-    <section class="bento-card col-requests" aria-labelledby="requests-title">
+    <section class="bento-card col-requests requests-card" aria-labelledby="requests-title">
       <div class="card-header-row">
-        <div>
-          <h2 id="requests-title" class="card-title">Solicitudes por Responder ({{ solicitudes().length }})</h2>
-          <p class="card-subtitle">Estudiantes de tu campus solicitando cupo</p>
-        </div>
-        <a class="link-action" [routerLink]="['/conductor/viajes', viajeHoy().id, 'solicitudes']">Ver todas →</a>
+        <h2 id="requests-title" class="card-title">Solicitudes recibidas</h2>
       </div>
-
-      @if (solicitudes().length === 0) {
-        <div class="empty-state">
-          <mat-icon fontSet="material-symbols-outlined">task_alt</mat-icon>
-          <p>No tienes solicitudes pendientes por responder.</p>
-        </div>
-      } @else {
-        <div class="requests-list">
-          @for (solicitud of solicitudes(); track solicitud.id) {
-            <article class="request-item">
-              <div class="req-passenger-meta">
-                <div class="req-avatar">{{ solicitud.nombre.substring(0, 2).toUpperCase() }}</div>
-                <div class="req-details">
-                  <p class="req-name">
-                    {{ solicitud.nombre }}
-                    <span class="req-rating">★ {{ solicitud.calificacion }}</span>
-                  </p>
-                  <p class="req-campus">{{ solicitud.carrera }} • {{ solicitud.recojo }}</p>
-                  <p class="req-fare">S/ {{ solicitud.monto | number:'1.2-2' }} vía {{ solicitud.metodo }}</p>
-                </div>
-              </div>
-              <div class="req-actions">
-                <button
-                  type="button"
-                  mat-flat-button
-                  class="btn-accept"
-                  [disabled]="!tieneCupoLibre()"
-                  (click)="aceptarSolicitud(solicitud)"
-                >
-                  ✓ Aceptar
-                </button>
-                <button
-                  type="button"
-                  mat-stroked-button
-                  class="btn-decline"
-                  (click)="rechazarSolicitud(solicitud)"
-                >
-                  ✕ Rechazar
-                </button>
-              </div>
-            </article>
-          }
-        </div>
-      }
+      <p>
+        Selecciona un viaje para revisar las solicitudes, aceptar pasajeros o registrar un rechazo.
+      </p>
+      <a mat-flat-button class="btn-accept" routerLink="/conductor/viajes">Consultar solicitudes</a>
     </section>
 
     <!-- 6. RUTAS POPULARES (Span 5 - GET /api/estadisticas/rutas) -->
@@ -318,7 +337,7 @@
             <span>San Borja ➔ UPC Monterrico</span>
             <strong class="rank-percent">68%</strong>
           </div>
-          <div class="progress-track"><div class="progress-fill" style="width: 68%;"></div></div>
+          <div class="progress-track"><div class="progress-fill" style="width: 68%"></div></div>
         </div>
 
         <div class="rank-item">
@@ -326,7 +345,7 @@
             <span>Surco / Higuereta ➔ UPC Monterrico</span>
             <strong class="rank-percent">54%</strong>
           </div>
-          <div class="progress-track"><div class="progress-fill" style="width: 54%;"></div></div>
+          <div class="progress-track"><div class="progress-fill" style="width: 54%"></div></div>
         </div>
 
         <div class="rank-item">
@@ -334,10 +353,9 @@
             <span>Miraflores ➔ UPC San Isidro</span>
             <strong class="rank-percent">40%</strong>
           </div>
-          <div class="progress-track"><div class="progress-fill" style="width: 40%;"></div></div>
+          <div class="progress-track"><div class="progress-fill" style="width: 40%"></div></div>
         </div>
       </div>
     </section>
-
   </div>
 </div>

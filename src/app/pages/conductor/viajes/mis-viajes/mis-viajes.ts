@@ -1,18 +1,13 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin, map, of, switchMap } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { Ruta, Viaje } from '../../../../core/models/ruta.model';
+import { Viaje, ViajeConRuta } from '../../../../core/models/ruta.model';
 import { consultaQuery } from '../../../../core/services/consulta';
 import { RutasService } from '../../../../core/services/rutas.service';
-
-interface ViajeConRuta extends Viaje {
-  ruta: Ruta;
-}
 
 @Component({
   selector: 'app-mis-viajes',
@@ -30,23 +25,7 @@ interface ViajeConRuta extends Viaje {
 export class MisViajes {
   private readonly service = inject(RutasService);
 
-  // La API no expone un listado global de viajes: se agregan los de cada ruta propia.
-  // shortcut: hasta 100 rutas y 100 viajes por ruta, sin paginación del servidor.
-  readonly consulta = consultaQuery(() =>
-    this.service.listar(0, 100).pipe(
-      switchMap((pagina) =>
-        pagina.content.length === 0
-          ? of([] as ViajeConRuta[])
-          : forkJoin(
-              pagina.content.map((ruta) =>
-                this.service.viajes(ruta.id, 0, 100).pipe(
-                  map((viajes) => viajes.content.map((viaje) => ({ ...viaje, ruta }))),
-                ),
-              ),
-            ).pipe(map((grupos) => grupos.flat())),
-      ),
-    ),
-  );
+  readonly consulta = consultaQuery(() => this.service.viajesPropios());
 
   readonly columnas: string[] = ['ruta', 'fecha', 'hora', 'estado', 'pasajeros', 'acciones'];
 

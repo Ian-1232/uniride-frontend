@@ -134,10 +134,15 @@
           Cancelar solicitud
         </button>
       }
-      @if (solicitud()?.estado === 'ACEPTADA' && !readonlyHistory()) {
-        <p>
-          Solicitud aceptada. La cancelación de un viaje completo no se realiza desde este módulo.
-        </p>
+      @if (canCancelTrip()) {
+        <button
+          class="ur-button ur-button--destructive"
+          type="button"
+          [disabled]="dialogOpen()"
+          (click)="cancelTrip()"
+        >
+          Cancelar viaje completo
+        </button>
       }
       <button
         class="ur-button ur-button--secondary"

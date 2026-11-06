@@ -16,6 +16,11 @@ import {
   Viaje,
 } from '../viajes.models';
 import { pasajeroError } from '../shared/pasajero-query';
+import { segundosParaSalida } from '../../../../core/models/coordinacion.models';
+import {
+  CancelacionViajeResultado,
+  CancelarViajeDialog,
+} from './cancelar-viaje-dialog/cancelar-viaje-dialog';
 import { UnirseViajeDialog } from './unirse-viaje-dialog/unirse-viaje-dialog';
 import {
   CancelacionResultado,
@@ -66,6 +71,15 @@ export class DetalleViaje {
   );
   protected readonly canCancel = computed(
     () => this.verified() && !this.readonlyHistory() && this.solicitud()?.estado === 'PENDIENTE',
+  );
+  protected readonly canCancelTrip = computed(
+    () =>
+      this.verified() &&
+      !this.readonlyHistory() &&
+      this.solicitud()?.estado === 'ACEPTADA' &&
+      (this.viaje()?.estado === null || this.viaje()?.estado === 'PROGRAMADO') &&
+      !!this.viaje() &&
+      segundosParaSalida(this.viaje()!) >= 0,
   );
   constructor() {
     this.route.paramMap
@@ -187,6 +201,28 @@ export class DetalleViaje {
         if (result.solicitud) this.afterMutation(result.solicitud);
         else this.refresh();
       }
+    });
+  }
+  protected cancelTrip(): void {
+    if (!this.canCancelTrip() || this.dialogOpen()) return;
+    const solicitud = this.solicitud()!;
+    const trip = this.viaje()!;
+    const ref = this.dialog.open<CancelarViajeDialog, Viaje, CancelacionViajeResultado>(
+      CancelarViajeDialog,
+      { width: '608px', maxWidth: '96vw', data: trip },
+    );
+    this.watch(ref, (result) => {
+      if (result?.viaje) {
+        // El PUT devuelve el estado del viaje. La solicitud se vuelve a consultar;
+        // no se simula su cancelación ni se conserva el filtro ACEPTADA de origen.
+        this.context.set({
+          viaje: { ...trip, estado: result.viaje.estado },
+          solicitud,
+          consulta: { historial: false, page: 0, size: 100 },
+        });
+        this.notice.set(result.viaje.mensaje || 'Viaje cancelado.');
+        this.refresh();
+      } else if (result?.refrescar) this.refresh();
     });
   }
   private afterMutation(solicitud: SolicitudRespuesta) {

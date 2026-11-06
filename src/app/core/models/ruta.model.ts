@@ -36,7 +36,15 @@ export interface Viaje {
   fecha: string;
   hora: string;
   estado: EstadoViaje;
+  dia?: string;
+  confirmado?: boolean;
+  fechaConfirmacion?: string | null;
+  mensaje?: string | null;
   pasajeros?: number;
   pasajerosConfirmados?: number;
   capacidadMaxima?: number;
+}
+
+export interface ViajeConRuta extends Viaje {
+  ruta: Ruta;
 }
