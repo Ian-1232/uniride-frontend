@@ -87,8 +87,9 @@ describe('Coordinación de viajes', () => {
   });
   function flushReports() {
     const http = TestBed.inject(HttpTestingController);
-    for (const req of http.match(r => r.url.startsWith('/api/estadisticas'))) {
-      if (req.request.url.endsWith('/semana')) req.flush({ suficientesDatos: false, mensaje: 'Sin viajes', viajesPorDia: [], canceladosPorMi: 0, canceladosPorTerceros: 0 });
+    for (const req of http.match(r => r.url.startsWith('/api/estadisticas') || r.url === '/api/metodos-compensacion')) {
+      if (req.request.url === '/api/metodos-compensacion') req.flush([]);
+      else if (req.request.url.endsWith('/semana')) req.flush({ suficientesDatos: false, mensaje: 'Sin viajes', viajesPorDia: [], canceladosPorMi: 0, canceladosPorTerceros: 0 });
       else if (req.request.url.endsWith('/rutas')) req.flush({ suficientesDatos: false, mensaje: 'Sin rutas', ranking: [] });
       else req.flush({ viajesComoConductor: 0, viajesComoPasajero: 0, viajesCancelados: 0, penalidadesAcumuladas: 0 });
     }
@@ -112,6 +113,7 @@ describe('Coordinación de viajes', () => {
     expect(h.routeNativeElement?.querySelector('.reportes-tabs')).toBeTruthy();
 
     await h.navigateByUrl('/compensaciones/metodos');
+    flushReports();
     expect(h.routeNativeElement?.querySelector('.sidebar')).toBeTruthy();
     expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe('Panel del conductor');
   }, 30000);

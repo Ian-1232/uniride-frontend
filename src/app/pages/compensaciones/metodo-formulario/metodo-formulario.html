@@ -16,7 +16,20 @@
     </div>
   </header>
 
-  @if (isNotFound()) {
+  @if (state() === 'cargando') {
+    <app-compensacion-state-panel
+      title="Cargando método"
+      message="Estamos consultando tus métodos de compensación."
+    />
+  } @else if (!loaded() && state() === 'error') {
+    <app-compensacion-state-panel
+      tone="danger"
+      title="No se pudo cargar el método"
+      [message]="message()"
+      actionLabel="Reintentar"
+      (action)="load()"
+    />
+  } @else if (isNotFound()) {
     <app-compensacion-state-panel
       tone="danger"
       icon="search_off"
@@ -40,30 +53,27 @@
       </mat-card-header>
 
       <mat-card-content>
-        @if (showDuplicate()) {
+        @if (state() === 'duplicado' || state() === 'error') {
           <app-compensacion-state-panel
             tone="danger"
-            icon="error"
-            title="Método duplicado"
-            message="Ya tienes un método con el mismo tipo y descripción en tu lista."
+            [title]="state() === 'duplicado' ? 'Método duplicado' : 'No se pudo guardar el método'"
+            [message]="message()"
           />
         } @else if (state() === 'exito') {
           <app-compensacion-state-panel
             tone="success"
-            icon="check_circle"
-            [title]="isEdit() ? 'Actualización preparada' : 'Registro preparado'"
-            message="Escenario de demostración: los cambios no se enviaron ni se persistieron en el servidor."
+            title="Cambios guardados"
+            [message]="message()"
           />
-        } @else if (integrationNoticeVisible()) {
+          <a mat-flat-button routerLink="/compensaciones/metodos">Volver al listado</a>
+        } @else if (state() === 'guardando') {
           <app-compensacion-state-panel
-            tone="info"
-            icon="info"
-            title="Demostración visual"
-            message="El formulario es válido. La operación real estará disponible al integrar el backend."
+            title="Guardando método"
+            message="Espera mientras confirmamos los cambios."
           />
         }
 
-        <form [formGroup]="form" (ngSubmit)="submitDemonstration()" novalidate>
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <mat-form-field appearance="outline">
             <mat-label>Tipo de compensación</mat-label>
             <mat-select formControlName="tipo" aria-describedby="tipo-error">
@@ -84,7 +94,9 @@
               placeholder="Ej. Aporte de combustible"
               aria-describedby="descripcion-ayuda descripcion-error"
             />
-            <mat-hint id="descripcion-ayuda">Describe brevemente cómo se realizará el aporte.</mat-hint>
+            <mat-hint id="descripcion-ayuda"
+              >Describe brevemente cómo se realizará el aporte.</mat-hint
+            >
             @if (hasDescriptionError()) {
               <mat-error id="descripcion-error">Ingresa una descripción válida.</mat-error>
             }
@@ -106,7 +118,11 @@
 
           <div class="form-actions">
             <a mat-stroked-button routerLink="/compensaciones/metodos">Cancelar</a>
-            <button mat-flat-button type="submit" [disabled]="form.invalid">
+            <button
+              mat-flat-button
+              type="submit"
+              [disabled]="form.invalid || busy() || state() === 'exito'"
+            >
               {{ isEdit() ? 'Guardar cambios' : 'Registrar método' }}
             </button>
           </div>

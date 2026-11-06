@@ -10,6 +10,13 @@
     </a>
   </header>
 
+  @if (notice()) {
+    <app-compensacion-state-panel
+      tone="info"
+      title="Resultado de la operación"
+      [message]="notice()"
+    />
+  }
   @if (state() === 'cargando') {
     <section class="loading-state" aria-live="polite">
       <mat-spinner diameter="36" />
@@ -23,9 +30,9 @@
       tone="danger"
       icon="error"
       title="No pudimos cargar tus métodos"
-      message="Ocurrió un error inesperado. Intenta nuevamente."
+      [message]="message()"
       actionLabel="Reintentar"
-      (action)="showDefaultState()"
+      (action)="load()"
     />
   } @else if (state() === 'vacio') {
     <section class="empty-state ur-card">
@@ -37,43 +44,12 @@
       <a mat-flat-button routerLink="/compensaciones/metodos/nuevo">Agregar método</a>
     </section>
   } @else {
-    @if (
-      (state() === 'eliminado' || localOutcome() === 'deleted') &&
-      state() !== 'eliminacion-bloqueada' &&
-      state() !== 'no-encontrado-eliminacion') {
-      <app-compensacion-state-panel
-        tone="success"
-        icon="check_circle"
-        title="Eliminación preparada"
-        message="Escenario de demostración: el método no se eliminó del servidor ni se persistieron cambios."
-      />
-    } @else if (state() === 'no-encontrado-eliminacion') {
-      <app-compensacion-state-panel
-        tone="danger"
-        icon="search_off"
-        title="Método no encontrado"
-        message="El método pudo haber sido eliminado por otro proceso. La lista permanece sin cambios."
-      />
-    } @else if (state() === 'eliminacion-bloqueada') {
-      <app-compensacion-state-panel
-        tone="warning"
-        icon="warning"
-        title="No se puede eliminar"
-        message="No puedes eliminar este método porque tiene solicitudes asociadas. Puedes desactivarlo para conservar el historial."
-      />
-      <div class="blocked-actions">
-        <button mat-stroked-button type="button" (click)="showDefaultState()">Cancelar</button>
-        <a mat-flat-button routerLink="/compensaciones/metodos/12/editar">Desactivar método</a>
-      </div>
-    }
-
     <div class="list-toolbar">
-      <p class="ur-body-strong">{{ methods.length }} métodos registrados</p>
-      <p class="ur-caption">Datos de demostración · sin persistencia</p>
+      <p class="ur-body-strong">{{ methods().length }} métodos registrados</p>
     </div>
 
     <div class="methods-list">
-      @for (method of methods; track method.id) {
+      @for (method of methods(); track method.id) {
         <mat-card appearance="outlined" class="method-card">
           <mat-card-content>
             <div class="method-card__heading">
@@ -97,10 +73,7 @@
               class="delete-action"
               mat-stroked-button
               type="button"
-              [disabled]="
-                state() === 'eliminacion-bloqueada' ||
-                state() === 'no-encontrado-eliminacion'
-              "
+              [disabled]="dialogOpen()"
               (click)="openDeleteDialog(method)"
             >
               <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">delete</mat-icon>
