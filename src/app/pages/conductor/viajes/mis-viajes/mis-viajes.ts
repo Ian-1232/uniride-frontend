@@ -1,86 +1,18 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { forkJoin, map, of, switchMap } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { Ruta, Viaje } from '../../../../core/models/ruta.model';
+import { consultaQuery } from '../../../../core/services/consulta';
+import { RutasService } from '../../../../core/services/rutas.service';
 
 interface ViajeConRuta extends Viaje {
   ruta: Ruta;
 }
-
-// shortcut: datos hardcodeados del Figma M2.4; sustituir por RutasService cuando haya backend
-const RUTA: Ruta = {
-  id: 1,
-  origen: 'San Borja',
-  destino: 'UPC',
-  capacidadMaxima: 3,
-  puntosReferencia: 'Av. Arequipa 1234',
-  zonasSinParada: 'Centro de Lima',
-  notaContribucion: 'S/ 10 sugeridos por pasajero',
-  estado: 'ACTIVA',
-};
-
-const VIAJES: Viaje[] = [
-  {
-    id: 1,
-    fecha: '2026-10-13',
-    hora: '07:30',
-    estado: 'PROGRAMADO',
-    pasajerosConfirmados: 2,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 2,
-    fecha: '2026-10-15',
-    hora: '07:30',
-    estado: 'PROGRAMADO',
-    pasajerosConfirmados: 1,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 3,
-    fecha: '2026-10-10',
-    hora: '07:30',
-    estado: 'EN_PROGRESO',
-    pasajerosConfirmados: 3,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 4,
-    fecha: '2026-10-06',
-    hora: '07:30',
-    estado: 'COMPLETADO',
-    pasajerosConfirmados: 3,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 5,
-    fecha: '2026-10-03',
-    hora: '07:30',
-    estado: 'CANCELADO',
-    pasajerosConfirmados: 0,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 6,
-    fecha: '2026-10-01',
-    hora: '07:30',
-    estado: 'COMPLETADO',
-    pasajerosConfirmados: 3,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 7,
-    fecha: '2026-09-29',
-    hora: '07:30',
-    estado: 'COMPLETADO',
-    pasajerosConfirmados: 3,
-    capacidadMaxima: 3,
-  },
-];
 
 @Component({
   selector: 'app-mis-viajes',
@@ -96,15 +28,35 @@ const VIAJES: Viaje[] = [
   ],
 })
 export class MisViajes {
+  private readonly service = inject(RutasService);
+
+  // La API no expone un listado global de viajes: se agregan los de cada ruta propia.
+  // shortcut: hasta 100 rutas y 100 viajes por ruta, sin paginación del servidor.
+  readonly consulta = consultaQuery(() =>
+    this.service.listar(0, 100).pipe(
+      switchMap((pagina) =>
+        pagina.content.length === 0
+          ? of([] as ViajeConRuta[])
+          : forkJoin(
+              pagina.content.map((ruta) =>
+                this.service.viajes(ruta.id, 0, 100).pipe(
+                  map((viajes) => viajes.content.map((viaje) => ({ ...viaje, ruta }))),
+                ),
+              ),
+            ).pipe(map((grupos) => grupos.flat())),
+      ),
+    ),
+  );
+
   readonly columnas: string[] = ['ruta', 'fecha', 'hora', 'estado', 'pasajeros', 'acciones'];
 
-  readonly viajes = signal<ViajeConRuta[]>(VIAJES.map((viaje) => ({ ...viaje, ruta: RUTA })));
-
-  // El resumen del Figma M2.4 (2/1/4) no cuadra con su propia tabla; se replica tal cual.
-  readonly programados = signal(2);
-  readonly enCurso = signal(1);
-  readonly completados = signal(4);
-  readonly rutasConViajes = signal(1);
+  readonly viajes = computed(() => this.consulta.state().data ?? []);
+  readonly rutasConViajes = computed(
+    () => new Set(this.viajes().map((viaje) => viaje.ruta.id)).size,
+  );
+  readonly programados = computed(() => this.contar('PROGRAMADO'));
+  readonly enCurso = computed(() => this.contar('EN_PROGRESO'));
+  readonly completados = computed(() => this.contar('COMPLETADO'));
 
   formatearFecha(fecha: string): string {
     const partes = fecha.split('-').map(Number);
@@ -127,10 +79,14 @@ export class MisViajes {
   }
 
   pasajeros(viaje: ViajeConRuta): number {
-    return viaje.pasajerosConfirmados ?? viaje.pasajeros ?? 0;
+    return viaje.pasajeros ?? viaje.pasajerosConfirmados ?? 0;
   }
 
   capacidad(viaje: ViajeConRuta): number {
     return viaje.capacidadMaxima ?? viaje.ruta.capacidadMaxima;
+  }
+
+  private contar(estado: Viaje['estado']): number {
+    return this.viajes().filter((viaje) => viaje.estado === estado).length;
   }
 }

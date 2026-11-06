@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -7,78 +8,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { Ruta, Viaje } from '../../../../core/models/ruta.model';
+import { consultaQuery } from '../../../../core/services/consulta';
 import { crearPaginatorIntl } from '../../../../core/services/paginator-intl';
-
-// shortcut: datos hardcodeados del Figma M2.4; sustituir por RutasService cuando haya backend
-const RUTA: Ruta = {
-  id: 1,
-  origen: 'San Borja',
-  destino: 'UPC',
-  capacidadMaxima: 3,
-  puntosReferencia: 'Av. Arequipa 1234',
-  zonasSinParada: 'Centro de Lima',
-  notaContribucion: 'S/ 10 sugeridos por pasajero',
-  estado: 'ACTIVA',
-};
-
-const VIAJES: Viaje[] = [
-  {
-    id: 1,
-    fecha: '2026-10-13',
-    hora: '07:30',
-    estado: 'PROGRAMADO',
-    pasajerosConfirmados: 2,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 2,
-    fecha: '2026-10-15',
-    hora: '07:30',
-    estado: 'PROGRAMADO',
-    pasajerosConfirmados: 1,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 3,
-    fecha: '2026-10-10',
-    hora: '07:30',
-    estado: 'EN_PROGRESO',
-    pasajerosConfirmados: 3,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 4,
-    fecha: '2026-10-06',
-    hora: '07:30',
-    estado: 'COMPLETADO',
-    pasajerosConfirmados: 3,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 5,
-    fecha: '2026-10-03',
-    hora: '07:30',
-    estado: 'CANCELADO',
-    pasajerosConfirmados: 0,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 6,
-    fecha: '2026-10-01',
-    hora: '07:30',
-    estado: 'COMPLETADO',
-    pasajerosConfirmados: 3,
-    capacidadMaxima: 3,
-  },
-  {
-    id: 7,
-    fecha: '2026-09-29',
-    hora: '07:30',
-    estado: 'COMPLETADO',
-    pasajerosConfirmados: 3,
-    capacidadMaxima: 3,
-  },
-];
+import { RutasService } from '../../../../core/services/rutas.service';
 
 @Component({
   selector: 'app-viajes-ruta',
@@ -97,24 +29,33 @@ const VIAJES: Viaje[] = [
 })
 export class ViajesRuta {
   private readonly route = inject(ActivatedRoute);
+  private readonly service = inject(RutasService);
 
   readonly rutaId = Number(this.route.snapshot.paramMap.get('id'));
   readonly columnas: string[] = ['fecha', 'hora', 'estado', 'pasajeros', 'acciones'];
 
-  readonly ruta = signal<Ruta>(RUTA);
+  // shortcut: se cargan hasta 100 viajes por ruta y se pagina en pantalla; subir a
+  // paginación del servidor cuando una ruta pueda superar ese volumen.
+  readonly consulta = consultaQuery(() =>
+    forkJoin({
+      ruta: this.service.obtener(this.rutaId),
+      viajes: this.service.viajes(this.rutaId, 0, 100),
+    }),
+  );
+  readonly ruta = computed<Ruta | null>(() => this.consulta.state().data?.ruta ?? null);
   readonly pagina = signal(0);
   readonly pageSize = 5;
 
+  readonly viajesTotales = computed(() => this.consulta.state().data?.viajes.content ?? []);
+  readonly total = computed(() => this.viajesTotales().length);
   readonly viajes = computed(() => {
     const inicio = this.pagina() * this.pageSize;
-    return VIAJES.slice(inicio, inicio + this.pageSize);
+    return this.viajesTotales().slice(inicio, inicio + this.pageSize);
   });
-  readonly total = VIAJES.length;
 
-  // El resumen del Figma (2/1/4) no cuadra con su propia tabla; se replica tal cual.
-  readonly programados = signal(2);
-  readonly enCurso = signal(1);
-  readonly completados = signal(4);
+  readonly programados = computed(() => this.contar('PROGRAMADO'));
+  readonly enCurso = computed(() => this.contar('EN_PROGRESO'));
+  readonly completados = computed(() => this.contar('COMPLETADO'));
 
   cambiarPagina(evento: PageEvent): void {
     this.pagina.set(evento.pageIndex);
@@ -141,10 +82,14 @@ export class ViajesRuta {
   }
 
   pasajeros(viaje: Viaje): number {
-    return viaje.pasajerosConfirmados ?? viaje.pasajeros ?? 0;
+    return viaje.pasajeros ?? viaje.pasajerosConfirmados ?? 0;
   }
 
   capacidad(viaje: Viaje): number {
-    return viaje.capacidadMaxima ?? this.ruta().capacidadMaxima;
+    return viaje.capacidadMaxima ?? this.ruta()?.capacidadMaxima ?? 0;
+  }
+
+  private contar(estado: Viaje['estado']): number {
+    return this.viajesTotales().filter((viaje) => viaje.estado === estado).length;
   }
 }

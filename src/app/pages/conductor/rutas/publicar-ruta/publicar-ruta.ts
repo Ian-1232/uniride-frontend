@@ -1,11 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { authError } from '../../../../core/services/auth-error';
+import { RutasService } from '../../../../core/services/rutas.service';
 
 @Component({
   selector: 'app-publicar-ruta',
@@ -16,8 +19,10 @@ import { MatInputModule } from '@angular/material/input';
 export class PublicarRuta {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly service = inject(RutasService);
 
   readonly guardando = signal(false);
+  readonly error = signal<string | null>(null);
 
   readonly form = this.fb.group({
     origen: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -28,10 +33,24 @@ export class PublicarRuta {
   });
 
   enviar(): void {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.guardando()) {
       return;
     }
-    // shortcut: sin backend, solo navega de vuelta; crearRuta real pendiente (US06)
-    void this.router.navigate(['/conductor/rutas']);
+    const valor = this.form.getRawValue();
+    this.guardando.set(true);
+    this.error.set(null);
+    this.service
+      .crear({
+        origen: valor.origen.trim(),
+        capacidadMaxima: valor.capacidad ?? 0,
+        puntosReferencia: valor.puntos.trim(),
+        zonasSinParada: valor.zonas.trim() || undefined,
+        notaContribucion: valor.nota.trim() || undefined,
+      })
+      .pipe(finalize(() => this.guardando.set(false)))
+      .subscribe({
+        next: () => void this.router.navigate(['/conductor/rutas']),
+        error: (err) => this.error.set(authError(err, 'No se pudo publicar la ruta.')),
+      });
   }
 }

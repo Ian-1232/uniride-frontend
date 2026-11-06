@@ -1,6 +1,6 @@
 <section class="page">
   <nav class="breadcrumb">
-    <a [routerLink]="['/conductor/viajes', rutaId]" [state]="{ ruta: ruta() }">
+    <a [routerLink]="['/conductor/rutas', rutaId, 'viajes']" [state]="{ ruta: ruta() }">
       <mat-icon>arrow_back</mat-icon>
       Viajes de la ruta
     </a>
@@ -15,9 +15,24 @@
     </div>
   </header>
 
+  @if (error(); as mensaje) {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ mensaje }}</div>
+    </div>
+  }
+
   <mat-card class="uni-card">
     <mat-card-content>
-      @if (ruta(); as actual) {
+      @if (consulta.state().estado === 'cargando') {
+        <p class="state-note">Cargando la ruta…</p>
+      } @else if (consulta.state().estado === 'error') {
+        <div class="banner banner-error" role="alert">
+          <mat-icon>error</mat-icon>
+          <div>{{ consulta.state().mensaje }}</div>
+        </div>
+        <button mat-stroked-button type="button" (click)="consulta.retry()">Reintentar</button>
+      } @else if (ruta(); as actual) {
         <div class="summary-box route-summary">
           <div class="summary-main">
             <mat-icon class="summary-icon is-plain">route</mat-icon>
@@ -69,7 +84,7 @@
         </div>
 
         <div class="form-actions">
-          <a mat-stroked-button [routerLink]="['/conductor/viajes', rutaId]">
+          <a mat-stroked-button [routerLink]="['/conductor/rutas', rutaId, 'viajes']">
             Cancelar
           </a>
           <button mat-flat-button type="submit" [disabled]="form.invalid || guardando()">

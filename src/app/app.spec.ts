@@ -85,12 +85,17 @@ describe('Coordinación de viajes', () => {
     TestBed.inject(HttpTestingController).verify();
     localStorage.clear(); sessionStorage.clear();
   });
-  function flushReports() {
+  // Vacía las consultas pendientes de reportes y del módulo 2 (mis viajes agrega
+  // sus rutas al listado propio).
+  function flushPendientes() {
     const http = TestBed.inject(HttpTestingController);
     for (const req of http.match(r => r.url.startsWith('/api/estadisticas'))) {
       if (req.request.url.endsWith('/semana')) req.flush({ suficientesDatos: false, mensaje: 'Sin viajes', viajesPorDia: [], canceladosPorMi: 0, canceladosPorTerceros: 0 });
       else if (req.request.url.endsWith('/rutas')) req.flush({ suficientesDatos: false, mensaje: 'Sin rutas', ranking: [] });
       else req.flush({ viajesComoConductor: 0, viajesComoPasajero: 0, viajesCancelados: 0, penalidadesAcumuladas: 0 });
+    }
+    for (const req of http.match(r => r.url.startsWith('/api/rutas'))) {
+      req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
     }
   }
   function authenticate(rol: 'CONDUCTOR' | 'PASAJERO') {
@@ -106,7 +111,7 @@ describe('Coordinación de viajes', () => {
     const h = await RouterTestingHarness.create();
 
     await h.navigateByUrl('/reportes/resumen');
-    flushReports();
+    flushPendientes();
     expect(h.routeNativeElement?.querySelector('.sidebar')).toBeTruthy();
     expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe('Panel del conductor');
     expect(h.routeNativeElement?.querySelector('.reportes-tabs')).toBeTruthy();
@@ -132,7 +137,7 @@ describe('Coordinación de viajes', () => {
     ]) {
       authenticate(path.startsWith('/pasajero') || path.startsWith('/contribucion') ? 'PASAJERO' : 'CONDUCTOR');
       await h.navigateByUrl(path);
-      flushReports();
+      flushPendientes();
       expect(h.routeNativeElement?.querySelector('h1'), path).toBeTruthy();
     }
   }, 30000);

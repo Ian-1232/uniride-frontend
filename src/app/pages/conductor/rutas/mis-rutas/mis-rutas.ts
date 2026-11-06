@@ -1,12 +1,18 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { filter, switchMap } from 'rxjs';
 import { Ruta } from '../../../../core/models/ruta.model';
+import { authError } from '../../../../core/services/auth-error';
+import { consultaQuery } from '../../../../core/services/consulta';
 import { crearPaginatorIntl } from '../../../../core/services/paginator-intl';
+import { RutasService } from '../../../../core/services/rutas.service';
+import { EliminarRutaDialog } from '../eliminar-ruta-dialog/eliminar-ruta-dialog';
 
 @Component({
   selector: 'app-mis-rutas',
@@ -23,54 +29,45 @@ import { crearPaginatorIntl } from '../../../../core/services/paginator-intl';
   providers: [{ provide: MatPaginatorIntl, useValue: crearPaginatorIntl('rutas') }],
 })
 export class MisRutas {
-  // shortcut: datos hardcodeados del Figma M2.1; sustituir por RutasService cuando haya backend
-  readonly rutas = signal<Ruta[]>([
-    {
-      id: 1,
-      origen: 'San Borja',
-      destino: 'UPC',
-      capacidadMaxima: 3,
-      puntosReferencia: 'Av. Arequipa 1234',
-      zonasSinParada: 'Centro de Lima',
-      notaContribucion: 'S/ 10 sugeridos por pasajero',
-      estado: 'ACTIVA',
-    },
-    {
-      id: 2,
-      origen: 'Surco',
-      destino: 'UPC',
-      capacidadMaxima: 3,
-      puntosReferencia: 'Caminos del Inca 155',
-      zonasSinParada: 'Centro de Lima',
-      notaContribucion: 'S/ 8 sugeridos por pasajero',
-      estado: 'ACTIVA',
-    },
-    {
-      id: 3,
-      origen: 'Los Olivos',
-      destino: 'UPC',
-      capacidadMaxima: 3,
-      puntosReferencia: 'Av. Tupac Amaru 4500',
-      zonasSinParada: 'Centro de Lima',
-      notaContribucion: 'S/ 12 sugeridos por pasajero',
-      estado: 'ACTIVA',
-    },
-    {
-      id: 4,
-      origen: 'Callao',
-      destino: 'UPC',
-      capacidadMaxima: 3,
-      puntosReferencia: 'Av. Argentina 2800',
-      zonasSinParada: 'Centro de Lima',
-      notaContribucion: 'S/ 9 sugeridos por pasajero',
-      estado: 'ACTIVA',
-    },
-  ]);
+  private readonly service = inject(RutasService);
+  private readonly dialog = inject(MatDialog);
 
+  // shortcut: se cargan hasta 100 rutas y se pagina en pantalla; subir a paginación
+  // del servidor cuando un conductor pueda superar ese volumen.
+  readonly consulta = consultaQuery(() => this.service.listar(0, 100));
+  readonly pagina = signal(0);
   readonly pageSize = 4;
-  readonly eliminandoId = signal<number | null>(null);
+  readonly errorAccion = signal<string | null>(null);
 
-  eliminar(id: number): void {
-    this.rutas.update((lista) => lista.filter((ruta) => ruta.id !== id));
+  readonly rutas = computed(() => this.consulta.state().data?.content ?? []);
+  readonly visibles = computed(() => {
+    const inicio = this.pagina() * this.pageSize;
+    return this.rutas().slice(inicio, inicio + this.pageSize);
+  });
+
+  cambiarPagina(evento: PageEvent): void {
+    this.pagina.set(evento.pageIndex);
+  }
+
+  eliminar(ruta: Ruta): void {
+    this.errorAccion.set(null);
+    this.dialog
+      .open(EliminarRutaDialog, {
+        data: ruta,
+        width: '28rem',
+        maxWidth: 'calc(100vw - 32px)',
+      })
+      .afterClosed()
+      .pipe(
+        filter((confirmado) => confirmado === true),
+        switchMap(() => this.service.eliminar(ruta.id)),
+      )
+      .subscribe({
+        next: () => {
+          this.pagina.set(0);
+          this.consulta.retry();
+        },
+        error: (error) => this.errorAccion.set(authError(error, 'No se pudo eliminar la ruta.')),
+      });
   }
 }
