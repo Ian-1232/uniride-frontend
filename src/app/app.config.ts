@@ -1,4 +1,6 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { AuthService } from './core/services/auth.service';
+import { firstValueFrom } from 'rxjs';
+import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import {
   provideRouter,
   withComponentInputBinding,
@@ -13,6 +15,7 @@ import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideAppInitializer(() => firstValueFrom(inject(AuthService).restoreSession())),
     provideRouter(
       routes,
       withComponentInputBinding(),

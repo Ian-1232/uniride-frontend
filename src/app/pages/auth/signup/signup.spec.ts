@@ -1,8 +1,8 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { SignupComponent } from './signup';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthRespuesta } from '../../../core/models/auth.models';
@@ -11,6 +11,9 @@ describe('SignupComponent (US01 - Registro & US03 - Selección de Rol)', () => {
   let component: SignupComponent;
   let authService: AuthService;
   let router: Router;
+  let fixture: ComponentFixture<SignupComponent>;
+
+  afterEach(() => component.ngOnDestroy());
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -22,7 +25,7 @@ describe('SignupComponent (US01 - Registro & US03 - Selección de Rol)', () => {
       ]
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(SignupComponent);
+    fixture = TestBed.createComponent(SignupComponent);
     component = fixture.componentInstance;
     authService = TestBed.inject(AuthService);
     router = TestBed.inject(Router);
@@ -31,6 +34,62 @@ describe('SignupComponent (US01 - Registro & US03 - Selección de Rol)', () => {
 
   it('debe crearse correctamente', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('connects the external submit button to the registration form', () => {
+    vi.spyOn(authService, 'registro').mockReturnValue(of({ token: null, mensaje: 'OK' }));
+    component.signupForm.setValue({ nombre: 'Ana', apellidos: 'Torres', telefono: '987654321', correo: 'ana@upc.edu.pe', contrasena: 'Password1!', rol: 'PASAJERO', aceptaTerminos: true });
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(button.form?.id).toBe('signup-form');
+    button.click();
+    expect(authService.registro).toHaveBeenCalledTimes(1);
+    expect(component.showOtpModal).toBe(true);
+  });
+
+  it('does not open OTP or grant a session when registration is offline', () => {
+    vi.spyOn(authService, 'registro').mockReturnValue(throwError(() => ({ status: 0 })));
+    component.signupForm.setValue({ nombre: 'Ana', apellidos: 'Torres', telefono: '987654321', correo: 'ana@upc.edu.pe', contrasena: 'Password1!', rol: 'PASAJERO', aceptaTerminos: true });
+    component.submitRegistro();
+    expect(component.showOtpModal).toBe(false);
+    expect(component.registroError).toContain('conectar');
+    expect(authService.isAuthenticated()).toBe(false);
+    expect(component.isSubmitting).toBe(false);
+  });
+
+  it('keeps OTP open on network failure and never navigates', () => {
+    const navigate = vi.spyOn(router, 'navigate');
+    vi.spyOn(authService, 'verificarCodigo').mockReturnValue(throwError(() => ({ status: 0 })));
+    component.signupForm.controls.correo.setValue('ana@upc.edu.pe');
+    component.showOtpModal = true;
+    component.otpDigits = ['6', '5', '4', '3', '2', '1'];
+    component.verificarOtp();
+    expect(component.showOtpModal).toBe(true);
+    expect(component.otpError).toContain('conectar');
+    expect(navigate).not.toHaveBeenCalled();
+    expect(authService.getToken()).toBeNull();
+  });
+
+  it('displays validation errors and respects Retry-After on resend', () => {
+    component.signupForm.controls.correo.setValue('ana@upc.edu.pe');
+    vi.spyOn(authService, 'reenviarCodigo').mockReturnValue(throwError(() => ({ status: 429, headers: { get: () => '900' } })));
+    component.reenviarCodigo();
+    expect(component.resendCooldown).toBe(900);
+    expect(component.resendSuccessMessage).toBe('');
+    component.reenviarCodigo();
+    expect(authService.reenviarCodigo).toHaveBeenCalledTimes(1);
+  });
+
+  it('suppresses simultaneous OTP submissions', () => {
+    const pending = new Subject<AuthRespuesta>();
+    vi.spyOn(authService, 'verificarCodigo').mockReturnValue(pending);
+    component.signupForm.controls.correo.setValue('ana@upc.edu.pe');
+    component.otpDigits = ['6', '5', '4', '3', '2', '1'];
+    component.verificarOtp(); component.verificarOtp();
+    expect(authService.verificarCodigo).toHaveBeenCalledTimes(1);
+    pending.error({ status: 400, error: { mensaje: 'Código incorrecto' } });
+    expect(component.isVerifying).toBe(false);
+    expect(component.otpError).toBe('Código incorrecto');
   });
 
   it('debe cambiar de rol entre CONDUCTOR y PASAJERO (US03)', () => {
@@ -94,7 +153,7 @@ describe('SignupComponent (US01 - Registro & US03 - Selección de Rol)', () => {
 
   it('debe enviar registro vía AuthService y abrir modal OTP en éxito', () => {
     const mockAuthRespuesta: AuthRespuesta = {
-      token: 'jwt-registro',
+      token: null,
       mensaje: 'Usuario registrado. Ingrese el código de 6 dígitos enviado a su correo.',
       usuario: {
         id: 10,
@@ -148,10 +207,10 @@ describe('SignupComponent (US01 - Registro & US03 - Selección de Rol)', () => {
     expect(component.registroError).toContain('ya se encuentra registrado');
   });
 
-  it('debe verificar código OTP y navegar a /auth/perfil en éxito', () => {
+  it('debe verificar código OTP y navegar a /auth/login en éxito', () => {
     const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(async () => true);
     const mockAuthRespuesta: AuthRespuesta = {
-      token: 'jwt-verified',
+      token: null,
       mensaje: 'Cuenta verificada exitosamente',
     };
 
@@ -168,6 +227,6 @@ describe('SignupComponent (US01 - Registro & US03 - Selección de Rol)', () => {
       codigo: '123456',
     });
     expect(component.showOtpModal).toBe(false);
-    expect(navigateSpy).toHaveBeenCalledWith(['/auth/perfil']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/auth/login'], { queryParams: { verificado: 'true' } });
   });
 });

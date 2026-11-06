@@ -26,10 +26,11 @@
       }
     }
   </mat-nav-list>
+  <button mat-button type="button" (click)="authService.logout()">Cerrar sesión</button>
   <div class="sidebar-user">
-    <span class="avatar">{{ authService.currentUser().iniciales }}</span>
+    <span class="avatar">{{ authService.currentUser()?.iniciales }}</span>
     <div>
-      {{ authService.currentUser().nombre }}
+      {{ authService.currentUser()?.nombre }}
       <small>{{ authService.currentRole() }}</small>
     </div>
   </div>
@@ -45,5 +46,6 @@
   @for (item of menu; track item.icono) {
     @if (item.ruta) { <a mat-menu-item [routerLink]="item.ruta">{{ item.nombre }}</a> }
   }
+  <button mat-menu-item type="button" (click)="authService.logout()">Cerrar sesión</button>
 </mat-menu>
 <main class="workspace" id="contenido"><router-outlet /></main>

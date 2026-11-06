@@ -1,201 +1,149 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
-import {
-  AuthRespuesta,
-  LoginRequest,
-  RegistroRequest,
-  ReenviarCodigoRequest,
-  RoleType,
-  UserSession,
-  UsuarioRespuesta,
-  VerificarCodigoRequest,
-} from '../models/auth.models';
+import { Router } from '@angular/router';
+import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError, timeout } from 'rxjs';
+import { AuthRespuesta, LoginRequest, RegistroRequest, UserSession, UsuarioRespuesta, VerificarCodigoRequest } from '../models/auth.models';
 import { environment } from '../../../environments/environment';
 
-const DEFAULT_USER: UserSession = {
-  id: 1,
-  nombre: 'Juan Pérez',
-  apellidos: 'Pérez',
-  iniciales: 'JP',
-  correo: 'juan.perez@upc.edu.pe',
-  rol: 'CONDUCTOR',
-  telefono: '987654321',
-};
+const TOKEN_KEY = 'uniride_token';
 
-const STORAGE_KEY_USER = 'uniride_user';
-const STORAGE_KEY_ROLE = 'uniride_rol';
-const STORAGE_KEY_TOKEN = 'uniride_token';
+// Only syntax and expiry: the server verifies the signature through /usuarios/me.
+export function usableJwt(token: unknown): token is string {
+  if (typeof token !== 'string' || !/^[\w-]+\.[\w-]+\.[\w-]+$/.test(token)) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' && payload.exp * 1000 > Date.now();
+  } catch { return false; }
+}
+function validUser(user: UsuarioRespuesta | null | undefined): user is UsuarioRespuesta {
+  return !!user && Number.isInteger(user.id) && user.id! > 0 &&
+    typeof user.nombre === 'string' && !!user.nombre.trim() &&
+    typeof user.correo === 'string' && user.correo.includes('@') &&
+    user.cuentaVerificada === true && ['CONDUCTOR', 'PASAJERO'].includes(user.rol);
+}
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly http = inject(HttpClient, { optional: true });
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly apiUrl = environment.apiUrl;
-
-  private readonly _currentUser = signal<UserSession>(this.loadInitialUser());
-
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly currentRole = computed(() => this._currentUser().rol);
+  private readonly user = signal<UserSession | null>(null);
+  private token: string | null = null;
+  private revision = 0;
+  private restoration?: Observable<boolean>;
+  private recoveredStorage?: Storage;
+  private expiryTimer?: ReturnType<typeof setTimeout>;
+  readonly currentUser = this.user.asReadonly();
+  readonly currentRole = computed(() => this.user()?.rol ?? null);
+  readonly isAuthenticated = computed(() => this.user() !== null);
   readonly isConductor = computed(() => this.currentRole() === 'CONDUCTOR');
   readonly isPasajero = computed(() => this.currentRole() === 'PASAJERO');
-  readonly panelLabel = computed(() =>
-    this.isConductor() ? 'Panel del conductor' : 'Panel del pasajero',
-  );
+  readonly panelLabel = computed(() => this.isConductor() ? 'Panel del conductor' : this.isPasajero() ? 'Panel del pasajero' : 'UniRide');
 
-  private loadInitialUser(): UserSession {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const storedUser = localStorage.getItem(STORAGE_KEY_USER);
-        if (storedUser) {
-          return JSON.parse(storedUser);
-        }
-        const storedRole = localStorage.getItem(STORAGE_KEY_ROLE) as RoleType | null;
-        if (storedRole === 'CONDUCTOR' || storedRole === 'PASAJERO') {
-          return { ...DEFAULT_USER, rol: storedRole };
-        }
-      }
-    } catch {
-      // Fallback a usuario por defecto si hay error de parseo o almacenamiento
-    }
-    return { ...DEFAULT_USER };
+  constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.expiryTimer));
   }
 
-  setRole(rol: RoleType): void {
-    this._currentUser.update((prev) => {
-      const updated = { ...prev, rol };
-      this.persistUser(updated);
-      return updated;
-    });
-  }
-
-  setSession(user: Partial<UserSession> | UsuarioRespuesta, token?: string): void {
-    this._currentUser.update((prev) => {
-      const updated: UserSession = {
-        ...prev,
-        ...user,
-        iniciales: this.computeInitials(user.nombre ?? prev.nombre, user.apellidos ?? prev.apellidos),
-      };
-      if (token) {
-        updated.token = token;
-        try {
-          if (typeof window !== 'undefined' && window.localStorage) {
-            localStorage.setItem(STORAGE_KEY_TOKEN, token);
-          }
-        } catch {}
-      }
-      this.persistUser(updated);
-      return updated;
-    });
-  }
-
+  getToken(): string | null { return this.token; }
   clearSession(): void {
-    this._currentUser.set({ ...DEFAULT_USER });
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.removeItem(STORAGE_KEY_USER);
-        localStorage.removeItem(STORAGE_KEY_ROLE);
-        localStorage.removeItem(STORAGE_KEY_TOKEN);
+    clearTimeout(this.expiryTimer);
+    this.revision++;
+    this.token = null;
+    this.user.set(null);
+    for (const storage of this.storages()) {
+      for (const key of [TOKEN_KEY, 'uniride_user', 'uniride_rol']) {
+        try { storage.removeItem(key); } catch { /* Storage disabled. */ }
       }
-    } catch {}
+    }
   }
-
-  getToken(): string | null {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        return localStorage.getItem(STORAGE_KEY_TOKEN) || this._currentUser().token || null;
-      }
-    } catch {}
-    return this._currentUser().token || null;
+  logout(): void {
+    this.clearSession();
+    void this.router.navigate(['/auth/login']);
   }
-
-  /**
-   * Autenticación — Login (US02)
-   * POST /api/auth/login
-   */
+  restoreSession(): Observable<boolean> {
+    if (this.restoration) return this.restoration;
+    if (this.user() && usableJwt(this.token)) return of(true);
+    const stored = this.token ?? this.readToken();
+    this.clearSession();
+    if (!usableJwt(stored)) return of(false);
+    this.token = stored;
+    const revision = this.revision;
+    this.restoration = this.http.get<UsuarioRespuesta>(`${this.apiUrl}/usuarios/me`).pipe(
+      timeout(10000),
+      map(user => {
+        if (revision !== this.revision) return false;
+        if (!validUser(user) || !usableJwt(stored)) throw new Error('Sesión inválida');
+        this.acceptUser(user);
+        try { this.recoveredStorage?.setItem(TOKEN_KEY, stored); } catch { /* In-memory session. */ }
+        return true;
+      }),
+      catchError(() => {
+        if (revision === this.revision) this.clearSession();
+        return of(false);
+      }),
+      finalize(() => { this.restoration = undefined; }),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
+    return this.restoration;
+  }
   login(credentials: LoginRequest): Observable<AuthRespuesta> {
-    const payload = {
-      correo: credentials.correo,
-      contrasena: credentials.contrasena,
-    };
-    return this.getHttpClient().post<AuthRespuesta>(`${this.apiUrl}/auth/login`, payload).pipe(
-      tap((res) => {
-        if (res.usuario) {
-          this.setSession(res.usuario, res.token);
-        } else if (res.token) {
-          this.setSession({}, res.token);
-        }
-      }),
-    );
-  }
-
-  /**
-   * Autenticación — Registro inicial (US01)
-   * POST /api/auth/registro
-   */
-  registro(data: RegistroRequest): Observable<AuthRespuesta> {
-    return this.getHttpClient().post<AuthRespuesta>(`${this.apiUrl}/auth/registro`, data).pipe(
-      tap((res) => {
-        if (res.usuario) {
-          this.setSession(res.usuario, res.token);
-        } else if (res.token) {
-          this.setSession({}, res.token);
-        }
-      }),
-    );
-  }
-
-  /**
-   * Autenticación — Verificación con código OTP (US01 / US02)
-   * POST /api/auth/verificar
-   */
-  verificarCodigo(data: VerificarCodigoRequest): Observable<AuthRespuesta> {
-    return this.getHttpClient().post<AuthRespuesta>(`${this.apiUrl}/auth/verificar`, data).pipe(
-      tap((res) => {
-        if (res.usuario) {
-          this.setSession(res.usuario, res.token);
-        } else if (res.token) {
-          this.setSession({}, res.token);
-        }
-      }),
-    );
-  }
-
-  /**
-   * Autenticación — Reenviar código OTP (US01)
-   * POST /api/auth/reenviar-codigo
-   */
-  reenviarCodigo(correo: string): Observable<AuthRespuesta> {
-    const payload: ReenviarCodigoRequest = { correo };
-    return this.getHttpClient().post<AuthRespuesta>(`${this.apiUrl}/auth/reenviar-codigo`, payload);
-  }
-
-  private getHttpClient(): HttpClient {
-    if (!this.http) {
-      throw new Error('HttpClient no está disponible. Asegúrate de configurar provideHttpClient().');
-    }
-    return this.http;
-  }
-
-  private persistUser(user: UserSession): void {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-        localStorage.setItem(STORAGE_KEY_ROLE, user.rol);
+    this.clearSession();
+    const revision = this.revision;
+    return this.http.post<AuthRespuesta>(`${this.apiUrl}/auth/login`, {
+      correo: credentials.correo.trim().toLowerCase(), contrasena: credentials.contrasena,
+    }).pipe(timeout(15000), tap(res => {
+      if (revision !== this.revision) throw new Error('Solicitud cancelada');
+      if (!usableJwt(res.token) || !validUser(res.usuario) ||
+          res.usuario.correo.toLowerCase() !== credentials.correo.trim().toLowerCase()) {
+        throw new Error('Respuesta de autenticación inválida');
       }
-    } catch {}
+      this.token = res.token;
+      this.acceptUser(res.usuario);
+      try {
+        (credentials.recordarDispositivo ? localStorage : sessionStorage).setItem(TOKEN_KEY, res.token);
+      } catch { /* In-memory session. */ }
+    }), catchError(error => {
+      if (revision === this.revision) this.clearSession();
+      return throwError(() => error);
+    }));
   }
-
-  private computeInitials(nombre?: string, apellidos?: string): string {
-    const n = nombre?.trim() || '';
-    const a = apellidos?.trim() || '';
-    if (n && a) {
-      return (n[0] + a[0]).toUpperCase();
+  registro(data: RegistroRequest): Observable<AuthRespuesta> {
+    return this.http.post<AuthRespuesta>(`${this.apiUrl}/auth/registro`, data).pipe(timeout(15000));
+  }
+  verificarCodigo(data: VerificarCodigoRequest): Observable<AuthRespuesta> {
+    return this.http.post<AuthRespuesta>(`${this.apiUrl}/auth/verificar`, data).pipe(timeout(15000));
+  }
+  reenviarCodigo(correo: string): Observable<AuthRespuesta> {
+    return this.http.post<AuthRespuesta>(`${this.apiUrl}/auth/reenviar-codigo`, { correo }).pipe(timeout(15000));
+  }
+  private acceptUser(user: UsuarioRespuesta): void {
+    const iniciales = ((user.nombre[0] ?? '') + (user.apellidos?.[0] ?? '')).toUpperCase();
+    this.user.set(Object.freeze({ ...user, iniciales }));
+    this.scheduleExpiry();
+  }
+  private scheduleExpiry(): void {
+    clearTimeout(this.expiryTimer);
+    if (!this.token) return;
+    const payload = JSON.parse(atob(this.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const remaining = payload.exp * 1000 - Date.now();
+    this.expiryTimer = setTimeout(() => {
+      if (usableJwt(this.token)) this.scheduleExpiry();
+      else this.logout();
+    }, Math.max(0, Math.min(remaining, 2147483647)));
+  }
+  private storages(): Storage[] {
+    const result: Storage[] = [];
+    try { result.push(sessionStorage); } catch { /* Unavailable. */ }
+    try { result.push(localStorage); } catch { /* Unavailable. */ }
+    return result;
+  }
+  private readToken(): string | null {
+    for (const storage of this.storages()) {
+      try {
+        const token = storage.getItem(TOKEN_KEY);
+        if (token) { this.recoveredStorage = storage; return token; }
+      } catch { /* Try next storage. */ }
     }
-    if (n) {
-      return n.slice(0, 2).toUpperCase();
-    }
-    return 'JP';
+    return null;
   }
 }

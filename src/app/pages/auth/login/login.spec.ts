@@ -58,18 +58,6 @@ describe('LoginComponent (US02 - Iniciar Sesión)', () => {
     expect(component.hidePassword).toBe(true);
   });
 
-  it('debe activar y cerrar los banners de feedback (simulación de Figma)', () => {
-    component.triggerDemoState('error');
-    expect(component.showErrorBanner).toBe(true);
-    expect(component.showUnverifiedBanner).toBe(false);
-
-    component.dismissAlert('error');
-    expect(component.showErrorBanner).toBe(false);
-
-    component.triggerDemoState('unverified');
-    expect(component.showUnverifiedBanner).toBe(true);
-  });
-
   it('debe iniciar sesión y redirigir a dashboard de conductor si el rol es CONDUCTOR', () => {
     const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(async () => true);
     const mockAuthRespuesta: AuthRespuesta = {

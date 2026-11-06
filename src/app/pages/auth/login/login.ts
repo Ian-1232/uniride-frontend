@@ -1,6 +1,7 @@
+import { authError } from '../../../core/services/auth-error';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -35,6 +36,7 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  readonly verified = inject(ActivatedRoute).snapshot.queryParamMap.get('verificado') === 'true';
   hidePassword = true;
   isLoading = false;
   showErrorBanner = false;
@@ -46,7 +48,7 @@ export class LoginComponent {
     correo: new FormControl('', [
       Validators.required,
       Validators.email,
-      Validators.pattern(/^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?edu(\.pe)?$/)
+      Validators.pattern(/^[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+edu(?:\.[A-Za-z]{2})?$/)
     ]),
     contrasena: new FormControl('', [
       Validators.required,
@@ -68,18 +70,6 @@ export class LoginComponent {
     this.cdr.detectChanges();
   }
 
-  // Permite simular los estados visuales del Figma
-  triggerDemoState(state: 'error' | 'unverified'): void {
-    if (state === 'error') {
-      this.showErrorBanner = true;
-      this.showUnverifiedBanner = false;
-    } else {
-      this.showUnverifiedBanner = true;
-      this.showErrorBanner = false;
-    }
-    this.cdr.detectChanges();
-  }
-
   onSubmit(): void {
     if (this.loginForm.invalid || this.isLoading) {
       this.loginForm.markAllAsTouched();
@@ -94,11 +84,11 @@ export class LoginComponent {
     this.showUnverifiedBanner = false;
     this.cdr.detectChanges();
 
-    this.authService.login({ correo, contrasena, recordarDispositivo: !!recordarDispositivo }).subscribe({
+    this.authService.login({ correo: correo.trim().toLowerCase(), contrasena, recordarDispositivo: !!recordarDispositivo }).subscribe({
       next: (res) => {
         this.isLoading = false;
         this.cdr.detectChanges();
-        const targetRole = res.usuario?.rol || this.authService.currentRole();
+        const targetRole = res.usuario!.rol;
         if (targetRole === 'CONDUCTOR') {
           this.router.navigate(['/conductor/dashboard']);
         } else {
@@ -107,16 +97,12 @@ export class LoginComponent {
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false;
-        const msg = err.error?.mensaje;
-        if (err.status === 0 || err.status === 504 || err.status === 502) {
-          this.showErrorBanner = true;
-          this.errorMessage = 'No se detecta conexión con el backend en localhost:8080 (PostgreSQL desconectado). Puedes usar los accesos directos de demostración.';
-        } else if (err.status === 409) {
+        if (err.status === 409) {
           this.showUnverifiedBanner = true;
-          this.unverifiedMessage = msg || 'Tu cuenta aún no ha sido verificada. Revisa tu bandeja institucional o ingresa tu código de confirmación enviado a tu correo.';
+          this.unverifiedMessage = authError(err, 'Verifica tu correo antes de iniciar sesión.');
         } else {
           this.showErrorBanner = true;
-          this.errorMessage = msg || 'Correo o contraseña incorrectos. Verifica tus credenciales o solicita restablecer tu acceso institucional.';
+          this.errorMessage = authError(err, 'No se pudo iniciar sesión. Verifica tus credenciales.');
         }
         this.cdr.detectChanges();
       }

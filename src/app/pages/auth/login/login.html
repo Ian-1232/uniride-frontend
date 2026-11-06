@@ -126,7 +126,7 @@
           <div class="alert-box error-alert">
             <mat-icon class="alert-icon">error_outline</mat-icon>
             <div class="alert-content">
-              <strong>Correo o contraseña incorrectos</strong>
+              <strong>No se pudo iniciar sesión</strong>
               <p>{{ errorMessage }}</p>
             </div>
             <button type="button" class="btn-close-alert" (click)="dismissAlert('error')">
@@ -148,6 +148,12 @@
           </div>
         }
 
+        @if (verified) {
+          <p role="status">Correo verificado. Inicia sesión con tus credenciales.</p>
+        }
+        @if (showUnverifiedBanner) {
+          <a [routerLink]="['/auth/registro']" [queryParams]="{ verificar: 'true', correo: loginForm.controls.correo.value }">Verificar correo o reenviar código</a>
+        }
         <!-- FORMULARIO REACTIVO (REACTIVE FORMS) -->
         <form [formGroup]="loginForm" class="login-form" (ngSubmit)="onSubmit()">
           <!-- CAMPO CORREO INSTITUCIONAL -->
@@ -260,11 +266,11 @@
         </div>
 
         <div class="sso-buttons-row">
-          <button type="button" mat-stroked-button class="btn-sso" (click)="triggerDemoState('unverified')">
+          <button type="button" mat-stroked-button class="btn-sso" disabled title="Disponible en una próxima fase">
             <span class="sso-upc-icon">U</span>
             <span>Portal UPC</span>
           </button>
-          <button type="button" mat-stroked-button class="btn-sso" (click)="triggerDemoState('error')">
+          <button type="button" mat-stroked-button class="btn-sso" disabled title="Disponible en una próxima fase">
             <mat-icon class="office-icon">corporate_fare</mat-icon>
             <span>Office 365 Edu</span>
           </button>
