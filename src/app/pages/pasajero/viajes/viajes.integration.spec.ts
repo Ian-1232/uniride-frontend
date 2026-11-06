@@ -1,3 +1,4 @@
+import { resolverDashboardVacio } from '../../../testing/dashboard-fixtures';
 import { prepararPerfil } from '../../../testing/perfil-fixtures';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -57,6 +58,7 @@ describe('Passenger trips REST integration', () => {
   });
   afterEach(() => {
     TestBed.inject(MatDialog).closeAll();
+    resolverDashboardVacio(http);
     http.verify();
     auth.clearSession();
     localStorage.clear();

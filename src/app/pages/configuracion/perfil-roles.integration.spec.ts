@@ -1,3 +1,4 @@
+import { resolverDashboardVacio } from '../../testing/dashboard-fixtures';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -43,6 +44,7 @@ describe('US03-US05 profile, onboarding and shared navigation', () => {
     login();
   });
   afterEach(() => {
+    resolverDashboardVacio(http);
     http.verify();
     auth.clearSession();
     localStorage.clear();
@@ -538,6 +540,7 @@ describe('US03-US05 profile, onboarding and shared navigation', () => {
     http.expectOne('/api/usuarios/rol').flush({ ...user, rol: 'PASAJERO' });
     await harness.fixture.whenStable();
     expect(TestBed.inject(Router).url).toBe('/pasajero/dashboard');
+    resolverDashboardVacio(http);
     await harness.navigateByUrl('/compensaciones/metodos');
     http.expectOne('/api/metodos-compensacion').flush([]);
     expect(harness.routeNativeElement!.querySelector('app-pasajero-layout')).toBeTruthy();

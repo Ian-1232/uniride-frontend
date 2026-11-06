@@ -1,328 +1,157 @@
 <div class="dashboard-container">
-  <!-- Feedback Alert -->
-  @if (feedbackMensaje()) {
-    <div class="feedback-banner" role="status">
-      <span>{{ feedbackMensaje() }}</span>
-      <button type="button" class="btn-close-banner" (click)="cerrarFeedback()" aria-label="Cerrar aviso">✕</button>
-    </div>
-  }
-
-  <!-- Page Heading -->
   <header class="page-heading">
-    <div class="heading-meta">
-      <nav class="breadcrumb" aria-label="Miga de pan">
-        <span>UniRide</span>
-        <span aria-hidden="true">/</span>
-        <span>Pasajero</span>
-        <span aria-hidden="true">/</span>
-        <span class="active">Dashboard</span>
-      </nav>
-      <h1>Tu Centro de Movilidad Universitaria 🎒</h1>
-      <p class="subtitle">Encuentra cupos seguros con compañeros de tu misma facultad y viaja cómodo pagando solo tu parte de gasolina.</p>
+    <div>
+      <h1>Tu centro de movilidad universitaria</h1>
+      <p class="subtitle">Consulta tus próximas salidas y encuentra viajes disponibles.</p>
     </div>
-    <div class="heading-actions">
-      <span class="verified-pill">
-        <mat-icon fontSet="material-symbols-outlined">verified_user</mat-icon>
-        Alumno UPC Verificado
-      </span>
-      <a mat-flat-button class="btn-primary" routerLink="/pasajero/viajes/buscar">
-        <mat-icon fontSet="material-symbols-outlined">search</mat-icon>
-        Buscar Rutas
-      </a>
-    </div>
+    <a mat-flat-button routerLink="/pasajero/viajes/buscar">Buscar viajes</a>
   </header>
-
-  <!-- Bento Grid Architecture -->
   <div class="bento-grid">
-
-    <!-- 1. BUSCADOR INTELIGENTE HACIA SEDES UPC (Span 12 - GET /api/viajes/buscar) -->
-    <section class="bento-card search-card" aria-labelledby="search-title">
-      <h2 id="search-title" class="search-title">¿A qué campus te diriges hoy?</h2>
-      <p class="search-subtitle">Coordinamos con compañeros universitarios que tienen clases en tu mismo turno académico.</p>
-
-      <div class="search-bar">
-        <div class="search-field">
-          <mat-icon fontSet="material-symbols-outlined" class="field-icon">near_me</mat-icon>
-          <input type="text" class="input-text" value="📍 Higuereta / Santiago de Surco" placeholder="Paradero de partida" aria-label="Paradero de partida">
-        </div>
-
-        <div class="search-field">
-          <mat-icon fontSet="material-symbols-outlined" class="field-icon">account_balance</mat-icon>
-          <select class="input-select" aria-label="Sede UPC">
-            <option selected>UPC Campus Monterrico</option>
-            <option>UPC Campus San Isidro</option>
-            <option>UPC Campus Villa</option>
-            <option>UPC Campus San Miguel</option>
-          </select>
-        </div>
-
-        <div class="search-field">
-          <mat-icon fontSet="material-symbols-outlined" class="field-icon">schedule</mat-icon>
-          <select class="input-select" aria-label="Horario deseado">
-            <option>Antes de 07:00 AM</option>
-            <option selected>Antes de 08:00 AM</option>
-            <option>Antes de 10:00 AM</option>
-          </select>
-        </div>
-
-        <a mat-flat-button class="btn-search" routerLink="/pasajero/viajes/buscar">
-          <mat-icon fontSet="material-symbols-outlined">travel_explore</mat-icon>
-          Buscar Cupos
-        </a>
+    <section class="bento-card search-card" aria-labelledby="buscar-title">
+      <div>
+        <h2 id="buscar-title">Encuentra tu próximo viaje</h2>
+        <p>Busca por origen, destino, día, hora o cercanía en el buscador completo.</p>
       </div>
+      <a mat-stroked-button routerLink="/pasajero/viajes/buscar">Abrir buscador</a>
     </section>
-
-    <!-- 2. HERO: VIAJE CONFIRMADO EN CAMINO (Span 8 - GET /api/solicitudes) -->
-    <section class="bento-card col-hero" aria-labelledby="trip-confirmed-title">
-      <div class="hero-top">
-        <div>
-          <span class="status-badge badge-confirmed">
-            <span class="pulse-indicator" aria-hidden="true"></span>
-            CONFIRMADO • SALIDA EN {{ viajeConfirmado().minutosParaSalida }} MIN
-          </span>
-          <h2 id="trip-confirmed-title" class="trip-title">Conductor: {{ viajeConfirmado().conductor }}</h2>
-          <p class="driver-academic">{{ viajeConfirmado().carrera }} • ★ {{ viajeConfirmado().calificacion }} ({{ viajeConfirmado().viajesConductor }} viajes)</p>
-        </div>
-        <div class="hero-actions">
-          <a mat-stroked-button class="btn-chat" [routerLink]="['/pasajero/viajes', viajeConfirmado().id]">
-            <mat-icon fontSet="material-symbols-outlined">chat</mat-icon>
-            Chat Conductor
-          </a>
-        </div>
-      </div>
-
-      <!-- Trazado de Ruta Visual -->
-      <div class="route-tracker">
-        <div class="route-point">
-          <span class="point-label">Punto de Recojo</span>
-          <p class="point-val">{{ viajeConfirmado().origen }}</p>
-          <span class="time-tag">Salida: {{ viajeConfirmado().horaSalida }}</span>
-        </div>
-        <div class="route-connector">
-          <span class="connector-pill">35 min</span>
-          <div class="connector-line"></div>
-          <span class="traffic-tag">Llegada {{ viajeConfirmado().horaLlegada }}</span>
-        </div>
-        <div class="route-point text-right">
-          <span class="point-label">Campus Destino</span>
-          <p class="point-val">{{ viajeConfirmado().destino }}</p>
-          <span class="time-tag">Clases 08:00 AM</span>
-        </div>
-      </div>
-
-      <!-- Car Cabin Seat Visualizer (Highlighting YOU) -->
-      <div class="cabin-container">
-        <div class="cabin-info">
-          <p class="car-spec">{{ viajeConfirmado().auto }} ({{ viajeConfirmado().placa }})</p>
-          <p class="seats-counter">
-            Tu Asiento: <strong class="seat-assigned">{{ viajeConfirmado().asientoAsignado }}</strong>
-            <span class="fare-note">• S/ {{ viajeConfirmado().contribucion | number:'1.2-2' }} vía {{ viajeConfirmado().metodoPago }} al abordar</span>
-          </p>
-        </div>
-        <div class="seats-visual" aria-label="Distribución de asientos en el auto">
-          <div class="seat-box seat-driver" title="Conductor: Rodrigo Morales">
-            <span class="seat-role">VOL</span>
-            <span class="seat-name">Rod.</span>
-          </div>
-          <div class="seat-box seat-other" title="Copiloto: Ocupado por otro estudiante">
-            <span class="seat-icon">👤</span>
-            <span class="seat-name">P1</span>
-          </div>
-          <div class="seat-box seat-you" title="¡Tu Asiento Confirmado!">
-            <span class="seat-icon">⭐</span>
-            <span class="seat-name">Tú</span>
-          </div>
-          <div class="seat-box seat-other" title="Asiento ocupado">
-            <span class="seat-icon">👤</span>
-            <span class="seat-name">P3</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mini Mapa Vectorial SVG -->
-      <div class="route-svg-box" aria-hidden="true">
-        <svg width="100%" height="100%" viewBox="0 0 600 100" preserveAspectRatio="none">
-          <path d="M 0,75 Q 150,25 300,55 T 600,30" fill="none" stroke="#E2E8F0" stroke-width="6"/>
-          <path d="M 0,75 Q 150,25 300,55 T 600,30" fill="none" stroke="var(--ur-color-accent, #10B981)" stroke-width="3" stroke-dasharray="8 4"/>
-          <!-- Origin Pin -->
-          <circle cx="60" cy="62" r="7" fill="var(--ur-color-accent, #10B981)"/>
-          <circle cx="60" cy="62" r="3" fill="#FFFFFF"/>
-          <text x="75" y="66" font-size="11" font-weight="700" fill="#047857">Higuereta (07:20 AM)</text>
-          <!-- Destination Pin -->
-          <circle cx="530" cy="32" r="7" fill="var(--ur-color-primary, #4F46E5)"/>
-          <circle cx="530" cy="32" r="3" fill="#FFFFFF"/>
-          <text x="430" y="20" font-size="11" font-weight="700" fill="#4F46E5">UPC Monterrico 🏛️</text>
-        </svg>
-      </div>
-
-      <div class="trip-footer-actions">
-        <button type="button" class="btn-cancel-trip" (click)="cancelarViaje()">
-          Cancelar reserva de viaje
+    <section class="bento-card col-hero" aria-labelledby="proximo-title">
+      <div class="card-header-row">
+        <h2 id="proximo-title">Próxima salida</h2>
+        <button
+          mat-button
+          type="button"
+          [disabled]="proxima.state().estado === 'cargando'"
+          (click)="proxima.retry()"
+        >
+          Actualizar viaje
         </button>
       </div>
+      @if (proxima.state().estado === 'cargando') {
+        <app-reportes-state-panel
+          title="Cargando próximo viaje"
+          message="Estamos revisando tus solicitudes aceptadas."
+          [loading]="true"
+          role="status"
+        />
+      } @else if (proxima.state().estado === 'error') {
+        <app-reportes-state-panel
+          title="No se pudo consultar tu próximo viaje"
+          [message]="proxima.state().mensaje"
+          tone="danger"
+          actionLabel="Reintentar"
+          (action)="proxima.retry()"
+          role="alert"
+        />
+      } @else if (siguiente(); as actual) {
+        <span class="status-badge">Solicitud aceptada</span>
+        <h3 class="trip-title">
+          {{ actual.solicitud.origen || 'Origen no disponible' }} →
+          {{ actual.solicitud.destino || 'Destino no disponible' }}
+        </h3>
+        <p class="trip-date">
+          {{ fecha(actual.solicitud.fecha) }} · {{ hora(actual.solicitud.hora) }}
+        </p>
+        <p class="muted">
+          La aceptación de tu solicitud no confirma la salida. Este listado no informa la
+          confirmación del conductor ni el estado actual del viaje.
+        </p>
+        <div class="actions">
+          <button mat-flat-button type="button" (click)="verSolicitud()">Ver mi viaje</button
+          ><a mat-stroked-button routerLink="/pasajero/viajes/mis-viajes"
+            >Gestionar mis solicitudes</a
+          >
+        </div>
+      } @else {
+        <div class="empty-state">
+          <h3>Todavía no tienes un próximo viaje.</h3>
+          <p>Busca una salida y envía tu solicitud desde el detalle del viaje.</p>
+          <a mat-flat-button routerLink="/pasajero/viajes/buscar">Buscar viajes</a>
+        </div>
+      }
+      @if (proxima.state().data?.incompletos) {
+        <p class="muted">
+          Algunas solicitudes tienen datos de salida incompletos. Revisa Mis viajes.
+        </p>
+      }
+      <p class="muted">
+        Las cancelaciones se revisan y confirman desde el detalle. Cancelar una solicitud pendiente
+        es distinto de cancelar un viaje completo.
+      </p>
     </section>
-
-    <!-- 3. KPI METRICS (Span 4 - GET /api/estadisticas) -->
-    <div class="col-kpis">
-      <div class="kpi-card">
-        <div class="kpi-content">
-          <span class="kpi-label">Dinero Ahorrado este Ciclo</span>
-          <p class="kpi-number text-accent">S/ {{ metricas().ahorroTotal | number:'1.2-2' }}</p>
-          <span class="kpi-sub">vs tarifas de taxi tradicional</span>
-        </div>
-        <div class="kpi-icon-wrap icon-emerald">
-          <mat-icon fontSet="material-symbols-outlined">savings</mat-icon>
-        </div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-content">
-          <span class="kpi-label">Viajes Realizados</span>
-          <p class="kpi-number">{{ metricas().viajesRealizados }}</p>
-          <span class="kpi-trend positive">{{ metricas().puntualidadPorcentaje }}% puntualidad</span>
-        </div>
-        <div class="kpi-icon-wrap icon-indigo">
-          <mat-icon fontSet="material-symbols-outlined">commute</mat-icon>
-        </div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-content">
-          <span class="kpi-label">Huella de CO₂ Evitada</span>
-          <p class="kpi-number">{{ metricas().co2EvitadoKg }} kg</p>
-          <span class="kpi-sub eco">Insignia Estudiante Verde 🌱</span>
-        </div>
-        <div class="kpi-icon-wrap icon-green">
-          <mat-icon fontSet="material-symbols-outlined">compost</mat-icon>
-        </div>
-      </div>
-    </div>
-
-    <!-- 4. GRAFICO DE AHORRO SEMANAL (Span 7 - GET /api/estadisticas/semana) -->
-    <section class="bento-card col-chart" aria-labelledby="savings-chart-title">
+    <app-dashboard-metricas class="col-kpis" rol="PASAJERO" />
+    <app-dashboard-frecuencia class="col-chart" />
+    <app-dashboard-metodos class="col-methods" />
+    <section class="bento-card col-available" aria-labelledby="disponibles-title">
       <div class="card-header-row">
         <div>
-          <h2 id="savings-chart-title" class="card-title">Comparativa de Gasto Semanal (US20)</h2>
-          <p class="card-subtitle">UniRide (S/ 5 por viaje) vs Taxi Habitual (S/ 25 por viaje)</p>
+          <h2 id="disponibles-title">Viajes disponibles</h2>
+          <p class="muted">Explora salidas publicadas. No son recomendaciones personalizadas.</p>
         </div>
-        <span class="badge-tag">Ahorro: S/ 100/sem</span>
+        <a class="link-action" routerLink="/pasajero/viajes/buscar">Ver buscador completo</a>
       </div>
-
-      <!-- SVG Bar Chart -->
-      <svg class="svg-bar-chart" viewBox="0 0 500 160" role="img" aria-label="Comparativa de gasto semanal">
-        <line x1="30" y1="30" x2="470" y2="30" stroke="#E2E8F0" stroke-dasharray="4"/>
-        <line x1="30" y1="75" x2="470" y2="75" stroke="#E2E8F0" stroke-dasharray="4"/>
-        <line x1="30" y1="120" x2="470" y2="120" stroke="#E2E8F0" stroke-dasharray="4"/>
-
-        <!-- Lun a Vie -->
-        <g class="chart-col">
-          <rect x="65" y="30" width="16" height="90" rx="4" fill="#CBD5E1" title="Taxi: S/ 25"/>
-          <rect x="85" y="100" width="16" height="20" rx="4" fill="#10B981" title="UniRide: S/ 5"/>
-          <text x="83" y="142" font-size="12" font-weight="500" fill="#64748B" text-anchor="middle">Lun</text>
-        </g>
-        <g class="chart-col">
-          <rect x="145" y="30" width="16" height="90" rx="4" fill="#CBD5E1"/>
-          <rect x="165" y="100" width="16" height="20" rx="4" fill="#10B981"/>
-          <text x="163" y="142" font-size="12" font-weight="500" fill="#64748B" text-anchor="middle">Mar</text>
-        </g>
-        <g class="chart-col">
-          <rect x="225" y="30" width="16" height="90" rx="4" fill="#CBD5E1"/>
-          <rect x="245" y="100" width="16" height="20" rx="4" fill="#10B981"/>
-          <text x="243" y="142" font-size="12" font-weight="700" fill="#1E293B" text-anchor="middle">Mié ★</text>
-        </g>
-        <g class="chart-col">
-          <rect x="305" y="30" width="16" height="90" rx="4" fill="#CBD5E1"/>
-          <rect x="325" y="100" width="16" height="20" rx="4" fill="#10B981"/>
-          <text x="323" y="142" font-size="12" font-weight="500" fill="#64748B" text-anchor="middle">Jue</text>
-        </g>
-        <g class="chart-col">
-          <rect x="385" y="30" width="16" height="90" rx="4" fill="#CBD5E1"/>
-          <rect x="405" y="100" width="16" height="20" rx="4" fill="#10B981"/>
-          <text x="403" y="142" font-size="12" font-weight="500" fill="#64748B" text-anchor="middle">Vie</text>
-        </g>
-      </svg>
-      <div class="chart-footer-note">
-        <span class="legend-color dot-taxi"></span>
-        <span>Taxi promedio (S/ 25)</span>
-        <span class="legend-color dot-uniride"></span>
-        <span>UniRide compartido (S/ 5)</span>
-      </div>
-    </section>
-
-    <!-- 5. DONUT METODOS USADOS (Span 5 - GET /api/metodos-compensacion) -->
-    <section class="bento-card col-donut" aria-labelledby="payments-donut-title">
-      <div class="card-header-row">
-        <div>
-          <h2 id="payments-donut-title" class="card-title">Tus Métodos de Pago (US26)</h2>
-          <p class="card-subtitle">Contribuciones al conductor</p>
-        </div>
-        <a class="link-action" routerLink="/compensaciones">Configurar →</a>
-      </div>
-
-      <div class="donut-flex">
-        <svg class="donut-svg" width="110" height="110" viewBox="0 0 42 42" role="img" aria-label="Distribución de métodos">
-          <circle cx="21" cy="21" r="15.9" fill="#fff"></circle>
-          <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#E2E8F0" stroke-width="5"></circle>
-          <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#7C3AED" stroke-width="5" stroke-dasharray="70 30" stroke-dashoffset="25"></circle>
-          <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#06B6D4" stroke-width="5" stroke-dasharray="30 70" stroke-dashoffset="55"></circle>
-          <text x="21" y="23" font-size="8" font-weight="700" fill="#1E293B" text-anchor="middle">100%</text>
-        </svg>
-
-        <ul class="donut-legend">
-          <li>
-            <span class="legend-color dot-yape"></span>
-            <span><strong>Yape (70%)</strong> • S/ 266</span>
-          </li>
-          <li>
-            <span class="legend-color dot-plin"></span>
-            <span><strong>Plin (30%)</strong> • S/ 114</span>
-          </li>
-          <li class="legend-check">
-            <mat-icon fontSet="material-symbols-outlined">task_alt</mat-icon>
-            <span>Pago directo al subir</span>
-          </li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- 6. RUTAS SUGERIDAS POR HORARIO (Span 12 - GET /api/perfil/cursos) -->
-    <section class="bento-card col-suggestions" aria-labelledby="suggest-title">
-      <div class="card-header-row">
-        <div>
-          <h2 id="suggest-title" class="card-title">Rutas Sugeridas Según Tu Horario Académico (US24 + US30)</h2>
-          <p class="card-subtitle">Sincronizado con tus clases de Lunes: 08:00 AM - 10:00 AM • <strong>Ingeniería de Software</strong></p>
-        </div>
-        <a class="link-action" routerLink="/pasajero/viajes/buscar">Ver más rutas →</a>
-      </div>
-
-      <div class="suggestions-grid">
-        @for (ruta of rutasSugeridas(); track ruta.id) {
-          <article class="suggest-card">
-            <div class="suggest-header">
-              <span class="status-badge badge-today">Salida {{ ruta.hora }}</span>
-              <span class="suggest-rating">★ {{ ruta.calificacion }}</span>
-            </div>
-            <h3 class="driver-name">{{ ruta.conductor }}</h3>
-            <p class="driver-meta">{{ ruta.origen }} ➔ {{ ruta.destino }}</p>
-            <div class="suggest-footer">
-              <p class="driver-price">
-                S/ {{ ruta.precio | number:'1.2-2' }}
-                <small>• {{ ruta.cupos }} {{ ruta.cupos === 1 ? 'cupo' : 'cupos' }}</small>
-              </p>
-              <button
-                type="button"
-                mat-flat-button
-                class="btn-request"
-                [disabled]="ruta.cupos === 0"
-                (click)="solicitarCupo(ruta)"
-              >
-                Solicitar Asiento
-              </button>
-            </div>
-          </article>
+      @if (disponibles.state().status === 'loading') {
+        <app-reportes-state-panel
+          title="Cargando viajes disponibles"
+          message="Estamos consultando las salidas publicadas."
+          [loading]="true"
+          role="status"
+        />
+      } @else if (disponibles.state().status === 'error') {
+        <app-reportes-state-panel
+          title="No se pudieron cargar los viajes"
+          [message]="disponibles.state().message"
+          tone="danger"
+          actionLabel="Reintentar"
+          (action)="reintentarDisponibles()"
+          role="alert"
+        />
+      } @else if (disponibles.state().data; as datos) {
+        @if (datos.mensaje) {
+          <p>{{ datos.mensaje }}</p>
         }
-      </div>
+        @if (datos.sugerencia) {
+          <p class="muted">{{ datos.sugerencia }}</p>
+        }
+        @if (!datos.viajes.content.length) {
+          <div class="empty-state">
+            <p>No hay viajes en esta página. Consulta el buscador para explorar otras salidas.</p>
+            <a mat-stroked-button routerLink="/pasajero/viajes/buscar">Buscar viajes</a>
+          </div>
+        } @else {
+          <div class="available-grid">
+            @for (viaje of datos.viajes.content; track viaje.viajeId) {
+              <article class="available-trip">
+                <h3>
+                  {{ viaje.origen || 'Origen no disponible' }} →
+                  {{ viaje.destino || 'Destino no disponible' }}
+                </h3>
+                <p>{{ fecha(viaje.fecha) }} · {{ hora(viaje.hora) }}</p>
+                @if (viaje.conductorNombre) {
+                  <p class="muted">Conductor: {{ viaje.conductorNombre }}</p>
+                }
+                <p class="muted">Capacidad total: {{ viaje.capacidadMaxima }} pasajeros</p>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="!idReal(viaje.viajeId) || !salidaValida(viaje)"
+                  (click)="verDisponible(viaje)"
+                >
+                  Ver detalle y solicitar
+                </button>
+              </article>
+            }
+          </div>
+        }
+        <mat-paginator
+          [length]="datos.viajes.totalElements"
+          [pageIndex]="datos.viajes.number"
+          [pageSize]="3"
+          [hidePageSize]="true"
+          [showFirstLastButtons]="true"
+          aria-label="Paginación de viajes disponibles"
+          (page)="paginar($event)"
+        />
+      }
     </section>
-
   </div>
 </div>

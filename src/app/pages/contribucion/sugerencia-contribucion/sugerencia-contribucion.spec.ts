@@ -1,3 +1,4 @@
+import { resolverDashboardVacio } from '../../../testing/dashboard-fixtures';
 import { prepararPerfil } from '../../../testing/perfil-fixtures';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -52,6 +53,7 @@ describe('US29 authenticated REST integration', () => {
     authenticate();
   });
   afterEach(() => {
+    resolverDashboardVacio(http);
     http.verify();
     auth.clearSession();
     localStorage.clear();

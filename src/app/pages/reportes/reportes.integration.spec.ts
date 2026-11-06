@@ -1,3 +1,4 @@
+import { resolverDashboardVacio } from '../../testing/dashboard-fixtures';
 import { prepararPerfil } from '../../testing/perfil-fixtures';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Type } from '@angular/core';
@@ -44,6 +45,7 @@ describe('Reportes HTTP integration', () => {
     authenticate();
   });
   afterEach(() => {
+    resolverDashboardVacio(http);
     http.verify(); auth.clearSession();
     localStorage.clear(); sessionStorage.clear();
   });
