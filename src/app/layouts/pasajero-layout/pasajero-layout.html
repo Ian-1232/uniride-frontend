@@ -1,100 +1,49 @@
-<div class="pasajero-shell">
-  <aside class="pasajero-sidebar">
-    <div class="brand">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <div>
-        <p class="brand-name">UniRide</p>
-        <p class="brand-sub">Panel del pasajero</p>
-      </div>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<aside class="sidebar" [attr.aria-label]="authService.panelLabel()">
+  <a class="brand" routerLink="/pasajero/dashboard" queryParamsHandling="merge">
+    <img src="assets/uniride/brand-dot.svg" alt="" />UniRide
+  </a>
+  <p class="panel-label">{{ authService.panelLabel() }}</p>
+  <mat-nav-list aria-label="Navegación del pasajero">
+    @for (item of menu; track item.icono) {
+      @if (item.ruta) {
+        <a
+          mat-list-item
+          [routerLink]="item.ruta"
+          queryParamsHandling="merge"
+          routerLinkActive="active"
+          #rla="routerLinkActive"
+          [attr.aria-current]="rla.isActive ? 'page' : null"
+        >
+          <img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" />
+          <span matListItemTitle>{{ item.nombre }}</span>
+        </a>
+      } @else {
+        <mat-list-item disabled [title]="item.nombre + ': módulo de otro integrante'">
+          <img matListItemIcon [src]="'assets/uniride/' + item.icono + '.svg'" alt="" />
+          <span matListItemTitle>{{ item.nombre }}</span>
+        </mat-list-item>
+      }
+    }
+  </mat-nav-list>
+  <div class="sidebar-user">
+    <span class="avatar">{{ authService.currentUser().iniciales }}</span>
+    <div>
+      {{ authService.currentUser().nombre }}
+      <small>{{ authService.currentRole() }}</small>
     </div>
-
-    <nav class="pasajero-nav" aria-label="Secciones del pasajero">
-      <a class="nav-item" routerLink="/pasajero/dashboard" routerLinkActive="is-active">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
-        <span>Dashboard</span>
-      </a>
-      <span class="nav-item nav-item--pending">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">alt_route</mat-icon>
-        <span>Rutas</span>
-      </span>
-      <a class="nav-item" routerLink="/pasajero/viajes" routerLinkActive="is-active">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">local_taxi</mat-icon>
-        <span>Viajes</span>
-      </a>
-      <a class="nav-item" routerLink="/compensaciones" routerLinkActive="is-active">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">payments</mat-icon>
-        <span>Compensaciones</span>
-      </a>
-      <a class="nav-item" routerLink="/reportes" routerLinkActive="is-active">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
-        <span>Reportes</span>
-      </a>
-      <span class="nav-item nav-item--pending">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">schedule</mat-icon>
-        <span>Horarios</span>
-      </span>
-      <span class="nav-item nav-item--pending">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
-        <span>Configuración</span>
-      </span>
-    </nav>
-
-    <div class="user-block">
-      <span class="avatar" aria-hidden="true">JP</span>
-      <div>
-        <p class="user-name">Juan Pérez</p>
-        <p class="user-role">PASAJERO</p>
-      </div>
-    </div>
-  </aside>
-
-  <header class="mobile-topbar">
-    <div class="brand">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <p class="brand-name">UniRide</p>
-    </div>
-    <button
-      class="mobile-menu-button"
-      mat-icon-button
-      type="button"
-      aria-label="Abrir navegación del pasajero"
-      [matMenuTriggerFor]="pasajeroMenu"
-    >
-      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">menu</mat-icon>
-    </button>
-    <mat-menu #pasajeroMenu="matMenu">
-      <a mat-menu-item routerLink="/pasajero/viajes">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">local_taxi</mat-icon>
-        <span>Viajes</span>
-      </a>
-      <a mat-menu-item routerLink="/reportes">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
-        <span>Reportes</span>
-      </a>
-      <a mat-menu-item routerLink="/pasajero/dashboard">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
-        <span>Dashboard</span>
-      </a>
-      <span mat-menu-item disabled>
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">alt_route</mat-icon>
-        <span>Rutas</span>
-      </span>
-      <span mat-menu-item disabled>
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">payments</mat-icon>
-        <span>Compensaciones</span>
-      </span>
-      <span mat-menu-item disabled>
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">schedule</mat-icon>
-        <span>Horarios</span>
-      </span>
-      <span mat-menu-item disabled>
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
-        <span>Configuración</span>
-      </span>
-    </mat-menu>
-  </header>
-
-  <main class="pasajero-content">
-    <router-outlet />
-  </main>
-</div>
+  </div>
+</aside>
+<mat-toolbar class="mobile-toolbar">
+  <a class="brand" routerLink="/pasajero/dashboard">
+    <img src="assets/uniride/brand-dot.svg" alt="" />UniRide
+  </a>
+  <span class="role-label">Pasajero</span>
+  <button matButton="text" [matMenuTriggerFor]="mobileMenu" aria-label="Abrir navegación">Menú</button>
+</mat-toolbar>
+<mat-menu #mobileMenu="matMenu" aria-label="Navegación móvil">
+  @for (item of menu; track item.icono) {
+    @if (item.ruta) { <a mat-menu-item [routerLink]="item.ruta">{{ item.nombre }}</a> }
+  }
+</mat-menu>
+<main class="workspace" id="contenido"><router-outlet /></main>

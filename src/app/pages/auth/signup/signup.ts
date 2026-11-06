@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatCardModule } from '@angular/material/card';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-signup',
@@ -27,6 +28,8 @@ import { MatCardModule } from '@angular/material/card';
   styleUrl: './signup.css'
 })
 export class SignupComponent {
+  private readonly authService = inject(AuthService);
+
   hidePassword = true;
   selectedRole: 'CONDUCTOR' | 'PASAJERO' = 'CONDUCTOR';
   showOtpModal = false;
@@ -56,6 +59,7 @@ export class SignupComponent {
   selectRole(role: 'CONDUCTOR' | 'PASAJERO'): void {
     this.selectedRole = role;
     this.signupForm.patchValue({ rol: role });
+    this.authService.setRole(role);
   }
 
   togglePasswordVisibility(): void {

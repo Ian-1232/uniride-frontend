@@ -159,7 +159,7 @@
     <a
       mat-flat-button
       class="btn-primary btn-complete-onboarding"
-      routerLink="/pasajero/dashboard"
+      [routerLink]="authService.isConductor() ? '/conductor/dashboard' : '/pasajero/dashboard'"
     >
       <span>Completar Onboarding y Entrar a UniRide</span>
       <mat-icon>check_circle</mat-icon>
