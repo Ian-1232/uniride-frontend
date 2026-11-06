@@ -1,7 +1,7 @@
 .route-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 32px;
   margin-top: 18px;
 }
 
@@ -25,7 +25,7 @@
 @media (max-width: 767px) {
   .form-row {
     grid-template-columns: 1fr;
-    gap: 4px;
+    gap: 32px;
   }
 
   /* Acciones apiladas a ancho completo (Cancelar encima, principal debajo) */
