@@ -1,5 +1,17 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { RoleType, UserSession } from '../models/auth.models';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
+import {
+  AuthRespuesta,
+  LoginRequest,
+  RegistroRequest,
+  ReenviarCodigoRequest,
+  RoleType,
+  UserSession,
+  UsuarioRespuesta,
+  VerificarCodigoRequest,
+} from '../models/auth.models';
+import { environment } from '../../../environments/environment';
 
 const DEFAULT_USER: UserSession = {
   id: 1,
@@ -19,6 +31,9 @@ const STORAGE_KEY_TOKEN = 'uniride_token';
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly http = inject(HttpClient, { optional: true });
+  private readonly apiUrl = environment.apiUrl;
+
   private readonly _currentUser = signal<UserSession>(this.loadInitialUser());
 
   readonly currentUser = this._currentUser.asReadonly();
@@ -55,7 +70,7 @@ export class AuthService {
     });
   }
 
-  setSession(user: Partial<UserSession>, token?: string): void {
+  setSession(user: Partial<UserSession> | UsuarioRespuesta, token?: string): void {
     this._currentUser.update((prev) => {
       const updated: UserSession = {
         ...prev,
@@ -93,6 +108,74 @@ export class AuthService {
       }
     } catch {}
     return this._currentUser().token || null;
+  }
+
+  /**
+   * Autenticación — Login (US02)
+   * POST /api/auth/login
+   */
+  login(credentials: LoginRequest): Observable<AuthRespuesta> {
+    const payload = {
+      correo: credentials.correo,
+      contrasena: credentials.contrasena,
+    };
+    return this.getHttpClient().post<AuthRespuesta>(`${this.apiUrl}/auth/login`, payload).pipe(
+      tap((res) => {
+        if (res.usuario) {
+          this.setSession(res.usuario, res.token);
+        } else if (res.token) {
+          this.setSession({}, res.token);
+        }
+      }),
+    );
+  }
+
+  /**
+   * Autenticación — Registro inicial (US01)
+   * POST /api/auth/registro
+   */
+  registro(data: RegistroRequest): Observable<AuthRespuesta> {
+    return this.getHttpClient().post<AuthRespuesta>(`${this.apiUrl}/auth/registro`, data).pipe(
+      tap((res) => {
+        if (res.usuario) {
+          this.setSession(res.usuario, res.token);
+        } else if (res.token) {
+          this.setSession({}, res.token);
+        }
+      }),
+    );
+  }
+
+  /**
+   * Autenticación — Verificación con código OTP (US01 / US02)
+   * POST /api/auth/verificar
+   */
+  verificarCodigo(data: VerificarCodigoRequest): Observable<AuthRespuesta> {
+    return this.getHttpClient().post<AuthRespuesta>(`${this.apiUrl}/auth/verificar`, data).pipe(
+      tap((res) => {
+        if (res.usuario) {
+          this.setSession(res.usuario, res.token);
+        } else if (res.token) {
+          this.setSession({}, res.token);
+        }
+      }),
+    );
+  }
+
+  /**
+   * Autenticación — Reenviar código OTP (US01)
+   * POST /api/auth/reenviar-codigo
+   */
+  reenviarCodigo(correo: string): Observable<AuthRespuesta> {
+    const payload: ReenviarCodigoRequest = { correo };
+    return this.getHttpClient().post<AuthRespuesta>(`${this.apiUrl}/auth/reenviar-codigo`, payload);
+  }
+
+  private getHttpClient(): HttpClient {
+    if (!this.http) {
+      throw new Error('HttpClient no está disponible. Asegúrate de configurar provideHttpClient().');
+    }
+    return this.http;
   }
 
   private persistUser(user: UserSession): void {

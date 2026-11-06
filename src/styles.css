@@ -1148,3 +1148,62 @@ mat-paginator.uni-paginator {
     justify-content: center;
   }
 }
+
+
+/* ==========================================================================
+   Alineación Perfecta y Estética de Botones Material (MDC)
+   ========================================================================== */
+.mat-mdc-button-base {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+  letter-spacing: normal !important;
+}
+
+.mat-mdc-button-base .mdc-button__label {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  gap: 8px !important;
+  line-height: 1 !important;
+  width: 100% !important;
+}
+
+.btn-content,
+.btn-content-loading {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}
+
+.btn-content mat-icon,
+.btn-content-loading mat-icon,
+.mat-mdc-button-base mat-icon {
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  line-height: 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  margin: 0 !important;
+}
+
+.btn-spinner {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+.btn-spinner circle {
+  stroke: #ffffff !important;
+}

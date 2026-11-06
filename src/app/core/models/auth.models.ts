@@ -1,5 +1,15 @@
 export type RoleType = 'CONDUCTOR' | 'PASAJERO';
 
+export interface UsuarioRespuesta {
+  id?: number;
+  correo: string;
+  nombre: string;
+  apellidos?: string;
+  telefono?: string;
+  rol: RoleType;
+  cuentaVerificada?: boolean;
+}
+
 export interface UserSession {
   id?: number;
   nombre: string;
@@ -9,6 +19,7 @@ export interface UserSession {
   rol: RoleType;
   telefono?: string;
   token?: string;
+  cuentaVerificada?: boolean;
 }
 
 export interface LoginRequest {
@@ -17,17 +28,38 @@ export interface LoginRequest {
   recordarDispositivo?: boolean;
 }
 
-export interface RegisterRequest {
+export interface RegistroRequest {
+  correo: string;
+  contrasena: string;
   nombre: string;
   apellidos: string;
   telefono: string;
-  correo: string;
-  contrasena: string;
   rol: RoleType;
+  aceptaTerminos: boolean;
 }
 
-export interface AuthResponse {
-  token: string;
-  tipo: string;
-  usuario: UserSession;
+/** Alias para compatibilidad hacia atrás */
+export type RegisterRequest = RegistroRequest;
+
+export interface VerificarCodigoRequest {
+  correo: string;
+  codigo: string;
+}
+
+export interface ReenviarCodigoRequest {
+  correo: string;
+}
+
+export interface AuthRespuesta {
+  token?: string;
+  mensaje: string;
+  usuario?: UsuarioRespuesta;
+}
+
+/** Alias para compatibilidad hacia atrás */
+export type AuthResponse = AuthRespuesta;
+
+export interface ErrorRespuesta {
+  mensaje: string;
+  campos?: Record<string, string>;
 }

@@ -127,7 +127,7 @@
             <mat-icon class="alert-icon">error_outline</mat-icon>
             <div class="alert-content">
               <strong>Correo o contraseña incorrectos</strong>
-              <p>Verifica tus credenciales o solicita restablecer tu acceso institucional.</p>
+              <p>{{ errorMessage }}</p>
             </div>
             <button type="button" class="btn-close-alert" (click)="dismissAlert('error')">
               <mat-icon>close</mat-icon>
@@ -140,7 +140,7 @@
             <mat-icon class="alert-icon">mark_email_unread</mat-icon>
             <div class="alert-content">
               <strong>Tu cuenta aún no ha sido verificada</strong>
-              <p>Revisa tu bandeja institucional o ingresa tu código de confirmación enviado a tu correo.</p>
+              <p>{{ unverifiedMessage }}</p>
             </div>
             <button type="button" class="btn-close-alert" (click)="dismissAlert('unverified')">
               <mat-icon>close</mat-icon>
@@ -149,7 +149,7 @@
         }
 
         <!-- FORMULARIO REACTIVO (REACTIVE FORMS) -->
-        <form [formGroup]="loginForm" class="login-form">
+        <form [formGroup]="loginForm" class="login-form" (ngSubmit)="onSubmit()">
           <!-- CAMPO CORREO INSTITUCIONAL -->
           <div class="field-container">
             <div class="field-label-row">
@@ -234,11 +234,21 @@
             mat-flat-button
             type="submit"
             class="btn-primary btn-submit-auth"
-            [disabled]="loginForm.invalid"
-            routerLink="/pasajero/dashboard"
+            [class.is-submitting]="isLoading"
+            [disabled]="loginForm.invalid || isLoading"
           >
-            <span>Iniciar Sesión</span>
-            <mat-icon>arrow_forward</mat-icon>
+            @if (isLoading) {
+              <span class="btn-content-loading">
+                <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+                <span>Iniciando sesión...</span>
+              </span>
+            }
+            @if (!isLoading) {
+              <span class="btn-content">
+                <span>Iniciar Sesión</span>
+                <mat-icon>arrow_forward</mat-icon>
+              </span>
+            }
           </button>
         </form>
 
