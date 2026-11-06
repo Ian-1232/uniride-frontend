@@ -3,16 +3,98 @@
     <h1>Configuración</h1>
     <p>Actualiza tus datos personales y tus preferencias de viaje.</p>
   </header>
-  <mat-card
-    ><h2>Mi perfil</h2>
-    <p>Datos personales, universidad y disponibilidad.</p>
-    <a mat-stroked-button routerLink="/configuracion/perfil">Editar mi perfil</a></mat-card
-  >
-  <mat-card
-    ><h2>Gustos e información adicional</h2>
-    <p>Música, hobbies y pautas para compartir el viaje.</p>
-    <a mat-stroked-button routerLink="/configuracion/info-adicional"
-      >Editar información adicional</a
-    ></mat-card
-  >
+
+  @if (loading()) {
+    <app-reportes-state-panel
+      role="status"
+      title="Cargando perfil"
+      message="Estamos consultando tus datos."
+      [loading]="true"
+    />
+  }
+  @if (loadError()) {
+    <app-reportes-state-panel
+      role="alert"
+      title="No se pudo consultar el perfil"
+      [message]="loadError()"
+      actionLabel="Reintentar"
+      (action)="load(true)"
+    />
+  }
+  @if (!loading() && !loadError() && !perfil()) {
+    <p role="status">Aún no has completado tu perfil.</p>
+    <a mat-stroked-button routerLink="/configuracion/perfil">Completar mi perfil</a>
+  }
+
+  @if (!loading() && !loadError() && perfil(); as p) {
+    <mat-card>
+      <h2>Mi perfil</h2>
+      <p>Datos personales, universidad y disponibilidad.</p>
+      <dl class="datos-lista">
+        <div class="dato">
+          <dt>Nombre</dt>
+          <dd>{{ p.nombre }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Apellidos</dt>
+          <dd>{{ p.apellidos }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Carrera universitaria</dt>
+          <dd>{{ p.carrera }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Campus de destino (Sede UPC)</dt>
+          <dd>{{ p.universidad }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Distrito de origen (Tu residencia)</dt>
+          <dd>{{ p.distrito }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Horario habitual de clases</dt>
+          <dd>{{ p.horariosDisponibles }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Días que asistes al campus</dt>
+          <dd>{{ p.diasDisponibles }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Inicio de clases</dt>
+          <dd>{{ p.fechaInicioClases }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Fin de ciclo / exámenes</dt>
+          <dd>{{ p.fechaFinClases }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Tipo de compensación preferido</dt>
+          <dd>{{ labelCompensacion(p.metodoCompensacionFavorito) }}</dd>
+        </div>
+      </dl>
+      <a mat-stroked-button routerLink="/configuracion/perfil">Editar mi perfil</a>
+    </mat-card>
+
+    <mat-card>
+      <h2>Gustos e información adicional</h2>
+      <p>Música, hobbies y pautas para compartir el viaje.</p>
+      <dl class="datos-lista">
+        <div class="dato">
+          <dt>Gustos musicales</dt>
+          <dd>{{ p.gustos || 'Sin información todavía.' }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Hobbies</dt>
+          <dd>{{ p.hobbies || 'Sin información todavía.' }}</dd>
+        </div>
+        <div class="dato">
+          <dt>Datos curiosos o pautas de viaje</dt>
+          <dd>{{ p.datosCuriosos || 'Sin información todavía.' }}</dd>
+        </div>
+      </dl>
+      <a mat-stroked-button routerLink="/configuracion/info-adicional"
+        >Editar información adicional</a
+      >
+    </mat-card>
+  }
 </article>

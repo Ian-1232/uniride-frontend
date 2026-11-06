@@ -110,6 +110,21 @@ describe('US03-US05 profile, onboarding and shared navigation', () => {
     expect(perfil().onboarding()).toBe(false);
     expect(text()).not.toContain('Saltar por ahora');
   });
+  it('shows the saved profile and additional information on the settings screen', async () => {
+    await open('/configuracion');
+    const shown = text();
+    expect(shown).toContain(PERFIL_TEST.nombre);
+    expect(shown).toContain(PERFIL_TEST.apellidos);
+    expect(shown).toContain(PERFIL_TEST.carrera);
+    expect(shown).toContain(PERFIL_TEST.universidad);
+    expect(shown).toContain(PERFIL_TEST.distrito);
+    expect(shown).toContain(PERFIL_TEST.horariosDisponibles);
+    expect(shown).toContain(PERFIL_TEST.diasDisponibles);
+    expect(shown).toContain('Gasolina');
+    expect(shown).toContain(PERFIL_TEST.gustos);
+    expect(shown).toContain(PERFIL_TEST.hobbies);
+    expect(shown).toContain(PERFIL_TEST.datosCuriosos);
+  });
   it('saves the complete PUT payload, local dates and selected days; updates the visible session name only after success', async () => {
     await open();
     const c = perfil();
