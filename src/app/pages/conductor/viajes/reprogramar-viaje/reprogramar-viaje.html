@@ -1,0 +1,150 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Reprogramar viaje</h1>
+      <p class="page-subtitle">Modifica la fecha y hora de una salida existente.</p>
+    </div>
+  </header>
+  @if (estado() === 'cargando') {
+    <app-reportes-state-panel
+      title="Cargando viaje"
+      message="Estamos consultando el horario y los pasajeros aceptados."
+      [loading]="true"
+      role="status"
+    />
+  }
+  @if (errorCarga()) {
+    <app-reportes-state-panel
+      title="No se pudo consultar el viaje"
+      [message]="errorCarga()"
+      tone="danger"
+      actionLabel="Volver a consultar"
+      (action)="cargar()"
+      role="alert"
+    />
+  }
+  @if (errorGuardado()) {
+    <app-reportes-state-panel
+      title="No se pudo guardar la reprogramación"
+      [message]="errorGuardado()"
+      tone="danger"
+      role="alert"
+    />
+  }
+  @if (aviso()) {
+    <p class="editor-notice warning" role="status">{{ aviso() }}</p>
+  }
+  @if (exito()) {
+    <p class="editor-notice success" role="status">{{ exito() }}</p>
+  }
+  @if (actual(); as consulta) {
+    @let datos = consulta.datos;
+    <mat-card class="uni-card"
+      ><mat-card-content>
+        <h2>{{ datos.origen }} → {{ datos.destino }}</h2>
+        <dl class="horario-actual">
+          <div>
+            <dt>Horario actual consultado</dt>
+            <dd>{{ horarioTexto(datos.viaje) }}</dd>
+          </div>
+          <div>
+            <dt>Estado del viaje</dt>
+            <dd>
+              {{ datos.viaje.estado.replace('_', ' ') }} ·
+              {{ datos.viaje.confirmado ? 'Confirmado' : 'Sin confirmar' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Pasajeros con solicitud aceptada</dt>
+            <dd>{{ consulta.aceptados }}</dd>
+          </div>
+        </dl>
+        @if (datos.viaje.estado !== 'PROGRAMADO') {
+          <p class="editor-notice warning" role="alert">
+            Este viaje no está PROGRAMADO. Su estado actual no permite reprogramarlo.
+          </p>
+        }
+        @if (datos.viaje.confirmado && datos.viaje.estado === 'PROGRAMADO') {
+          <p class="editor-notice warning">
+            Al cambiar el horario, este viaje perderá su confirmación. Tendrás que confirmarlo
+            nuevamente dentro del plazo establecido.
+          </p>
+        }
+        @if (exito() && !datos.viaje.confirmado && datos.viaje.estado === 'PROGRAMADO') {
+          <p class="editor-notice warning">
+            Debes confirmar nuevamente la salida desde Gestionar viaje dentro del plazo establecido.
+          </p>
+        }
+        @if (consulta.aceptados > 0 && datos.viaje.estado === 'PROGRAMADO') {
+          <p class="editor-notice">
+            Antes de guardar te pediremos confirmar el impacto sobre los pasajeros aceptados.
+          </p>
+        }
+        <form
+          class="route-form"
+          [formGroup]="form"
+          (ngSubmit)="guardar()"
+          [attr.aria-busy]="ocupado()"
+        >
+          <div class="form-row">
+            <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic"
+              ><mat-label>Nueva fecha</mat-label
+              ><input matInput type="date" required formControlName="fecha" /><mat-error
+                >Selecciona una fecha válida.</mat-error
+              ></mat-form-field
+            >
+            <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic"
+              ><mat-label>Nueva hora</mat-label
+              ><input matInput required formControlName="hora" placeholder="HH:mm" /><mat-hint
+                >Formato 24 h: HH:mm o HH:mm:ss. Hora de Lima.</mat-hint
+              ><mat-error>Ingresa una hora válida.</mat-error></mat-form-field
+            >
+          </div>
+          @if (form.hasError('pasada')) {
+            <p class="field-error" role="alert">La nueva fecha y hora deben ser futuras.</p>
+          }
+          @if (form.hasError('anticipacion')) {
+            <p class="field-error" role="alert">
+              Selecciona una salida con al menos 12 horas de anticipación.
+            </p>
+          }
+          <p class="hint">
+            La nueva salida debe tener al menos 12 horas de anticipación. El servidor comprobará el
+            plazo al guardar.
+          </p>
+          @if (sinCambios() && !ocupado() && editable()) {
+            <p class="hint">No hay cambios de fecha ni hora que guardar.</p>
+          }
+          @if (ocupado()) {
+            <p role="status">Comprobando y guardando el horario…</p>
+          }
+          <div class="form-actions">
+            <button
+              mat-stroked-button
+              type="button"
+              routerLink="/conductor/viajes"
+              [disabled]="ocupado()"
+            >
+              {{ exito() ? 'Volver a mis viajes' : 'Cancelar edición' }}
+            </button>
+            <button
+              mat-flat-button
+              type="submit"
+              [disabled]="ocupado() || !editable() || form.invalid || sinCambios()"
+            >
+              {{ ocupado() ? 'Procesando…' : 'Guardar nuevo horario' }}
+            </button>
+          </div>
+        </form>
+        <div class="return-actions">
+          <a mat-button [routerLink]="['/conductor/viajes', datos.viaje.id]">Gestionar viaje</a
+          ><a mat-button [routerLink]="['/conductor/rutas', datos.viaje.rutaId, 'viajes']"
+            >Viajes de esta ruta</a
+          >
+        </div>
+      </mat-card-content></mat-card
+    >
+  } @else if (estado() !== 'cargando') {
+    <a mat-stroked-button routerLink="/conductor/viajes">Volver a mis viajes</a>
+  }
+</section>

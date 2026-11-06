@@ -153,6 +153,7 @@
     <a matButton="outlined" [routerLink]="['/conductor/viajes', viaje.id, 'solicitudes']"
       >Ver solicitudes</a
     >
+    @if (programado && !cargando() && !enviando()) { <a matButton="outlined" [routerLink]="['/conductor/viajes', viaje.id, 'editar']">Reprogramar</a> }
     @if (programado && segundos(viaje) >= 0) {
       <button
         matButton="text"

@@ -13,6 +13,7 @@ export const CONDUCTOR_ROUTES: Routes = [{
     // Viajes (Módulo 2)
     { path: 'viajes', pathMatch: 'full', title: 'Mis viajes · UniRide', loadComponent: () => import('./viajes/mis-viajes/mis-viajes').then(m => m.MisViajes) },
     { path: 'viajes/:id/generar', title: 'Generar viaje · UniRide', loadComponent: () => import('./rutas/generar-viaje/generar-viaje').then(m => m.GenerarViaje) },
+    { path: 'viajes/:id/editar', title: 'Reprogramar viaje · UniRide', loadComponent: () => import('./viajes/reprogramar-viaje/reprogramar-viaje').then(m => m.ReprogramarViaje) },
     // Módulo 4 — Solicitudes
     { path: 'viajes/:viajeId/solicitudes', title: 'Solicitudes recibidas · UniRide', loadComponent: () => import('./viajes/solicitudes/solicitudes').then(m => m.Solicitudes) },
     { path: 'viajes/:viajeId/solicitudes/:solicitudId', title: 'Detalle de solicitud · UniRide', loadComponent: () => import('./viajes/detalle-solicitud/detalle-solicitud').then(m => m.DetalleSolicitud) },

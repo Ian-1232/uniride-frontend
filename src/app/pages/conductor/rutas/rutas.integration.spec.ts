@@ -399,7 +399,7 @@ describe('Módulo 2 HTTP integration', () => {
     const resumen = h.routeNativeElement!.querySelectorAll('.stat-value');
     expect([...resumen].map((valor) => valor.textContent?.trim())).toEqual(['1', '1', '1']);
     expect(h.routeNativeElement?.textContent).toContain('2 / 3');
-    expect(h.routeNativeElement!.querySelector('tr[mat-row] a')?.getAttribute('href')).toBe(
+    expect(h.routeNativeElement!.querySelector('tr[mat-row] a[href$="/solicitudes"]')?.getAttribute('href')).toBe(
       '/conductor/viajes/11/solicitudes',
     );
   });
@@ -422,6 +422,7 @@ describe('Módulo 2 HTTP integration', () => {
       h.routeNativeElement!.querySelectorAll('tr[mat-row]')[0].querySelectorAll('a'),
     );
     expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toEqual([
+      '/conductor/viajes/11/editar',
       '/conductor/viajes/11',
       '/conductor/viajes/11/solicitudes',
     ]);

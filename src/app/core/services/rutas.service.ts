@@ -1,11 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap, timeout } from 'rxjs';
+import { ViajeRespuesta } from '../models/coordinacion.models';
 import { environment } from '../../../environments/environment';
 import { Page, Ruta, RutaRequest, Viaje, ViajeConRuta } from '../models/ruta.model';
 import { todasLasPaginas } from './consulta';
 
-/** Cuerpo de POST /api/rutas/{rutaId}/viajes (`ViajeRequest`). */
+/** Cuerpo ViajeRequest de POST /rutas/{rutaId}/viajes y PUT /viajes/{id}. */
 export interface SalidaViaje {
   fecha: string;
   hora: string;
@@ -74,5 +75,29 @@ export class RutasService {
 
   crearViaje(rutaId: number, salida: SalidaViaje): Observable<Viaje> {
     return this.http.post<Viaje>(`${this.url}/${rutaId}/viajes`, salida);
+  }
+
+  actualizarHorario(
+    viajeId: number,
+    salida: SalidaViaje,
+    confirmarImpacto = false,
+  ): Observable<ViajeRespuesta> {
+    return this.http
+      .put<ViajeRespuesta>(
+        `${environment.apiUrl}/viajes/${viajeId}`,
+        {
+          fecha: salida.fecha,
+          hora: salida.hora,
+        },
+        { params: { confirmarImpacto }, observe: 'response' },
+      )
+      .pipe(
+        timeout(15000),
+        map((response) => {
+          if (response.status !== 200 || !response.body || response.body.id !== viajeId)
+            throw new Error('No se pudo confirmar la reprogramación');
+          return response.body;
+        }),
+      );
   }
 }
