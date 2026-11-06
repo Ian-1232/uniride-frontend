@@ -4,7 +4,7 @@
     <p>Consulta tu actividad como conductor y pasajero en UniRide.</p>
   </header>
 
-  @if (showSummary()) {
+  @if (summary(); as summary) {
     <section class="summary-grid" aria-label="Indicadores de actividad">
       <mat-card class="total-card">
         <mat-card-content>
@@ -46,47 +46,10 @@
       </mat-card>
     </section>
 
-    @if (state() === 'incidencias') {
-      <app-reportes-state-panel
-        title="Incidencias visibles"
-        message="Los 3 viajes cancelados y las 2 penalidades se muestran separados y no forman parte de los 20 viajes completados."
-        tone="warning"
-      />
-    } @else {
-      <app-reportes-state-panel
-        title="Datos actualizados"
-        message="El total completado suma tus viajes como conductor y pasajero; no incluye cancelaciones."
-        tone="success"
-      />
-    }
+    <app-reportes-state-panel title="Datos actualizados" message="El total completado suma tus viajes como conductor y pasajero; no incluye cancelaciones." tone="success" />
+  } @else if (report.state().status === 'cargando') {
+    <app-reportes-state-panel title="Cargando actividad" message="Estamos consultando tus estadísticas personales." [loading]="true" tone="neutral" />
   } @else {
-    @switch (state()) {
-      @case ('restringido') {
-        <app-reportes-state-panel
-          title="Acceso restringido"
-          message="Tu cuenta no está confirmada o no dispone de acceso válido. No se muestran estadísticas personales."
-          tone="danger"
-          actionLabel="Volver al resumen"
-          (action)="restoreDefaultState()"
-        />
-      }
-      @case ('cargando') {
-        <app-reportes-state-panel
-          title="Cargando actividad"
-          message="Estamos consultando tus estadísticas personales."
-          tone="neutral"
-          [loading]="true"
-        />
-      }
-      @case ('error') {
-        <app-reportes-state-panel
-          title="No pudimos cargar el resumen"
-          message="No se muestran cifras desactualizadas como actuales. Intenta nuevamente."
-          tone="danger"
-          actionLabel="Reintentar"
-          (action)="restoreDefaultState()"
-        />
-      }
-    }
+    <app-reportes-state-panel title="No pudimos cargar el resumen" [message]="report.state().message" tone="danger" actionLabel="Reintentar" (action)="report.retry()" />
   }
 </article>

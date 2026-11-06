@@ -89,7 +89,7 @@
 .bar {
   display: block;
   width: min(2.25rem, 64%);
-  height: calc(var(--bar-value) * 1.75rem);
+  height: 0;
   border-radius: var(--ur-radius-6) var(--ur-radius-6) 0 0;
   background: var(--ur-color-primary);
 }
