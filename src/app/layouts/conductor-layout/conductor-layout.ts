@@ -53,7 +53,7 @@ export class ConductorLayout {
         icono: 'reportes',
         ruta: '/reportes',
       },
-      { nombre: 'Horarios', icono: 'horarios' },
+      { nombre: 'Horarios', icono: 'horarios', ruta: '/horarios' },
       { nombre: 'Configuración', icono: 'configuracion', ruta: '/configuracion' },
     ];
   });

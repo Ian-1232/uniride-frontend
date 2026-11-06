@@ -178,6 +178,20 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'horarios',
+    canActivate: [authGuard, perfilGuard],
+    canActivateChild: [authGuard, perfilGuard],
+    loadComponent: () =>
+      import('./layouts/shared-layout/shared-layout').then((m) => m.SharedLayout),
+    children: [
+      {
+        path: '',
+        title: 'Horarios académicos · UniRide',
+        loadComponent: () => import('./pages/horarios/horarios').then((m) => m.Horarios),
+      },
+    ],
+  },
+  {
     path: 'configuracion',
     canActivate: [authGuard],
     canActivateChild: [authGuard],
