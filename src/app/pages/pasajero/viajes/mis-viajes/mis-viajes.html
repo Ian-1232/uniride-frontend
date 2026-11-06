@@ -1,0 +1,50 @@
+<article class="viajes-page">
+  <header class="page-heading">
+    <div>
+      <p class="breadcrumb">Pasajero / Viajes</p>
+      <h1>Mis viajes</h1>
+      <p>Consulta tus viajes confirmados y el estado de tus solicitudes.</p>
+    </div>
+    <a class="ur-button heading-action" routerLink="/pasajero/viajes/buscar">Buscar viajes</a>
+  </header>
+
+  <section class="list-section" aria-labelledby="confirmados-title">
+    <h2 id="confirmados-title">Viajes confirmados</h2>
+    @if (confirmados().length; as total) {
+      <div class="trips-grid">
+        @for (viaje of confirmados(); track viaje.id) {
+          <app-viaje-card
+            [viaje]="viaje"
+            etiqueta="Confirmado"
+            tono="success"
+            accion="Ver detalle"
+            (seleccion)="verDetalle(viaje)"
+          />
+        }
+      </div>
+      <p class="ur-caption">{{ total }} viaje(s) confirmado(s)</p>
+    } @else {
+      <p class="empty-state">Aún no tienes viajes confirmados.</p>
+    }
+  </section>
+
+  <section class="list-section" aria-labelledby="pendientes-title">
+    <h2 id="pendientes-title">Solicitudes pendientes</h2>
+    @if (pendientes().length; as total) {
+      <div class="trips-grid">
+        @for (viaje of pendientes(); track viaje.id) {
+          <app-viaje-card
+            [viaje]="viaje"
+            etiqueta="Pendiente"
+            tono="warning"
+            accion="Ver detalle"
+            (seleccion)="verDetalle(viaje)"
+          />
+        }
+      </div>
+      <p class="ur-caption">{{ total }} solicitud(es) en espera de respuesta</p>
+    } @else {
+      <p class="empty-state">No tienes solicitudes pendientes.</p>
+    }
+  </section>
+</article>

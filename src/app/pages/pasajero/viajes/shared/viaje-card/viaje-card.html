@@ -1,0 +1,19 @@
+<article class="ur-card trip-card">
+  <div class="trip-card__head">
+    <h3>{{ viaje().origen }} → {{ viaje().destino }}</h3>
+    <span [class]="'ur-status ur-status--' + tono()">{{ etiqueta() }}</span>
+  </div>
+
+  <div class="trip-card__body">
+    <p>{{ linea1() }}</p>
+    <p>Punto de encuentro: {{ viaje().puntoEncuentro }}</p>
+  </div>
+
+  <button
+    class="ur-button ur-button--secondary ur-button--compact"
+    type="button"
+    (click)="seleccion.emit(viaje())"
+  >
+    {{ accion() }}
+  </button>
+</article>

@@ -25,6 +25,41 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'pasajero/viajes',
+    loadComponent: () =>
+      import('./layouts/pasajero-layout/pasajero-layout').then(
+        (component) => component.PasajeroLayout,
+      ),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'mis-viajes',
+      },
+      {
+        path: 'mis-viajes',
+        loadComponent: () =>
+          import('./pages/pasajero/viajes/mis-viajes/mis-viajes').then(
+            (component) => component.MisViajes,
+          ),
+      },
+      {
+        path: 'buscar',
+        loadComponent: () =>
+          import('./pages/pasajero/viajes/buscar-viaje/buscar-viaje').then(
+            (component) => component.BuscarViaje,
+          ),
+      },
+      {
+        path: ':id',
+        loadComponent: () =>
+          import('./pages/pasajero/viajes/detalle-viaje/detalle-viaje').then(
+            (component) => component.DetalleViaje,
+          ),
+      },
+    ],
+  },
+  {
     path: 'reportes',
     loadComponent: () =>
       import('./pages/reportes/reportes-shell/reportes-shell').then(
@@ -121,11 +156,6 @@ export const routes: Routes = [
     path: 'conductor',
     loadChildren: () =>
       import('./pages/conductor/conductor.routes').then((module) => module.CONDUCTOR_ROUTES),
-  },
-  {
-    path: 'pasajero',
-    loadChildren: () =>
-      import('./pages/pasajero/pasajero.routes').then((module) => module.PASAJERO_ROUTES),
   },
   {
     path: '**',

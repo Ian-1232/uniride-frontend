@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>Unirse al viaje</h2>
+
+<mat-dialog-content>
+  <p class="dialog-subtitle">
+    {{ viaje.origen }} → {{ viaje.destino }} · {{ viaje.fecha }} · {{ viaje.hora }}
+  </p>
+
+  <form class="dialog-form" [formGroup]="form" (ngSubmit)="enviar()">
+    <mat-form-field appearance="outline">
+      <mat-label>Preferencia de compensación</mat-label>
+      <mat-select formControlName="preferencia">
+        @for (tipo of tipos; track tipo) {
+          <mat-option [value]="tipo">{{ etiquetas[tipo] }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>Debe coincidir con el método que selecciones.</mat-hint>
+      <mat-error>Selecciona una preferencia.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Método de compensación</mat-label>
+      <mat-select formControlName="metodo">
+        @for (metodo of metodosPreferidos; track metodo.id) {
+          <mat-option [value]="metodo.id">{{ metodo.descripcion }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>Tu método registrado que coincida con la preferencia.</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Mensaje para el conductor (opcional)</mat-label>
+      <textarea matInput formControlName="mensaje" rows="3"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button class="ur-button ur-button--secondary" type="button" (click)="cancelar()">
+    Cancelar
+  </button>
+  <button class="ur-button" type="button" [disabled]="form.invalid" (click)="enviar()">
+    Enviar solicitud
+  </button>
+</mat-dialog-actions>

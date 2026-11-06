@@ -1,0 +1,26 @@
+:host {
+  display: block;
+}
+
+.trip-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ur-space-16);
+}
+
+.trip-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ur-space-12);
+}
+
+.trip-card__body {
+  display: grid;
+  gap: var(--ur-space-4);
+  color: var(--ur-color-muted);
+}
+
+.trip-card button {
+  align-self: flex-start;
+}
