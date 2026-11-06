@@ -84,6 +84,10 @@ describe('Coordinación de viajes', () => {
       '/compensaciones/metodos',
       '/compensaciones/metodos/nuevo',
       '/contribucion/sugerencia/1',
+      '/pasajero/viajes/mis-viajes',
+      '/pasajero/viajes/buscar',
+      '/pasajero/viajes/1',
+      '/conductor/viajes',
     ]) {
       await h.navigateByUrl(path);
       expect(h.routeNativeElement?.querySelector('h1'), path).toBeTruthy();

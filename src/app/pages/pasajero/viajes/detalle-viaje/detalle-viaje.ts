@@ -94,6 +94,6 @@ export class DetalleViaje {
   }
 
   protected volver(): void {
-    void this.router.navigate(['/viajes']);
+    void this.router.navigate(['/pasajero/viajes']);
   }
 }

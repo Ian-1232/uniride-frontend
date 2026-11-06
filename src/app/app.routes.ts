@@ -25,7 +25,7 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'viajes',
+    path: 'pasajero/viajes',
     loadComponent: () =>
       import('./layouts/pasajero-layout/pasajero-layout').then(
         (component) => component.PasajeroLayout,

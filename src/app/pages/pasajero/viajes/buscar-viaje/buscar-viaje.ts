@@ -48,6 +48,6 @@ export class BuscarViaje {
   }
 
   protected verDetalle(viaje: Viaje): void {
-    void this.router.navigate(['/viajes', viaje.id]);
+    void this.router.navigate(['/pasajero/viajes', viaje.id]);
   }
 }
