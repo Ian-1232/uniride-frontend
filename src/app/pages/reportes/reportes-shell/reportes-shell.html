@@ -1,69 +1,24 @@
-<div class="reportes-shell">
-  <header class="feature-header">
-    <a class="brand" routerLink="/reportes/resumen" aria-label="Ir al resumen de reportes">
-      UniRide
-    </a>
-
-    <div class="header-actions">
-      <span class="ur-status ur-status--info">Conductor</span>
-      <button
-        class="mobile-menu-button"
-        mat-icon-button
-        type="button"
-        aria-label="Abrir navegación de reportes"
-        [matMenuTriggerFor]="reportsMenu"
-      >
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">menu</mat-icon>
-      </button>
-    </div>
-  </header>
-
-  <mat-menu #reportsMenu="matMenu">
-    <a mat-menu-item routerLink="/reportes/resumen">
+<div class="reportes-container">
+  <nav class="reportes-tabs" aria-label="Secciones de reportes">
+    <a routerLink="/reportes/resumen" routerLinkActive="tab-active">
       <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
       <span>Resumen</span>
     </a>
-    <a mat-menu-item routerLink="/reportes/frecuencia">
+    <a routerLink="/reportes/frecuencia" routerLinkActive="tab-active">
       <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
       <span>Frecuencia semanal</span>
     </a>
-    <a mat-menu-item routerLink="/reportes/rutas">
+    <a routerLink="/reportes/rutas" routerLinkActive="tab-active">
       <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">route</mat-icon>
       <span>Rutas frecuentes</span>
     </a>
-    <a mat-menu-item routerLink="/reportes/exportar">
+    <a routerLink="/reportes/exportar" routerLinkActive="tab-active">
       <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">picture_as_pdf</mat-icon>
       <span>Exportar historial</span>
     </a>
-  </mat-menu>
+  </nav>
 
-  <div class="reportes-layout">
-    <nav class="reportes-navigation" aria-label="Secciones de reportes">
-      <div class="navigation-heading">
-        <p class="ur-label">REPORTES</p>
-        <p class="navigation-title">Actividad personal</p>
-      </div>
-
-      <a routerLink="/reportes/resumen" routerLinkActive="is-active">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
-        <span>Resumen</span>
-      </a>
-      <a routerLink="/reportes/frecuencia" routerLinkActive="is-active">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
-        <span>Frecuencia semanal</span>
-      </a>
-      <a routerLink="/reportes/rutas" routerLinkActive="is-active">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">route</mat-icon>
-        <span>Rutas frecuentes</span>
-      </a>
-      <a routerLink="/reportes/exportar" routerLinkActive="is-active">
-        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">picture_as_pdf</mat-icon>
-        <span>Exportar historial</span>
-      </a>
-    </nav>
-
-    <section class="reportes-content" aria-live="polite">
-      <router-outlet />
-    </section>
-  </div>
+  <section class="reportes-body" aria-live="polite">
+    <router-outlet />
+  </section>
 </div>

@@ -75,6 +75,19 @@ describe('Coordinación de viajes', () => {
     });
   });
 
+  it('muestra el sidebar estándar de conductor en reportes y compensaciones', async () => {
+    const h = await RouterTestingHarness.create();
+
+    await h.navigateByUrl('/reportes/resumen');
+    expect(h.routeNativeElement?.querySelector('.sidebar')).toBeTruthy();
+    expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe('Panel del conductor');
+    expect(h.routeNativeElement?.querySelector('.reportes-tabs')).toBeTruthy();
+
+    await h.navigateByUrl('/compensaciones/metodos');
+    expect(h.routeNativeElement?.querySelector('.sidebar')).toBeTruthy();
+    expect(h.routeNativeElement?.querySelector('.panel-label')?.textContent).toBe('Panel del conductor');
+  }, 15000);
+
   it('conserva las rutas integradas de los otros módulos', async () => {
     const h = await RouterTestingHarness.create();
     for (const path of [
