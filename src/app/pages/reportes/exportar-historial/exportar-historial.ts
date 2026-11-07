@@ -28,13 +28,10 @@ import {
   dateRangeValidator,
   HistoryExportState,
   HistoryTripType,
-} from './exportar-historial.models';
+} from '../../../core/models/exportar-historial.models';
 
 class DateRangeErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(
-    control: FormControl | null,
-    form: FormGroupDirective | NgForm | null,
-  ): boolean {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const interacted = Boolean(control?.touched || control?.dirty || form?.submitted);
     return interacted && Boolean(control?.invalid || control?.parent?.hasError('dateRange'));
   }
@@ -107,19 +104,25 @@ export class ExportarHistorial {
     this.state.set('preparando');
     this.message.set('');
     this.form.disable({ emitEvent: false });
-    defer(() => this.service.exportarHistorial(filters)).pipe(
-      timeout(30000),
-      switchMap(response => from(preparePdf(response))),
-      tap(file => downloadPdf(file.blob, file.filename)),
-      map(file => ({ state: 'descargado' as const, message: 'Descarga iniciada: ' + file.filename + '. Revisa las descargas de tu navegador.' })),
-      catchError(error => from(historyExportError(error))),
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => {
-        if (!this.destroyRef.destroyed) this.form.enable({ emitEvent: false });
-      }),
-    ).subscribe(result => {
-      this.state.set(result.state);
-      this.message.set(result.message);
-    });
+    defer(() => this.service.exportarHistorial(filters))
+      .pipe(
+        timeout(30000),
+        switchMap((response) => from(preparePdf(response))),
+        tap((file) => downloadPdf(file.blob, file.filename)),
+        map((file) => ({
+          state: 'descargado' as const,
+          message:
+            'Descarga iniciada: ' + file.filename + '. Revisa las descargas de tu navegador.',
+        })),
+        catchError((error) => from(historyExportError(error))),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (!this.destroyRef.destroyed) this.form.enable({ emitEvent: false });
+        }),
+      )
+      .subscribe((result) => {
+        this.state.set(result.state);
+        this.message.set(result.message);
+      });
   }
 }

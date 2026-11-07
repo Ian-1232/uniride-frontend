@@ -18,7 +18,7 @@ import {
   formatContributionTime,
   SugerenciaContribucionRespuesta,
   SugerenciaContribucionState,
-} from '../contribucion.models';
+} from '../../../core/models/contribucion.models';
 import { ContribucionStatePanel } from '../shared/contribucion-state-panel/contribucion-state-panel';
 
 interface PasajerosForm {

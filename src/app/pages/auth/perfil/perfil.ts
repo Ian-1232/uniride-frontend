@@ -1,7 +1,7 @@
 import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { AuthService } from '../../../core/services/auth.service';
 import { PerfilService } from '../../../core/services/perfil.service';
@@ -15,9 +15,8 @@ import {
 } from '../../../core/models/perfil.models';
 import { erroresPerfil, perfilError } from '../../../core/services/perfil-error';
 import { ReportesStatePanel } from '../../reportes/shared/reportes-state-panel/reportes-state-panel';
-import { TipoCompensacion } from '../../compensaciones/compensaciones.models';
+import { TipoCompensacion } from '../../../core/models/compensaciones.models';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';

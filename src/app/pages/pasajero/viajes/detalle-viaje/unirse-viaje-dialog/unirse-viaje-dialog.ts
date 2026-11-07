@@ -8,15 +8,15 @@ import { MatSelectModule } from '@angular/material/select';
 import { finalize } from 'rxjs';
 import { SolicitudesPasajeroService } from '../../../../../core/services/solicitudes-pasajero.service';
 import { MetodosCompensacionService } from '../../../../../core/services/metodos-compensacion.service';
-import { MetodoCompensacionResponse } from '../../../../compensaciones/compensaciones.models';
+import { MetodoCompensacionResponse } from '../../../../../core/models/compensaciones.models';
 import { ReportesStatePanel } from '../../../../reportes/shared/reportes-state-panel/reportes-state-panel';
 import {
   ETIQUETAS_COMPENSACION,
   salidaTexto,
   SolicitudRespuesta,
   TipoCompensacion,
-  Viaje,
-} from '../../viajes.models';
+  ViajeVista,
+} from '../../../../../core/models/viajes.models';
 import { pasajeroError } from '../../shared/pasajero-query';
 @Component({
   selector: 'app-unirse-viaje-dialog',
@@ -32,7 +32,7 @@ import { pasajeroError } from '../../shared/pasajero-query';
   styleUrl: './unirse-viaje-dialog.css',
 })
 export class UnirseViajeDialog {
-  protected readonly viaje = inject<{ viaje: Viaje }>(MAT_DIALOG_DATA).viaje;
+  protected readonly viaje = inject<{ viaje: ViajeVista }>(MAT_DIALOG_DATA).viaje;
   private readonly ref = inject(MatDialogRef<UnirseViajeDialog, SolicitudRespuesta>);
   private readonly service = inject(SolicitudesPasajeroService);
   private readonly methodsService = inject(MetodosCompensacionService);

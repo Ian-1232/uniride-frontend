@@ -6,7 +6,7 @@ import {
   EliminacionMetodoResponse,
   MetodoCompensacionRequest,
   MetodoCompensacionResponse,
-} from '../../pages/compensaciones/compensaciones.models';
+} from '../models/compensaciones.models';
 
 @Injectable({ providedIn: 'root' })
 export class MetodosCompensacionService {

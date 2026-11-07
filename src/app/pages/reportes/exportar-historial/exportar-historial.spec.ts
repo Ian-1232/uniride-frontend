@@ -1,6 +1,6 @@
 import { FormControl, FormGroup } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
-import { dateRangeValidator } from './exportar-historial.models';
+import { dateRangeValidator } from '../../../core/models/exportar-historial.models';
 
 function createDateRange(desde: Date | null, hasta: Date | null): FormGroup {
   return new FormGroup(

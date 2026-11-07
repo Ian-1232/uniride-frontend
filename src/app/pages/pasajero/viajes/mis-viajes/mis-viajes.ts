@@ -20,7 +20,7 @@ import {
   Pagina,
   SolicitudHistorialRespuesta,
   SolicitudRespuesta,
-} from '../viajes.models';
+} from '../../../../core/models/viajes.models';
 interface Row {
   solicitud: SolicitudRespuesta;
   historico?: SolicitudHistorialRespuesta;
@@ -57,31 +57,27 @@ export class MisViajes {
   private last: ConsultaSolicitudes = { historial: false, page: 0, size: 10 };
   protected readonly query = pasajeroQuery<ConsultaSolicitudes, Result>((q) =>
     q.historial
-      ? this.service
-          .historial(q.page, q.size)
-          .pipe(
-            map((r) => ({
-              pagina: {
-                ...r.solicitudes,
-                content: r.solicitudes.content.map((historico) => ({
-                  solicitud: historico.solicitud,
-                  historico,
-                })),
-              },
-              mensaje: r.mensaje,
-            })),
-          )
-      : this.service
-          .listar(q.estado, q.page, q.size)
-          .pipe(
-            map((r) => ({
-              pagina: {
-                ...r.solicitudes,
-                content: r.solicitudes.content.map((solicitud) => ({ solicitud })),
-              },
-              mensaje: r.mensaje,
-            })),
-          ),
+      ? this.service.historial(q.page, q.size).pipe(
+          map((r) => ({
+            pagina: {
+              ...r.solicitudes,
+              content: r.solicitudes.content.map((historico) => ({
+                solicitud: historico.solicitud,
+                historico,
+              })),
+            },
+            mensaje: r.mensaje,
+          })),
+        )
+      : this.service.listar(q.estado, q.page, q.size).pipe(
+          map((r) => ({
+            pagina: {
+              ...r.solicitudes,
+              content: r.solicitudes.content.map((solicitud) => ({ solicitud })),
+            },
+            mensaje: r.mensaje,
+          })),
+        ),
   );
   protected readonly data = computed(() => this.query.state().data);
   constructor() {

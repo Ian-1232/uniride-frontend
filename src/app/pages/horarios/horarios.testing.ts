@@ -1,4 +1,9 @@
-import { ArchivoRespuesta, CursoRequest, CursoRespuesta, CursosPagina } from './horarios.models';
+import {
+  ArchivoRespuesta,
+  CursoRequest,
+  CursoRespuesta,
+  CursosPagina,
+} from './../../core/models/horarios.models';
 // Imported exclusively by specs. These values never provide production screen data.
 export const CURSO_REQUEST: CursoRequest = {
   nombre: 'Curso de prueba',

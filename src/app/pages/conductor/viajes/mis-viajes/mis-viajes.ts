@@ -5,7 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { Viaje, ViajeConRuta } from '../../../../core/models/ruta.model';
+import { Viaje, ViajeConRuta } from '../../../../core/models/ruta.models';
 import { consultaQuery } from '../../../../core/services/consulta';
 import { RutasService } from '../../../../core/services/rutas.service';
 

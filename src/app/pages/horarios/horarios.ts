@@ -38,7 +38,7 @@ import {
   dentroDeFranja,
   rangoCurso,
   validarArchivo,
-} from './horarios.models';
+} from '../../core/models/horarios.models';
 import { horariosError } from './horarios-error';
 import { EliminarCursoDialog } from './eliminar-curso-dialog/eliminar-curso-dialog';
 

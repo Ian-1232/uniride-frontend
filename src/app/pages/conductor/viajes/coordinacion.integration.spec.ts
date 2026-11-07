@@ -13,7 +13,7 @@ import { RutasService } from '../../../core/services/rutas.service';
 import { CoordinacionService } from '../../../core/services/coordinacion.service';
 import { jwtInterceptor } from '../../../core/interceptors/jwt.interceptor';
 import { prepararPerfil } from '../../../testing/perfil-fixtures';
-import { Ruta } from '../../../core/models/ruta.model';
+import { Ruta } from '../../../core/models/ruta.models';
 import { SolicitudRecibida, ViajeRespuesta } from '../../../core/models/coordinacion.models';
 import { solicitudFixture } from '../../pasajero/viajes/viajes.testing';
 import { Solicitudes } from './solicitudes/solicitudes';
@@ -252,22 +252,20 @@ describe('Módulo 4 con el backend original', () => {
     http
       .expectOne('/api/viajes/74/solicitudes?page=0&size=100')
       .flush(pagina([{ ...SOLICITUD, id: 300 }], 101));
-    http
-      .expectOne('/api/viajes/74/solicitudes?page=1&size=100')
-      .flush(
-        pagina(
-          [
-            {
-              ...SOLICITUD,
-              estado: 'ACEPTADA',
-              acuerdoTerminos: 'Borrador real de gasolina',
-              acuerdoEstado: 'BORRADOR',
-            },
-          ],
-          101,
-          1,
-        ),
-      );
+    http.expectOne('/api/viajes/74/solicitudes?page=1&size=100').flush(
+      pagina(
+        [
+          {
+            ...SOLICITUD,
+            estado: 'ACEPTADA',
+            acuerdoTerminos: 'Borrador real de gasolina',
+            acuerdoEstado: 'BORRADOR',
+          },
+        ],
+        101,
+        1,
+      ),
+    );
     f.detectChanges();
     expect(f.nativeElement.textContent).toContain('Universidad real');
     expect(f.nativeElement.textContent).toContain('GASOLINA');

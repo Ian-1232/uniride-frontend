@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { AvisoConflictos } from '../horarios-conflictos';
-import { diaCurso, horaCurso } from '../horarios.models';
+import { diaCurso, horaCurso } from '../../../core/models/horarios.models';
 @Component({
   selector: 'app-conflictos-horario-dialog',
   imports: [MatDialogModule, MatButtonModule],

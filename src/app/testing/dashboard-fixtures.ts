@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
 import { RoleType } from '../core/models/auth.models';
-import { Ruta, Viaje } from '../core/models/ruta.model';
-import { EstadisticasRespuesta, AnalisisSemanalRespuesta } from '../pages/reportes/reportes.models';
+import { Ruta, Viaje } from '../core/models/ruta.models';
+import { EstadisticasRespuesta, AnalisisSemanalRespuesta } from '../core/models/reportes.models';
 import { solicitudFixture } from '../pages/pasajero/viajes/viajes.testing';
 
 /** Test-only resources for dashboards and regression tests that navigate into them. */

@@ -9,7 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Ruta, RutaRequest } from '../../../../core/models/ruta.model';
+import { Ruta, RutaRequest } from '../../../../core/models/ruta.models';
 import { authError } from '../../../../core/services/auth-error';
 import { consultaQuery } from '../../../../core/services/consulta';
 import { RutasService } from '../../../../core/services/rutas.service';
@@ -83,9 +83,7 @@ export class EditarRuta {
       .actualizar(this.rutaId, cambios)
       .pipe(
         catchError((err) =>
-          this.requiereConfirmacion(err)
-            ? this.confirmarImpacto(cambios)
-            : throwError(() => err),
+          this.requiereConfirmacion(err) ? this.confirmarImpacto(cambios) : throwError(() => err),
         ),
         finalize(() => this.guardando.set(false)),
       )

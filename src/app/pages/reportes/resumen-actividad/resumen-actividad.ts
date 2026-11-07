@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { ReportesService } from '../../../core/services/reportes.service';
-import { ActivitySummary } from '../reportes.models';
+import { ActivitySummary } from '../../../core/models/reportes.models';
 import { reportQuery } from '../shared/report-query';
 import { ReportesStatePanel } from '../shared/reportes-state-panel/reportes-state-panel';
 
@@ -16,12 +16,14 @@ export class ResumenActividad {
   protected readonly report = reportQuery(() => this.service.resumen());
   protected readonly summary = computed<ActivitySummary | null>(() => {
     const data = this.report.state().data;
-    return data ? {
-      completedTrips: data.viajesComoConductor + data.viajesComoPasajero,
-      driverTrips: data.viajesComoConductor,
-      passengerTrips: data.viajesComoPasajero,
-      cancelledTrips: data.viajesCancelados,
-      penalties: data.penalidadesAcumuladas,
-    } : null;
+    return data
+      ? {
+          completedTrips: data.viajesComoConductor + data.viajesComoPasajero,
+          driverTrips: data.viajesComoConductor,
+          passengerTrips: data.viajesComoPasajero,
+          cancelledTrips: data.viajesCancelados,
+          penalties: data.penalidadesAcumuladas,
+        }
+      : null;
   });
 }

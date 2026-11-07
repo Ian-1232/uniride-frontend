@@ -1,6 +1,6 @@
-import type { TipoCompensacion } from '../../compensaciones/compensaciones.models';
-import type { SugerenciaContribucionRespuesta } from '../../contribucion/contribucion.models';
-export type { TipoCompensacion } from '../../compensaciones/compensaciones.models';
+import type { TipoCompensacion } from './compensaciones.models';
+import type { SugerenciaContribucionRespuesta } from './contribucion.models';
+export type { TipoCompensacion } from './compensaciones.models';
 export type EstadoViaje = 'PROGRAMADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO' | 'VENCIDO';
 export type EstadoSolicitud = 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA' | 'CANCELADA';
 export interface Pagina<T> {
@@ -96,7 +96,7 @@ export interface ConsultaSolicitudes {
   readonly size: number;
 }
 /** View fields are nullable when not provided by the source DTO. Never fill from fixtures. */
-export interface Viaje {
+export interface ViajeVista {
   readonly id: number;
   readonly origen: string;
   readonly destino: string;
@@ -112,7 +112,7 @@ export interface Viaje {
   readonly contribucion: SugerenciaContribucionRespuesta | null;
 }
 export interface ContextoViaje {
-  readonly viaje: Viaje;
+  readonly viaje: ViajeVista;
   readonly consulta?: ConsultaSolicitudes;
   readonly solicitud?: SolicitudRespuesta;
   readonly historico?: SolicitudHistorialRespuesta;
@@ -143,7 +143,7 @@ export const ETIQUETAS_SOLICITUD = {
   RECHAZADA: 'Rechazada',
   CANCELADA: 'Cancelada',
 } as const;
-export function desdeBusqueda(dto: BusquedaRespuesta): Viaje {
+export function desdeBusqueda(dto: BusquedaRespuesta): ViajeVista {
   return {
     id: dto.viajeId,
     origen: dto.origen,
@@ -160,7 +160,7 @@ export function desdeBusqueda(dto: BusquedaRespuesta): Viaje {
     contribucion: dto.contribucionSugerida,
   };
 }
-export function desdeSolicitud(dto: SolicitudRespuesta, estado: EstadoViaje | null = null): Viaje {
+export function desdeSolicitud(dto: SolicitudRespuesta, estado: EstadoViaje | null = null): ViajeVista {
   return {
     id: dto.viajeId,
     origen: dto.origen,
@@ -177,7 +177,7 @@ export function desdeSolicitud(dto: SolicitudRespuesta, estado: EstadoViaje | nu
     contribucion: null,
   };
 }
-export function salidaTexto(v: Pick<Viaje, 'fecha' | 'hora' | 'dia'>): string {
+export function salidaTexto(v: Pick<ViajeVista, 'fecha' | 'hora' | 'dia'>): string {
   const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v.fecha);
   return (
     v.dia +

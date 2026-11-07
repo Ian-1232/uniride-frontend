@@ -12,7 +12,7 @@ import {
   BusquedaResumenRespuesta,
   desdeBusqueda,
   desdeSolicitud,
-} from '../viajes/viajes.models';
+} from '../../../core/models/viajes.models';
 import { pasajeroQuery } from '../viajes/shared/pasajero-query';
 import { ReportesStatePanel } from '../../reportes/shared/reportes-state-panel/reportes-state-panel';
 import { DashboardMetricas } from '../../dashboard/dashboard-metricas/dashboard-metricas';
@@ -23,7 +23,7 @@ import {
   horaDashboard,
   idReal,
   salidaValida,
-} from '../../dashboard/dashboard.models';
+} from '../../../core/models/dashboard.models';
 
 @Component({
   selector: 'app-pasajero-dashboard',

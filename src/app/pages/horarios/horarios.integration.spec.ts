@@ -13,7 +13,7 @@ import { prepararPerfil } from '../../testing/perfil-fixtures';
 import { Horarios } from './horarios';
 import { EliminarCursoDialog } from './eliminar-curso-dialog/eliminar-curso-dialog';
 import { ARCHIVO_TEST, CURSO_REQUEST, CURSO_TEST, paginaCursos } from './horarios.testing';
-import { MAX_ARCHIVO_BYTES } from './horarios.models';
+import { MAX_ARCHIVO_BYTES } from '../../core/models/horarios.models';
 
 const cursosUrl = '/api/perfil/cursos';
 const uploadUrl = '/api/perfil/horarios/archivo';

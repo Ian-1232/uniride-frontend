@@ -10,7 +10,7 @@ import { ReportesStatePanel } from '../reportes/shared/reportes-state-panel/repo
 import {
   TIPO_COMPENSACION_LABELS,
   TipoCompensacion,
-} from '../compensaciones/compensaciones.models';
+} from '../../core/models/compensaciones.models';
 
 @Component({
   selector: 'app-configuracion',

@@ -19,7 +19,7 @@ import { SolicitudesPasajeroService } from '../../../core/services/solicitudes-p
 import { ViajePasajeroContextoService } from '../../../core/services/viaje-pasajero-contexto.service';
 import { BuscarViaje } from './buscar-viaje/buscar-viaje';
 import { MisViajes } from './mis-viajes/mis-viajes';
-import { desdeBusqueda, desdeSolicitud, EstadoSolicitud } from './viajes.models';
+import { desdeBusqueda, desdeSolicitud, EstadoSolicitud } from '../../../core/models/viajes.models';
 import { busquedaFixture, solicitudFixture, historialFixture, pageFixture } from './viajes.testing';
 
 const searchUrl = '/api/viajes/buscar/resumen';

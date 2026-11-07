@@ -9,7 +9,7 @@ import {
   coordinacionError,
   penalidadEstimada,
 } from '../../../../../core/models/coordinacion.models';
-import { Viaje } from '../../viajes.models';
+import { ViajeVista } from '../../../../../core/models/viajes.models';
 import { ReportesStatePanel } from '../../../../reportes/shared/reportes-state-panel/reportes-state-panel';
 
 export interface CancelacionViajeResultado {
@@ -80,7 +80,7 @@ export interface CancelacionViajeResultado {
   `,
 })
 export class CancelarViajeDialog {
-  protected readonly viaje = inject<Viaje>(MAT_DIALOG_DATA);
+  protected readonly viaje = inject<ViajeVista>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<CancelarViajeDialog, CancelacionViajeResultado>);
   private readonly service = inject(CoordinacionService);
   private readonly destroyRef = inject(DestroyRef);

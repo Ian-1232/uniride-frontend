@@ -14,7 +14,7 @@ import {
   loginDashboard,
   paginaDashboard,
 } from '../../../testing/dashboard-fixtures';
-import { Viaje } from '../../../core/models/ruta.model';
+import { Viaje } from '../../../core/models/ruta.models';
 
 const rutasUrl = '/api/rutas';
 const pendientesUrl = '/api/viajes/791/solicitudes';

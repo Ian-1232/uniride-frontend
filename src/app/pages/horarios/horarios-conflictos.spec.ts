@@ -1,6 +1,6 @@
 import { FormControl } from '@angular/forms';
 import { agruparCursos, conflictosImportacion, cursosSuperpuestos } from './horarios-conflictos';
-import { dentroDeFranja, rangoCurso } from './horarios.models';
+import { dentroDeFranja, rangoCurso } from '../../core/models/horarios.models';
 import { ARCHIVO_TEST, CURSO_TEST } from './horarios.testing';
 
 describe('Weekly schedule, overlaps and allowed hours', () => {

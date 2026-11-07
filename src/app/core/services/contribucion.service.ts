@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { SugerenciaContribucionRespuesta } from '../../pages/contribucion/contribucion.models';
+import { SugerenciaContribucionRespuesta } from '../models/contribucion.models';
 
 @Injectable({ providedIn: 'root' })
 export class ContribucionService {

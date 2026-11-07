@@ -8,7 +8,7 @@ import {
   SolicitudRespuesta,
   SolicitudesResumenRespuesta,
   SolicitudesHistorialResumenRespuesta,
-} from '../../pages/pasajero/viajes/viajes.models';
+} from '../models/viajes.models';
 
 @Injectable({ providedIn: 'root' })
 export class SolicitudesPasajeroService {

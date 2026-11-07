@@ -7,7 +7,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
-import { Ruta, Viaje } from '../../../../core/models/ruta.model';
+import { Ruta, Viaje } from '../../../../core/models/ruta.models';
 import { consultaQuery } from '../../../../core/services/consulta';
 import { crearPaginatorIntl } from '../../../../core/services/paginator-intl';
 import { RutasService } from '../../../../core/services/rutas.service';

@@ -14,7 +14,7 @@ import {
   timeout,
 } from 'rxjs';
 import { authError } from './auth-error';
-import { Page } from '../models/ruta.model';
+import { Page } from '../models/ruta.models';
 
 /** Recorre las páginas reales sin truncar las rutas o viajes a los primeros 100. */
 export function todasLasPaginas<T>(

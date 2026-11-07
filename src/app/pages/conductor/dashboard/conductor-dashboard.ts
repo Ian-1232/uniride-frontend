@@ -7,7 +7,7 @@ import { CoordinacionService } from '../../../core/services/coordinacion.service
 import { ReportesService } from '../../../core/services/reportes.service';
 import { consultaDashboard } from '../../dashboard/dashboard-query';
 import { pasajeroQuery } from '../../pasajero/viajes/shared/pasajero-query';
-import { Page } from '../../../core/models/ruta.model';
+import { Page } from '../../../core/models/ruta.models';
 import { SolicitudRecibida } from '../../../core/models/coordinacion.models';
 import { ReportesStatePanel } from '../../reportes/shared/reportes-state-panel/reportes-state-panel';
 import { reportQuery } from '../../reportes/shared/report-query';
@@ -20,7 +20,7 @@ import {
   fechaDashboard,
   horaDashboard,
   proximoViajeConductor,
-} from '../../dashboard/dashboard.models';
+} from '../../../core/models/dashboard.models';
 
 @Component({
   selector: 'app-conductor-dashboard',

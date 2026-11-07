@@ -5,7 +5,7 @@ import { RoleType } from '../../../core/models/auth.models';
 import { ReportesService } from '../../../core/services/reportes.service';
 import { reportQuery } from '../../reportes/shared/report-query';
 import { ReportesStatePanel } from '../../reportes/shared/reportes-state-panel/reportes-state-panel';
-import { exigirConteos } from '../dashboard.models';
+import { exigirConteos } from '../../../core/models/dashboard.models';
 
 @Component({
   selector: 'app-dashboard-metricas',

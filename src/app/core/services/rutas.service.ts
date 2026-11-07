@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, map, Observable, of, switchMap, timeout } from 'rxjs';
 import { ViajeRespuesta } from '../models/coordinacion.models';
 import { environment } from '../../../environments/environment';
-import { Page, Ruta, RutaRequest, Viaje, ViajeConRuta } from '../models/ruta.model';
+import { Page, Ruta, RutaRequest, Viaje, ViajeConRuta } from '../models/ruta.models';
 import { todasLasPaginas } from './consulta';
 
 /** Cuerpo ViajeRequest de POST /rutas/{rutaId}/viajes y PUT /viajes/{id}. */
