@@ -115,19 +115,26 @@ Estructura general:
 ```text
 src/
 ├── app/
-│   ├── app.routes.ts
-│   ├── home/
-│   ├── layouts/
+│   ├── app.routes.ts      // -> rutas de la aplicacion
+│   ├── app.config.ts      // -> activa HttpClient y el interceptor
+│   ├── core/              // -> lo compartido, no solo de una pantalla
+│   │   ├── models/        // -> la forma de datos (DTO)
+│   │   ├── services/      // -> llaman a la API
+│   │   ├── interceptors/  // -> agrega el token a las llamadas
+│   │   └── guards/        // -> protegen las rutas
+│   ├── home/              // -> la pagina de inicio (ruta "/")
+│   ├── layouts/           // -> el marco de cada grupo de pantallas
 │   │   ├── auth-layout/
 │   │   ├── conductor-layout/
 │   │   └── pasajero-layout/
-│   └── pages/
-│       ├── auth/
+│   └── pages/             // -> las pantallas agrupadad por grupo de usuario
+│       ├── auth/          // -> login y crear cuenta
 │       ├── conductor/
 │       │   ├── rutas/
 │       │   └── viajes/
 │       └── pasajero/
 │           └── viajes/
+├── environments/          // -> la URL de la API por entorno
 ├── styles.css
 └── material-theme.scss
 ```
@@ -169,22 +176,22 @@ La colección contiene variables primitivas y alias semánticos. En la implement
 
 ### 6.2. Colores
 
-| Variable semántica | Valor | Aplicación principal |
-|---|---:|---|
-| `color/primary` | `#4F46E5` | Acciones principales, selección y foco |
-| `color/ink` | `#1E293B` | Texto y contenido principal |
-| `color/accent` | `#10B981` | Acentos positivos |
-| `color/background` | `#F8FAFC` | Fondo general de la aplicación |
-| `color/surface` | `#FFFFFF` | Tarjetas, campos y superficies elevadas |
-| `color/muted` | `#64748B` | Texto secundario |
-| `color/border` | `#E2E8F0` | Bordes y divisores |
-| `color/primarySoft` | `#EEF2FF` | Fondos seleccionados o informativos |
-| `color/successSoft` | `#ECFDF5` | Fondo de estado exitoso |
-| `color/successText` | `#047857` | Texto de estado exitoso |
-| `color/warningSoft` | `#FFFBEB` | Fondo de advertencia |
-| `color/warningText` | `#92400E` | Texto de advertencia |
-| `color/danger` | `#DC2626` | Error y acciones destructivas |
-| `color/dangerSoft` | `#FEF2F2` | Fondo de error |
+| Variable semántica  |     Valor | Aplicación principal                    |
+| ------------------- | --------: | --------------------------------------- |
+| `color/primary`     | `#4F46E5` | Acciones principales, selección y foco  |
+| `color/ink`         | `#1E293B` | Texto y contenido principal             |
+| `color/accent`      | `#10B981` | Acentos positivos                       |
+| `color/background`  | `#F8FAFC` | Fondo general de la aplicación          |
+| `color/surface`     | `#FFFFFF` | Tarjetas, campos y superficies elevadas |
+| `color/muted`       | `#64748B` | Texto secundario                        |
+| `color/border`      | `#E2E8F0` | Bordes y divisores                      |
+| `color/primarySoft` | `#EEF2FF` | Fondos seleccionados o informativos     |
+| `color/successSoft` | `#ECFDF5` | Fondo de estado exitoso                 |
+| `color/successText` | `#047857` | Texto de estado exitoso                 |
+| `color/warningSoft` | `#FFFBEB` | Fondo de advertencia                    |
+| `color/warningText` | `#92400E` | Texto de advertencia                    |
+| `color/danger`      | `#DC2626` | Error y acciones destructivas           |
+| `color/dangerSoft`  | `#FEF2F2` | Fondo de error                          |
 
 Estos colores constituyen la base visual existente.
 
@@ -196,17 +203,17 @@ La familia tipográfica global definida en el Design System es `Roboto`.
 
 Los frames antiguos de autenticación que todavía utilizan Inter se consideran una diferencia heredada del archivo y no una segunda escala global. No se deben modificar esos frames sin coordinación, pero las implementaciones nuevas deben emplear la escala global de Roboto.
 
-| Estilo de Figma | Fuente | Tamaño | Interlineado |
-|---|---|---:|---:|
-| `Typography/Display` | Roboto Bold | 36 px | 44 px |
-| `Typography/Page title` | Roboto Bold | 28 px | 39 px |
-| `Typography/Section title` | Roboto Bold | 22 px | 31 px |
-| `Typography/Card title` | Roboto Bold | 18 px | 25 px |
-| `Typography/Body` | Roboto Regular | 14 px | 20 px |
-| `Typography/Body strong` | Roboto Medium | 14 px | 20 px |
-| `Typography/Body small` | Roboto Regular | 13 px | 18 px |
-| `Typography/Label` | Roboto Medium | 12 px | 17 px |
-| `Typography/Caption` | Roboto Regular | 12 px | 17 px |
+| Estilo de Figma            | Fuente         | Tamaño | Interlineado |
+| -------------------------- | -------------- | -----: | -----------: |
+| `Typography/Display`       | Roboto Bold    |  36 px |        44 px |
+| `Typography/Page title`    | Roboto Bold    |  28 px |        39 px |
+| `Typography/Section title` | Roboto Bold    |  22 px |        31 px |
+| `Typography/Card title`    | Roboto Bold    |  18 px |        25 px |
+| `Typography/Body`          | Roboto Regular |  14 px |        20 px |
+| `Typography/Body strong`   | Roboto Medium  |  14 px |        20 px |
+| `Typography/Body small`    | Roboto Regular |  13 px |        18 px |
+| `Typography/Label`         | Roboto Medium  |  12 px |        17 px |
+| `Typography/Caption`       | Roboto Regular |  12 px |        17 px |
 
 No introducir nuevas familias ni combinaciones tipográficas sin incorporarlas primero al Design System de Figma.
 
