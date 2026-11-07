@@ -1,0 +1,160 @@
+<div class="dashboard-container">
+  <header class="page-heading">
+    <div>
+      <h1>Tu panel de conductor</h1>
+      <p class="subtitle">Organiza tus salidas y consulta la actividad de tu cuenta.</p>
+    </div>
+    <div class="actions">
+      <a mat-stroked-button routerLink="/conductor/rutas">Mis rutas</a
+      ><a mat-flat-button routerLink="/conductor/rutas/publicar">Publicar ruta</a>
+    </div>
+  </header>
+  <div class="bento-grid">
+    <section class="bento-card col-hero" aria-labelledby="proximo-title">
+      <div class="card-header-row">
+        <h2 id="proximo-title">
+          {{ proximo()?.estado === 'EN_PROGRESO' ? 'Viaje en progreso' : 'Próximo viaje' }}
+        </h2>
+        <button
+          mat-button
+          type="button"
+          [disabled]="viajes.state().estado === 'cargando'"
+          (click)="viajes.retry()"
+        >
+          Actualizar viaje
+        </button>
+      </div>
+      @if (viajes.state().estado === 'cargando') {
+        <app-reportes-state-panel
+          title="Cargando tus viajes"
+          message="Estamos consultando tus rutas y salidas."
+          [loading]="true"
+          role="status"
+        />
+      } @else if (viajes.state().estado === 'error') {
+        <app-reportes-state-panel
+          title="No se pudieron cargar tus viajes"
+          [message]="viajes.state().mensaje"
+          tone="danger"
+          actionLabel="Reintentar"
+          (action)="viajes.retry()"
+          role="alert"
+        />
+      } @else if (proximo(); as viaje) {
+        <span class="status-badge">{{
+          viaje.estado === 'EN_PROGRESO' ? 'En progreso' : 'Programado'
+        }}</span>
+        <h3 class="trip-title">
+          {{ viaje.ruta.origen || 'Origen no disponible' }} →
+          {{ viaje.ruta.destino || 'Destino no disponible' }}
+        </h3>
+        <p class="trip-date">{{ fecha(viaje.fecha) }} · {{ hora(viaje.hora) }}</p>
+        @if (viaje.confirmado === true) {
+          <p class="confirmation">Salida confirmada por ti</p>
+        } @else if (viaje.confirmado === false) {
+          <p class="muted">Salida pendiente de confirmación</p>
+        }
+        <div class="trip-details">
+          <p>
+            Capacidad total: <strong>{{ viaje.ruta.capacidadMaxima }}</strong> pasajeros
+          </p>
+          @if (viaje.pasajeros !== undefined && conteoValido(viaje.pasajeros)) {
+            <p>
+              Pasajeros registrados: <strong>{{ viaje.pasajeros }}</strong>
+            </p>
+          }
+        </div>
+        @if (viaje.ruta.puntosReferencia) {
+          <p class="muted">Referencias de la ruta: {{ viaje.ruta.puntosReferencia }}</p>
+        }
+        @if (viaje.ruta.notaContribucion) {
+          <p class="muted">Nota de contribución: {{ viaje.ruta.notaContribucion }}</p>
+        }
+        <a mat-flat-button [routerLink]="['/conductor/viajes', viaje.id]">Gestionar viaje</a>
+      } @else {
+        <div class="empty-state">
+          <h3>Todavía no tienes un próximo viaje.</h3>
+          <p>Selecciona una de tus rutas para generar una salida.</p>
+          <div class="actions">
+            <a mat-flat-button routerLink="/conductor/rutas">Ver mis rutas</a
+            ><a mat-stroked-button routerLink="/conductor/rutas/publicar">Publicar ruta</a>
+          </div>
+        </div>
+      }
+    </section>
+    <app-dashboard-metricas class="col-kpis" rol="CONDUCTOR" />
+    <app-dashboard-frecuencia class="col-chart" />
+    <app-dashboard-metodos class="col-methods" />
+    <section class="bento-card col-requests requests-card" aria-labelledby="solicitudes-title">
+      <div class="card-header-row"><h2 id="solicitudes-title">Solicitudes recibidas</h2></div>
+      @if (proximo(); as viaje) {
+        <p>Solicitudes pendientes para {{ viaje.ruta.origen }} → {{ viaje.ruta.destino }}.</p>
+        @if (solicitudes.state().status === 'loading') {
+          <app-reportes-state-panel
+            title="Cargando solicitudes"
+            message="Estamos consultando las solicitudes de esta salida."
+            [loading]="true"
+            role="status"
+          />
+        } @else if (solicitudes.state().status === 'error') {
+          <app-reportes-state-panel
+            title="No se pudieron cargar las solicitudes"
+            [message]="solicitudes.state().message"
+            tone="danger"
+            actionLabel="Reintentar"
+            (action)="reintentarSolicitudes()"
+            role="alert"
+          />
+        } @else if (solicitudes.state().data; as datos) {
+          <p class="request-count">{{ datos.totalElements }} solicitudes pendientes</p>
+        }
+        <a mat-flat-button [routerLink]="['/conductor/viajes', viaje.id, 'solicitudes']"
+          >Revisar solicitudes</a
+        >
+      } @else {
+        <p class="muted">Selecciona un viaje desde Mis viajes para consultar sus solicitudes.</p>
+        <a mat-stroked-button routerLink="/conductor/viajes">Ver mis viajes</a>
+      }
+    </section>
+    <section class="bento-card col-ranking" aria-labelledby="ranking-title">
+      <div class="card-header-row">
+        <h2 id="ranking-title">Tus rutas frecuentes</h2>
+        <a class="link-action" routerLink="/reportes/rutas">Ver ranking</a>
+      </div>
+      @if (ranking.state().status === 'cargando') {
+        <app-reportes-state-panel
+          title="Cargando rutas frecuentes"
+          message="Estamos consultando tus viajes completados."
+          [loading]="true"
+          role="status"
+        />
+      } @else if (ranking.state().status === 'error') {
+        <app-reportes-state-panel
+          title="No se pudo cargar el ranking"
+          [message]="ranking.state().message"
+          tone="danger"
+          actionLabel="Reintentar"
+          (action)="ranking.retry()"
+          role="alert"
+        />
+      } @else if (ranking.state().data; as datos) {
+        @if (!datos.suficientesDatos) {
+          <p class="empty-state">
+            {{ datos.mensaje || 'Todavía no hay datos suficientes para generar el ranking.' }}
+          </p>
+        } @else if (!rutasFrecuentes().length) {
+          <p class="empty-state">No hay rutas en tu ranking.</p>
+        } @else {
+          <ol class="ranking-list">
+            @for (ruta of rutasFrecuentes(); track $index) {
+              <li>
+                <strong>{{ ruta.origen }} → {{ ruta.destino }}</strong>
+                <p>{{ ruta.cantidad }} viajes completados · {{ ruta.penalidades }} penalidades</p>
+              </li>
+            }
+          </ol>
+        }
+      }
+    </section>
+  </div>
+</div>

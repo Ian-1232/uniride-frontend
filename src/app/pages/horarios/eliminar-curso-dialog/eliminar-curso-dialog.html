@@ -1,0 +1,31 @@
+<h2 mat-dialog-title>Eliminar curso</h2>
+<mat-dialog-content>
+  <p class="course-name">{{ curso.nombre }}</p>
+  <p>{{ dia(curso.dia) }} · {{ hora(curso.horaInicio) }}–{{ hora(curso.horaFin) }}</p>
+  <p>Se eliminará este curso de tu horario académico. Esta acción no se puede deshacer.</p>
+  @if (error()) {
+    <app-reportes-state-panel
+      role="alert"
+      title="No se pudo eliminar"
+      [message]="error()"
+      tone="danger"
+    />
+  }
+  @if (busy()) {
+    <p role="status">Eliminando curso…</p>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" [disabled]="busy()" (click)="cancelar()">
+    Conservar curso
+  </button>
+  <button
+    mat-flat-button
+    class="delete-action"
+    type="button"
+    [disabled]="busy()"
+    (click)="confirmar()"
+  >
+    Confirmar eliminación
+  </button>
+</mat-dialog-actions>

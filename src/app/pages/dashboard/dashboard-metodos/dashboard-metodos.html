@@ -1,0 +1,50 @@
+<section class="bento-card" aria-labelledby="metodos-title">
+  <div class="card-header-row">
+    <div>
+      <h2 id="metodos-title">Tus métodos de compensación</h2>
+      <p class="muted">Configuración personal para tus viajes.</p>
+    </div>
+    <a class="link-action" routerLink="/compensaciones">Gestionar métodos</a>
+  </div>
+  @if (consulta.state().estado === 'cargando') {
+    <app-reportes-state-panel
+      title="Cargando métodos"
+      message="Estamos consultando tu configuración."
+      [loading]="true"
+      role="status"
+    />
+  } @else if (consulta.state().estado === 'error') {
+    <app-reportes-state-panel
+      title="No se pudieron cargar los métodos"
+      [message]="consulta.state().mensaje"
+      tone="danger"
+      actionLabel="Reintentar"
+      (action)="consulta.retry()"
+      role="alert"
+    />
+  } @else if (consulta.state().data; as metodos) {
+    @if (!metodos.length) {
+      <p class="empty-state">
+        Todavía no tienes métodos registrados. Puedes configurarlos desde Compensaciones.
+      </p>
+    } @else {
+      <p>{{ metodos.length }} métodos registrados</p>
+      <ul class="resource-list">
+        @for (metodo of metodos.slice(0, 3); track metodo.id) {
+          <li>
+            <div>
+              <strong>{{ etiquetas[metodo.tipo] }}</strong>
+              <p>{{ metodo.descripcion }}</p>
+            </div>
+            <span class="status-badge" [class.badge-muted]="!metodo.activo">{{
+              metodo.activo ? 'Activo' : 'Inactivo'
+            }}</span>
+          </li>
+        }
+      </ul>
+      @if (metodos.length > 3) {
+        <p class="muted">Mostrando 3 de {{ metodos.length }}. Consulta todos en Compensaciones.</p>
+      }
+    }
+  }
+</section>

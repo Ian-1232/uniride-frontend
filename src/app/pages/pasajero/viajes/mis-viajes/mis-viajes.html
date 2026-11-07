@@ -1,0 +1,96 @@
+<article class="viajes-page">
+  <header class="page-heading">
+    <div>
+      <p class="breadcrumb">Pasajero / Viajes</p>
+      <h1>Mis viajes</h1>
+      <p>Consulta tus solicitudes y el historial personal.</p>
+    </div>
+    <a class="ur-button heading-action" routerLink="/pasajero/viajes/buscar">Buscar viajes</a>
+  </header>
+  <div>
+    <mat-form-field appearance="outline"
+      ><mat-label>Vista</mat-label
+      ><mat-select [formControl]="vista"
+        ><mat-option value="solicitudes">Solicitudes</mat-option
+        ><mat-option value="historial">Historial (solo lectura)</mat-option></mat-select
+      ></mat-form-field
+    >
+    @if (vista.value === 'solicitudes') {
+      <mat-form-field appearance="outline"
+        ><mat-label>Estado</mat-label
+        ><mat-select [formControl]="estado"
+          ><mat-option value="">Todos</mat-option>
+          @for (state of estados; track state) {
+            <mat-option [value]="state">{{ labels[state] }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+    }
+  </div>
+  @if (query.state().status === 'loading') {
+    <app-reportes-state-panel
+      title="Cargando solicitudes"
+      role="status"
+      message="Estamos consultando tus solicitudes."
+      [loading]="true"
+    />
+  } @else if (query.state().status === 'error') {
+    <app-reportes-state-panel
+      title="No se pudo cargar"
+      role="alert"
+      [message]="query.state().message"
+      tone="danger"
+      actionLabel="Reintentar"
+      (action)="retry()"
+    />
+  } @else if (data(); as result) {
+    @if (result.mensaje) {
+      <p role="status" class="empty-state">{{ result.mensaje }}</p>
+    }
+    @if (vista.value === 'historial') {
+      <p>Historial de solo lectura. Las penalidades corresponden exclusivamente a tu cuenta.</p>
+    }
+    @for (state of estados; track state) {
+      @if (rows(state).length) {
+        <section class="list-section" [attr.aria-labelledby]="'solicitudes-' + state">
+          <h2 [id]="'solicitudes-' + state">{{ labels[state] }}s (en esta página)</h2>
+          <div class="trips-grid">
+            @for (row of rows(state); track row.solicitud.id) {
+              <div>
+                <app-viaje-card
+                  [viaje]="viajeDe(row.solicitud, row.historico?.estadoViaje)"
+                  [etiqueta]="labels[state]"
+                  [tono]="
+                    state === 'ACEPTADA' ? 'success' : state === 'PENDIENTE' ? 'warning' : 'danger'
+                  "
+                  accion="Ver detalle"
+                  (seleccion)="verDetalle(row)"
+                />
+                @if (row.historico; as history) {
+                  <p>Estado del viaje: {{ history.estadoViaje }}</p>
+                  @for (penalidad of history.penalidades; track penalidad.id) {
+                    <p>Penalidad {{ penalidad.tipo }}: {{ penalidad.motivo }}</p>
+                  }
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+    }
+    @if (!result.pagina.content.length && !result.mensaje) {
+      <p class="empty-state">No hay solicitudes en esta página.</p>
+    }
+    <p class="ur-caption">
+      {{ result.pagina.totalElements }} solicitudes · {{ result.pagina.totalPages }} páginas
+    </p>
+    <mat-paginator
+      [length]="result.pagina.totalElements"
+      [pageIndex]="result.pagina.number"
+      [pageSize]="result.pagina.size"
+      [pageSizeOptions]="[5, 10, 20]"
+      (page)="page($event)"
+      aria-label="Paginación de solicitudes"
+    />
+  }
+</article>

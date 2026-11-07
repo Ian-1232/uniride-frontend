@@ -1,0 +1,133 @@
+<div class="form-page">
+  <header class="page-heading">
+    <a mat-button routerLink="/compensaciones/metodos">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
+      Volver a mis métodos
+    </a>
+    <div>
+      <h1>{{ isEdit() ? 'Editar método' : 'Agregar método' }}</h1>
+      <p>
+        {{
+          isEdit()
+            ? 'Actualiza los datos y la disponibilidad del método.'
+            : 'Registra una forma de acordar contribuciones en tus viajes.'
+        }}
+      </p>
+    </div>
+  </header>
+
+  @if (state() === 'cargando') {
+    <app-compensacion-state-panel
+      title="Cargando método"
+      message="Estamos consultando tus métodos de compensación."
+    />
+  } @else if (!loaded() && state() === 'error') {
+    <app-compensacion-state-panel
+      tone="danger"
+      title="No se pudo cargar el método"
+      [message]="message()"
+      actionLabel="Reintentar"
+      (action)="load()"
+    />
+  } @else if (isNotFound()) {
+    <app-compensacion-state-panel
+      tone="danger"
+      icon="search_off"
+      title="Método no encontrado"
+      message="No encontramos el método solicitado. Pudo haber sido eliminado por otro proceso."
+    />
+    <a class="back-to-list" mat-flat-button routerLink="/compensaciones/metodos">
+      Volver al listado
+    </a>
+  } @else {
+    <mat-card appearance="outlined" class="form-card">
+      <mat-card-header>
+        <mat-card-title>{{ isEdit() ? 'Editar método' : 'Registrar método' }}</mat-card-title>
+        <mat-card-subtitle>
+          {{
+            isEdit()
+              ? 'Modifica el tipo, la descripción o su estado.'
+              : 'Completa los campos obligatorios.'
+          }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        @if (state() === 'duplicado' || state() === 'error') {
+          <app-compensacion-state-panel
+            tone="danger"
+            [title]="state() === 'duplicado' ? 'Método duplicado' : 'No se pudo guardar el método'"
+            [message]="message()"
+          />
+        } @else if (state() === 'exito') {
+          <app-compensacion-state-panel
+            tone="success"
+            title="Cambios guardados"
+            [message]="message()"
+          />
+          <a mat-flat-button routerLink="/compensaciones/metodos">Volver al listado</a>
+        } @else if (state() === 'guardando') {
+          <app-compensacion-state-panel
+            title="Guardando método"
+            message="Espera mientras confirmamos los cambios."
+          />
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de compensación</mat-label>
+            <mat-select formControlName="tipo" aria-describedby="tipo-error">
+              @for (type of types; track type) {
+                <mat-option [value]="type">{{ labels[type] }}</mat-option>
+              }
+            </mat-select>
+            @if (hasTypeError()) {
+              <mat-error id="tipo-error">Selecciona un tipo de compensación.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Descripción</mat-label>
+            <input
+              matInput
+              formControlName="descripcion"
+              placeholder="Ej. Aporte de combustible"
+              aria-describedby="descripcion-ayuda descripcion-error"
+            />
+            <mat-hint id="descripcion-ayuda"
+              >Describe brevemente cómo se realizará el aporte.</mat-hint
+            >
+            @if (hasDescriptionError()) {
+              <mat-error id="descripcion-error">Ingresa una descripción válida.</mat-error>
+            }
+          </mat-form-field>
+
+          @if (isEdit()) {
+            <div class="status-control">
+              <div>
+                <p class="ur-body-strong">Estado del método</p>
+                <p class="ur-caption">
+                  Los métodos inactivos permanecen en tu lista y conservan el historial.
+                </p>
+              </div>
+              <mat-slide-toggle formControlName="activo">
+                {{ form.controls.activo.value ? 'Activo' : 'Inactivo' }}
+              </mat-slide-toggle>
+            </div>
+          }
+
+          <div class="form-actions">
+            <a mat-stroked-button routerLink="/compensaciones/metodos">Cancelar</a>
+            <button
+              mat-flat-button
+              type="submit"
+              [disabled]="form.invalid || busy() || state() === 'exito'"
+            >
+              {{ isEdit() ? 'Guardar cambios' : 'Registrar método' }}
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

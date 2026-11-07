@@ -1,0 +1,98 @@
+<section class="page">
+  <nav class="breadcrumb">
+    <a [routerLink]="['/conductor/rutas', rutaId, 'viajes']" [state]="{ ruta: ruta() }">
+      <mat-icon>arrow_back</mat-icon>
+      Viajes de la ruta
+    </a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Generar viaje</span>
+  </nav>
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Generar viaje programado</h1>
+      <p class="page-subtitle">Selecciona la fecha y hora de salida para crear un viaje de esta ruta</p>
+    </div>
+  </header>
+
+  @if (error(); as mensaje) {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ mensaje }}</div>
+    </div>
+  }
+
+  <mat-card class="uni-card">
+    <mat-card-content>
+      @if (consulta.state().estado === 'cargando') {
+        <p class="state-note">Cargando la ruta…</p>
+      } @else if (consulta.state().estado === 'error') {
+        <div class="banner banner-error" role="alert">
+          <mat-icon>error</mat-icon>
+          <div>{{ consulta.state().mensaje }}</div>
+        </div>
+        <button mat-stroked-button type="button" (click)="consulta.retry()">Reintentar</button>
+      } @else if (ruta(); as actual) {
+        <div class="summary-box route-summary">
+          <div class="summary-main">
+            <mat-icon class="summary-icon is-plain">route</mat-icon>
+            <div>
+              <div class="summary-name">{{ actual.origen }} → {{ actual.destino }}</div>
+              <div class="summary-detail">
+                {{ actual.puntosReferencia }} · Capacidad: {{ actual.capacidadMaxima }} pasajeros
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <form class="route-form" [formGroup]="form" (ngSubmit)="enviar()">
+        <div class="form-row">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Fecha *</mat-label>
+            <input
+              matInput
+              formControlName="fecha"
+              [matDatepicker]="picker"
+              [min]="hoy"
+              readonly
+            />
+            <mat-hint>No puede ser una fecha en el pasado</mat-hint>
+            <mat-datepicker-toggle matSuffix [for]="picker" />
+            <mat-datepicker #picker />
+            <mat-error>Selecciona una fecha válida</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Hora *</mat-label>
+            <input matInput formControlName="hora" placeholder="07:30" />
+            <mat-icon matSuffix>schedule</mat-icon>
+            <mat-hint>Formato 24 horas (HH:mm)</mat-hint>
+            @if (form.controls.hora.hasError('pattern')) {
+              <mat-error>Usa el formato HH:mm (24 horas)</mat-error>
+            } @else {
+              <mat-error>La hora es obligatoria</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="banner">
+          <mat-icon>info</mat-icon>
+          <div>
+            El viaje se creará en estado PROGRAMADO. Deberás confirmarlo al menos 12 horas antes de la salida.
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <a mat-stroked-button [routerLink]="['/conductor/rutas', rutaId, 'viajes']">
+            Cancelar
+          </a>
+          <button mat-flat-button type="submit" [disabled]="form.invalid || guardando()">
+            <mat-icon>add</mat-icon>
+            {{ guardando() ? 'Generando…' : 'Generar viaje' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</section>

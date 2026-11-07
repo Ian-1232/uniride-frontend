@@ -1,0 +1,157 @@
+<div class="dashboard-container">
+  <header class="page-heading">
+    <div>
+      <h1>Tu centro de movilidad universitaria</h1>
+      <p class="subtitle">Consulta tus próximas salidas y encuentra viajes disponibles.</p>
+    </div>
+    <a mat-flat-button routerLink="/pasajero/viajes/buscar">Buscar viajes</a>
+  </header>
+  <div class="bento-grid">
+    <section class="bento-card search-card" aria-labelledby="buscar-title">
+      <div>
+        <h2 id="buscar-title">Encuentra tu próximo viaje</h2>
+        <p>Busca por origen, destino, día, hora o cercanía en el buscador completo.</p>
+      </div>
+      <a mat-stroked-button routerLink="/pasajero/viajes/buscar">Abrir buscador</a>
+    </section>
+    <section class="bento-card col-hero" aria-labelledby="proximo-title">
+      <div class="card-header-row">
+        <h2 id="proximo-title">Próxima salida</h2>
+        <button
+          mat-button
+          type="button"
+          [disabled]="proxima.state().estado === 'cargando'"
+          (click)="proxima.retry()"
+        >
+          Actualizar viaje
+        </button>
+      </div>
+      @if (proxima.state().estado === 'cargando') {
+        <app-reportes-state-panel
+          title="Cargando próximo viaje"
+          message="Estamos revisando tus solicitudes aceptadas."
+          [loading]="true"
+          role="status"
+        />
+      } @else if (proxima.state().estado === 'error') {
+        <app-reportes-state-panel
+          title="No se pudo consultar tu próximo viaje"
+          [message]="proxima.state().mensaje"
+          tone="danger"
+          actionLabel="Reintentar"
+          (action)="proxima.retry()"
+          role="alert"
+        />
+      } @else if (siguiente(); as actual) {
+        <span class="status-badge">Solicitud aceptada</span>
+        <h3 class="trip-title">
+          {{ actual.solicitud.origen || 'Origen no disponible' }} →
+          {{ actual.solicitud.destino || 'Destino no disponible' }}
+        </h3>
+        <p class="trip-date">
+          {{ fecha(actual.solicitud.fecha) }} · {{ hora(actual.solicitud.hora) }}
+        </p>
+        <p class="muted">
+          La aceptación de tu solicitud no confirma la salida. Este listado no informa la
+          confirmación del conductor ni el estado actual del viaje.
+        </p>
+        <div class="actions">
+          <button mat-flat-button type="button" (click)="verSolicitud()">Ver mi viaje</button
+          ><a mat-stroked-button routerLink="/pasajero/viajes/mis-viajes"
+            >Gestionar mis solicitudes</a
+          >
+        </div>
+      } @else {
+        <div class="empty-state">
+          <h3>Todavía no tienes un próximo viaje.</h3>
+          <p>Busca una salida y envía tu solicitud desde el detalle del viaje.</p>
+          <a mat-flat-button routerLink="/pasajero/viajes/buscar">Buscar viajes</a>
+        </div>
+      }
+      @if (proxima.state().data?.incompletos) {
+        <p class="muted">
+          Algunas solicitudes tienen datos de salida incompletos. Revisa Mis viajes.
+        </p>
+      }
+      <p class="muted">
+        Las cancelaciones se revisan y confirman desde el detalle. Cancelar una solicitud pendiente
+        es distinto de cancelar un viaje completo.
+      </p>
+    </section>
+    <app-dashboard-metricas class="col-kpis" rol="PASAJERO" />
+    <app-dashboard-frecuencia class="col-chart" />
+    <app-dashboard-metodos class="col-methods" />
+    <section class="bento-card col-available" aria-labelledby="disponibles-title">
+      <div class="card-header-row">
+        <div>
+          <h2 id="disponibles-title">Viajes disponibles</h2>
+          <p class="muted">Explora salidas publicadas. No son recomendaciones personalizadas.</p>
+        </div>
+        <a class="link-action" routerLink="/pasajero/viajes/buscar">Ver buscador completo</a>
+      </div>
+      @if (disponibles.state().status === 'loading') {
+        <app-reportes-state-panel
+          title="Cargando viajes disponibles"
+          message="Estamos consultando las salidas publicadas."
+          [loading]="true"
+          role="status"
+        />
+      } @else if (disponibles.state().status === 'error') {
+        <app-reportes-state-panel
+          title="No se pudieron cargar los viajes"
+          [message]="disponibles.state().message"
+          tone="danger"
+          actionLabel="Reintentar"
+          (action)="reintentarDisponibles()"
+          role="alert"
+        />
+      } @else if (disponibles.state().data; as datos) {
+        @if (datos.mensaje) {
+          <p>{{ datos.mensaje }}</p>
+        }
+        @if (datos.sugerencia) {
+          <p class="muted">{{ datos.sugerencia }}</p>
+        }
+        @if (!datos.viajes.content.length) {
+          <div class="empty-state">
+            <p>No hay viajes en esta página. Consulta el buscador para explorar otras salidas.</p>
+            <a mat-stroked-button routerLink="/pasajero/viajes/buscar">Buscar viajes</a>
+          </div>
+        } @else {
+          <div class="available-grid">
+            @for (viaje of datos.viajes.content; track viaje.viajeId) {
+              <article class="available-trip">
+                <h3>
+                  {{ viaje.origen || 'Origen no disponible' }} →
+                  {{ viaje.destino || 'Destino no disponible' }}
+                </h3>
+                <p>{{ fecha(viaje.fecha) }} · {{ hora(viaje.hora) }}</p>
+                @if (viaje.conductorNombre) {
+                  <p class="muted">Conductor: {{ viaje.conductorNombre }}</p>
+                }
+                <p class="muted">Capacidad total: {{ viaje.capacidadMaxima }} pasajeros</p>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="!idReal(viaje.viajeId) || !salidaValida(viaje)"
+                  (click)="verDisponible(viaje)"
+                >
+                  Ver detalle y solicitar
+                </button>
+              </article>
+            }
+          </div>
+        }
+        <mat-paginator
+          [length]="datos.viajes.totalElements"
+          [pageIndex]="datos.viajes.number"
+          [pageSize]="3"
+          [hidePageSize]="true"
+          [showFirstLastButtons]="true"
+          aria-label="Paginación de viajes disponibles"
+          (page)="paginar($event)"
+        />
+      }
+    </section>
+  </div>
+</div>

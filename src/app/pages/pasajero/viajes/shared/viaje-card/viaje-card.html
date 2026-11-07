@@ -1,0 +1,24 @@
+<article class="ur-card trip-card">
+  <div class="trip-card__head">
+    <h3>{{ viaje().origen }} → {{ viaje().destino }}</h3>
+    <span [class]="'ur-status ur-status--' + tono()">{{ etiqueta() }}</span>
+  </div>
+
+  <div class="trip-card__body">
+    <p>{{ linea1() }}</p>
+    @if (viaje().puntosReferencia) {
+      <p>Referencias de ruta: {{ viaje().puntosReferencia }}</p>
+    }
+    @if (viaje().conductorNombre) {
+      <p>Conductor: {{ viaje().conductorNombre }}</p>
+    }
+  </div>
+
+  <button
+    class="ur-button ur-button--secondary ur-button--compact"
+    type="button"
+    (click)="seleccion.emit(viaje())"
+  >
+    {{ accion() }}
+  </button>
+</article>

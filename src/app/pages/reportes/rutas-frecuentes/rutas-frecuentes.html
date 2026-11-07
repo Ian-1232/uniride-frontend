@@ -1,0 +1,92 @@
+<article class="report-page">
+  <header class="page-heading">
+    <div>
+      <span class="role-label">Vista de conductor</span>
+      <h1>Rutas frecuentes</h1>
+      <p>Ranking de tus rutas completadas con mayor frecuencia.</p>
+    </div>
+  </header>
+
+  @if (data()?.suficientesDatos && routes().length > 0) {
+    <mat-card class="ranking-card" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Rutas más utilizadas</mat-card-title>
+        <mat-card-subtitle>Ordenadas por cantidad de viajes completados</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="desktop-ranking">
+          <table>
+            <caption class="sr-only">Ranking de rutas frecuentes como conductor</caption>
+            <thead>
+              <tr>
+                <th scope="col">Posición</th>
+                <th scope="col">Origen</th>
+                <th scope="col">Destino</th>
+                <th scope="col" class="numeric">Viajes</th>
+                <th scope="col" class="numeric">Penalidades</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (route of routes(); track route.position) {
+                <tr>
+                  <td><span class="position">{{ route.position }}</span></td>
+                  <td>{{ route.origin }}</td>
+                  <td>{{ route.destination }}</td>
+                  <td class="numeric"><strong>{{ route.completedTrips }}</strong></td>
+                  <td class="numeric">
+                    <span
+                      class="penalty-badge"
+                      [class.penalty-badge--clear]="route.penalties === 0"
+                    >
+                      {{ route.penalties }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mobile-ranking" aria-label="Ranking de rutas frecuentes como conductor">
+          @for (route of routes(); track route.position) {
+            <article class="route-card">
+              <div class="route-card__heading">
+                <span class="position">{{ route.position }}</span>
+                <div>
+                  <span class="route-card__eyebrow">Ruta {{ route.position }}</span>
+                  <h2>{{ route.origin }} <span aria-hidden="true">→</span> {{ route.destination }}</h2>
+                </div>
+              </div>
+              <dl>
+                <div>
+                  <dt>Viajes completados</dt>
+                  <dd>{{ route.completedTrips }}</dd>
+                </div>
+                <div>
+                  <dt>Penalidades</dt>
+                  <dd>
+                    <span
+                      class="penalty-badge"
+                      [class.penalty-badge--clear]="route.penalties === 0"
+                    >
+                      {{ route.penalties }}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <app-reportes-state-panel title="Penalidades por ruta" message="Las penalidades se muestran separadas de la cantidad de viajes y no alteran el orden del ranking." tone="info" />
+  } @else if (data(); as result) {
+    <app-reportes-state-panel [title]="result.suficientesDatos ? 'Sin rutas para mostrar' : 'Información insuficiente'" [message]="result.mensaje ?? 'No hay rutas frecuentes disponibles en tu historial.'" tone="info" />
+  } @else if (report.state().status === 'cargando') {
+    <app-reportes-state-panel title="Cargando rutas" message="Estamos consultando tus rutas frecuentes." [loading]="true" tone="neutral" />
+  } @else {
+    <app-reportes-state-panel title="No pudimos cargar las rutas" [message]="report.state().message" tone="danger" actionLabel="Reintentar" (action)="report.retry()" />
+  }
+</article>

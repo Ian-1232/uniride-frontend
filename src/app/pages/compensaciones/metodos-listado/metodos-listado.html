@@ -1,0 +1,87 @@
+<div class="page-container">
+  <header class="page-heading">
+    <div>
+      <h1>Mis métodos de compensación</h1>
+      <p>Administra cómo prefieres acordar contribuciones en tus viajes.</p>
+    </div>
+    <a mat-flat-button routerLink="/compensaciones/metodos/nuevo">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+      Agregar método
+    </a>
+  </header>
+
+  @if (notice()) {
+    <app-compensacion-state-panel
+      tone="info"
+      title="Resultado de la operación"
+      [message]="notice()"
+    />
+  }
+  @if (state() === 'cargando') {
+    <section class="loading-state" aria-live="polite">
+      <mat-spinner diameter="36" />
+      <div>
+        <h2>Cargando métodos</h2>
+        <p>Estamos consultando tus opciones de compensación.</p>
+      </div>
+    </section>
+  } @else if (state() === 'error') {
+    <app-compensacion-state-panel
+      tone="danger"
+      icon="error"
+      title="No pudimos cargar tus métodos"
+      [message]="message()"
+      actionLabel="Reintentar"
+      (action)="load()"
+    />
+  } @else if (state() === 'vacio') {
+    <section class="empty-state ur-card">
+      <div class="empty-state__icon" aria-hidden="true">
+        <mat-icon fontSet="material-symbols-outlined">handshake</mat-icon>
+      </div>
+      <h2>Aún no tienes métodos de compensación</h2>
+      <p>Agrega una opción para acordar contribuciones con otros estudiantes.</p>
+      <a mat-flat-button routerLink="/compensaciones/metodos/nuevo">Agregar método</a>
+    </section>
+  } @else {
+    <div class="list-toolbar">
+      <p class="ur-body-strong">{{ methods().length }} métodos registrados</p>
+    </div>
+
+    <div class="methods-list">
+      @for (method of methods(); track method.id) {
+        <mat-card appearance="outlined" class="method-card">
+          <mat-card-content>
+            <div class="method-card__heading">
+              <h2>{{ labels[method.tipo] }}</h2>
+              <span
+                class="ur-status"
+                [class.ur-status--success]="method.activo"
+                [class.ur-status--warning]="!method.activo"
+              >
+                {{ method.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </div>
+            <p>{{ method.descripcion }}</p>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            <a mat-stroked-button [routerLink]="['/compensaciones/metodos', method.id, 'editar']">
+              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">edit</mat-icon>
+              Editar
+            </a>
+            <button
+              class="delete-action"
+              mat-stroked-button
+              type="button"
+              [disabled]="dialogOpen()"
+              (click)="openDeleteDialog(method)"
+            >
+              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">delete</mat-icon>
+              Eliminar
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

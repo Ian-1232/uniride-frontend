@@ -1,0 +1,113 @@
+<article class="history-page">
+  <header class="page-heading">
+    <h1>Exportar historial</h1>
+    <p>Genera un PDF completo o aplica filtros opcionales.</p>
+  </header>
+
+  <mat-card class="export-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>
+        Historial personal
+      </mat-card-title>
+      <mat-card-subtitle>
+        El archivo corresponde exclusivamente a tu historial personal de viajes.
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form class="history-form" [formGroup]="form" (ngSubmit)="exportPdf()">
+        <mat-form-field appearance="outline">
+          <mat-label>Desde</mat-label>
+          <input
+            matInput
+            formControlName="desde"
+            [matDatepicker]="fromPicker"
+            [errorStateMatcher]="rangeErrorStateMatcher"
+            aria-describedby="date-range-message"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+          <mat-datepicker #fromPicker />
+          <mat-hint>Fecha inicial opcional</mat-hint>
+          <mat-error>Revisa el rango indicado.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Hasta</mat-label>
+          <input
+            matInput
+            formControlName="hasta"
+            [matDatepicker]="toPicker"
+            [errorStateMatcher]="rangeErrorStateMatcher"
+            aria-describedby="date-range-message"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+          <mat-datepicker #toPicker />
+          <mat-hint>Fecha final opcional</mat-hint>
+          <mat-error>Revisa el rango indicado.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="tipo">
+            <mat-option value="todos">Todos</mat-option>
+            <mat-option value="conductor">Conductor</mat-option>
+            <mat-option value="pasajero">Pasajero</mat-option>
+          </mat-select>
+          <mat-hint>Todos los roles por defecto</mat-hint>
+        </mat-form-field>
+
+        <button
+          class="export-button"
+          mat-flat-button
+          type="submit"
+          [disabled]="form.invalid || isPreparing()"
+        >
+          <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">picture_as_pdf</mat-icon>
+          Exportar PDF
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  @if (hasDateRangeError()) {
+    <div id="date-range-message" role="alert">
+      <app-reportes-state-panel
+        title="Fechas inválidas"
+        message="La fecha Desde no puede ser posterior a la fecha Hasta."
+        tone="danger"
+      />
+    </div>
+  } @else {
+    @switch (state()) {
+      @case ('sin-resultados') {
+        <app-reportes-state-panel title="No hay historial para exportar" [message]="message()" tone="warning" actionLabel="Reintentar" (action)="exportPdf()" />
+      }
+      @case ('preparando') {
+        <app-reportes-state-panel title="Preparando PDF" message="Estamos generando tu historial personal de viajes." tone="neutral" [loading]="true" />
+      }
+      @case ('descargado') {
+        <app-reportes-state-panel title="PDF listo para descargar" [message]="message()" tone="success" />
+      }
+      @case ('error') {
+        <app-reportes-state-panel title="No se pudo exportar el historial" [message]="message()" tone="danger" actionLabel="Reintentar" (action)="exportPdf()" />
+      }
+      @default {
+        <app-reportes-state-panel title="Historial listo para consultar" message="Exporta todo tu historial o selecciona fechas y tipo de viaje." tone="info" />
+      }
+    }
+  }
+
+  <aside class="format-info" aria-labelledby="format-title">
+    <span class="ur-status ur-status--info">Información</span>
+    <div>
+      <h2 id="format-title">Formato disponible</h2>
+      <p>
+        El servicio devuelve directamente un archivo <strong>application/pdf</strong>,
+        sin vista previa dinámica ni formatos adicionales.
+      </p>
+      <p class="format-fields">
+        Incluye fecha, día, hora, ruta, rol del usuario, estado del viaje y penalidad cuando corresponda.
+      </p>
+    </div>
+  </aside>
+</article>

@@ -1,0 +1,150 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Viajes</h1>
+      <p class="page-subtitle">Todos los viajes de tus rutas publicadas</p>
+    </div>
+    <a mat-stroked-button routerLink="/conductor/rutas">
+      <mat-icon>route</mat-icon>
+      Mis rutas
+    </a>
+  </header>
+
+  @if (consulta.state().estado === 'cargando') {
+    <p class="state-note">Cargando tus viajes…</p>
+  } @else if (consulta.state().estado === 'error') {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ consulta.state().mensaje }}</div>
+    </div>
+    <button mat-stroked-button type="button" (click)="consulta.retry()">Reintentar</button>
+  } @else {
+    <mat-card class="uni-card summary-card">
+      <mat-card-content>
+        <div class="route-summary">
+          <div class="summary-main">
+            <mat-icon class="summary-icon">directions_bus</mat-icon>
+            <div>
+              <div class="summary-name">
+                {{ viajes().length }} {{ viajes().length === 1 ? 'viaje' : 'viajes' }} en tus rutas
+              </div>
+              <div class="summary-detail">
+                {{ rutasConViajes() }} {{ rutasConViajes() === 1 ? 'ruta' : 'rutas' }} con viajes
+              </div>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <span class="stat-value is-primario">{{ programados() }}</span>
+              <span class="stat-label">Programados</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value is-acento">{{ enCurso() }}</span>
+              <span class="stat-label">En curso</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value is-alerta">{{ completados() }}</span>
+              <span class="stat-label">Completados</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    @if (viajes().length === 0) {
+      <p class="state-note">
+        Todavía no tienes viajes. Publica una ruta y genera un viaje desde «Mis rutas».
+      </p>
+    } @else {
+      <div class="uni-table-card uni-table">
+        <table mat-table [dataSource]="viajes()">
+          <ng-container matColumnDef="ruta">
+            <th mat-header-cell *matHeaderCellDef>Ruta</th>
+            <td mat-cell *matCellDef="let viaje">
+              <span class="route-cell">
+                <mat-icon>route</mat-icon>
+                <span>
+                  <span class="route-name">{{ viaje.ruta.origen }} → {{ viaje.ruta.destino }}</span>
+                  <span class="route-detail">{{ viaje.ruta.puntosReferencia }}</span>
+                </span>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let viaje">
+              <span class="cell-with-icon">
+                <mat-icon>calendar_month</mat-icon>
+                {{ formatearFecha(viaje.fecha) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="hora">
+            <th mat-header-cell *matHeaderCellDef>Hora</th>
+            <td mat-cell *matCellDef="let viaje">
+              <span class="cell-with-icon">
+                <mat-icon>schedule</mat-icon>
+                {{ formatearHora(viaje.hora) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let viaje">
+              @switch (viaje.estado) {
+                @case ('PROGRAMADO') {
+                  <mat-chip class="estado-chip chip-programado">PROGRAMADO</mat-chip>
+                }
+                @case ('EN_PROGRESO') {
+                  <mat-chip class="estado-chip chip-en-progreso">EN_PROGRESO</mat-chip>
+                }
+                @case ('COMPLETADO') {
+                  <mat-chip class="estado-chip chip-completado">COMPLETADO</mat-chip>
+                }
+                @case ('CANCELADO') {
+                  <mat-chip class="estado-chip chip-cancelado">CANCELADO</mat-chip>
+                }
+                @case ('VENCIDO') {
+                  <mat-chip class="estado-chip chip-vencido">VENCIDO</mat-chip>
+                }
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="pasajeros">
+            <th mat-header-cell *matHeaderCellDef>Pasajeros</th>
+            <td mat-cell *matCellDef="let viaje">
+              {{ pasajeros(viaje) }} / {{ capacidad(viaje) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let viaje">
+              <div class="row-actions">
+                @if (viaje.estado === 'PROGRAMADO') { <a mat-stroked-button [routerLink]="['/conductor/viajes', viaje.id, 'editar']">Reprogramar</a> }
+                <a
+                  mat-stroked-button
+                  class="btn-outline-primary"
+                  [routerLink]="['/conductor/viajes', viaje.id]"
+                >
+                  Gestionar viaje
+                </a>
+                <a mat-stroked-button [routerLink]="['/conductor/viajes', viaje.id, 'solicitudes']">
+                  Ver solicitudes
+                </a>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+          <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+        </table>
+      </div>
+    }
+  }
+</section>

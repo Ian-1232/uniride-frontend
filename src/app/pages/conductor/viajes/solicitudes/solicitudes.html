@@ -1,0 +1,155 @@
+<header class="page-heading">
+  <p class="breadcrumb">Viajes / Coordinación</p>
+  <h1>Solicitudes recibidas</h1>
+  <p>Revisa a tus pasajeros y organiza los cupos de cada viaje.</p>
+</header>
+@if (aviso(); as aviso) {
+  <div
+    class="notice feedback"
+    [class.success]="aviso.exito"
+    [class.warning]="!aviso.exito"
+    role="status"
+  >
+    <p>{{ aviso.mensaje }}</p>
+    <button matButton="text" (click)="this.aviso.set(null)">Cerrar</button>
+  </div>
+}
+@if (cargando()) {
+  <p role="status" aria-live="polite">Cargando solicitudes…</p>
+}
+@if (error()) {
+  <div class="notice warning" role="alert">
+    <p>{{ error() }}</p>
+    <button matButton="outlined" (click)="cargar()">Reintentar</button>
+  </div>
+}
+@if (viaje(); as datos) {
+  <mat-card class="trip-summary"
+    ><div>
+      <small>Viaje</small><span>{{ datos.origen }} → {{ datos.destino }}</span>
+    </div>
+    <div>
+      <small>Salida</small><span>{{ salidaTexto(datos.viaje) }}</span>
+    </div>
+    <div>
+      <small>Cupos disponibles</small
+      ><span>{{ datos.cuposDisponibles }} de {{ datos.capacidadMaxima }}</span>
+    </div>
+    <a matButton="outlined" [routerLink]="['/conductor/viajes', datos.viaje.id]"
+      >Gestionar viaje</a
+    ></mat-card
+  >
+  <div class="list-toolbar">
+    <nav class="filter-tabs" aria-label="Filtrar solicitudes">
+      @for (opcion of filtros; track opcion.estado) {
+        <button
+          matButton="text"
+          [class.selected]="filtro === opcion.estado"
+          [attr.aria-pressed]="filtro === opcion.estado"
+          (click)="filtrar(opcion.estado)"
+          [disabled]="cargando()"
+        >
+          {{ opcion.etiqueta }}
+        </button>
+      }
+    </nav>
+    <span class="selection-hint">{{ seleccion().size }} seleccionadas</span
+    ><button
+      matButton="outlined"
+      (click)="abrir('rechazar')"
+      [disabled]="!seleccion().size || !procesable() || cargando()"
+    >
+      Rechazar selección
+    </button>
+  </div>
+  <div class="request-list" [attr.aria-busy]="cargando()">
+    @for (solicitud of solicitudes(); track solicitud.id) {
+      <mat-card class="request-card" [attr.data-request]="solicitud.id"
+        ><div class="request-heading">
+          @if (solicitud.estado === 'PENDIENTE' && procesable()) {
+            <mat-checkbox
+              [checked]="seleccion().has(solicitud.id)"
+              [disabled]="cargando()"
+              (change)="seleccionar(solicitud.id, $event.checked)"
+              [aria-label]="'Seleccionar a ' + solicitud.pasajeroNombre"
+            />
+          }
+          <span class="avatar">{{ iniciales(solicitud.pasajeroNombre) }}</span>
+          <div class="request-person">
+            <h2>{{ solicitud.pasajeroNombre }}</h2>
+            <p>
+              {{ solicitud.pasajeroCarrera || 'Carrera no indicada' }} ·
+              {{ solicitud.pasajeroDistrito || 'Distrito no indicado' }}
+            </p>
+          </div>
+          <span
+            class="status"
+            [class.success]="solicitud.estado === 'ACEPTADA'"
+            [class.warning]="solicitud.estado === 'PENDIENTE'"
+            [class.danger]="solicitud.estado === 'RECHAZADA' || solicitud.estado === 'CANCELADA'"
+            >{{ solicitud.estado }}</span
+          >
+        </div>
+        <div class="request-footer">
+          <p class="request-message">{{ solicitud.mensaje || 'Sin mensaje adicional.' }}</p>
+          <div class="actions">
+            <a
+              matButton="text"
+              [routerLink]="['/conductor/viajes', datos.viaje.id, 'solicitudes', solicitud.id]"
+              >Ver detalle</a
+            >
+            @if (solicitud.estado === 'PENDIENTE' && procesable()) {
+              <button
+                matButton="filled"
+                (click)="abrir('aceptar', solicitud)"
+                [disabled]="!datos.cuposDisponibles || cargando()"
+              >
+                Aceptar</button
+              ><button
+                matButton="outlined"
+                (click)="abrir('rechazar', solicitud)"
+                [disabled]="cargando()"
+              >
+                Rechazar
+              </button>
+            }
+          </div>
+        </div>
+        @if (solicitud.motivoRechazo) {
+          <p class="muted">Motivo: {{ solicitud.motivoRechazo }}</p>
+        }
+      </mat-card>
+    } @empty {
+      @if (!cargando()) {
+        <mat-card class="empty-state"
+          ><h2>No hay solicitudes para este filtro</h2>
+          <p>Las solicitudes recibidas aparecerán aquí.</p></mat-card
+        >
+      }
+    }
+  </div>
+  @if (!datos.cuposDisponibles) {
+    <p class="muted seat-note">
+      No quedan cupos disponibles. Puedes revisar o rechazar solicitudes pendientes.
+    </p>
+  }
+  @if (!procesable()) {
+    <p class="notice warning">El viaje ya no admite cambios en las solicitudes.</p>
+  }
+  <mat-paginator
+    [length]="total"
+    [pageSize]="tamanio"
+    [pageIndex]="pagina"
+    [pageSizeOptions]="[5, 10, 20]"
+    [disabled]="cargando()"
+    (page)="paginar($event)"
+    aria-label="Páginas de solicitudes"
+  />
+}
+@if (dialogo(); as datos) {
+  <app-solicitud-accion-dialog
+    [datos]="datos"
+    (cancelada)="dialogo.set(null)"
+    (terminada)="resuelta($event)"
+  />
+}

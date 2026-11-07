@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.reportes-container {
+  display: grid;
+  gap: var(--ur-space-24);
+  width: min(100%, var(--ur-content-width));
+  margin-inline: auto;
+}
+
+.reportes-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ur-space-8);
+}
+
+.reportes-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ur-space-8);
+  min-height: var(--ur-control-compact);
+  padding: var(--ur-space-8) var(--ur-space-16);
+  border-radius: var(--ur-radius-12);
+  border: var(--ur-border);
+  background: var(--ur-color-surface);
+  color: var(--ur-color-muted);
+  font-size: var(--ur-type-body-size);
+  font-weight: var(--ur-font-weight-medium);
+  text-decoration: none;
+  transition: all var(--ur-transition-fast);
+}
+
+.reportes-tabs a:hover {
+  background: var(--ur-color-primary-soft);
+  color: var(--ur-color-primary);
+}
+
+.reportes-tabs a.tab-active {
+  border-color: transparent;
+  background: var(--ur-color-primary-soft);
+  color: var(--ur-color-primary);
+  font-weight: var(--ur-font-weight-bold);
+}
+
+.reportes-tabs mat-icon {
+  font-size: var(--ur-icon-md);
+  width: var(--ur-icon-md);
+  height: var(--ur-icon-md);
+}
+
+.reportes-body {
+  min-width: 0;
+}

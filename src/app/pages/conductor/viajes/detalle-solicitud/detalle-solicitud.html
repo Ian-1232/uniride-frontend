@@ -1,0 +1,106 @@
+<header class="page-heading">
+  <p class="breadcrumb">Viajes / Coordinación</p>
+  <h1>Detalle de solicitud</h1>
+  <p>Conoce al pasajero antes de gestionar su solicitud.</p>
+</header>
+<a class="back-link" matButton="text" [routerLink]="['/conductor/viajes', viajeId, 'solicitudes']"
+  >Volver a solicitudes</a
+>
+@if (cargando()) {
+  <p role="status">Cargando solicitud…</p>
+}
+@if (error()) {
+  <div class="notice warning" role="alert">
+    <p>{{ error() }}</p>
+    <button matButton="outlined" (click)="cargar()">Reintentar</button>
+  </div>
+}
+@if (aviso(); as aviso) {
+  <div class="notice" [class.success]="aviso.exito" [class.warning]="!aviso.exito" role="status">
+    {{ aviso.mensaje }}
+  </div>
+}
+@if (solicitud(); as solicitud) {
+  @if (viaje(); as viaje) {
+    @let persona = solicitud.pasajero;
+    <div class="detail-grid">
+      <mat-card class="profile-card"
+        ><span class="avatar large">{{ iniciales(persona.nombre + ' ' + persona.apellidos) }}</span>
+        <h2>{{ persona.nombre }} {{ persona.apellidos }}</h2>
+        <span class="status info">{{ persona.universidad || 'Universidad no indicada' }}</span
+        ><mat-divider />
+        <dl>
+          <dt>Carrera</dt>
+          <dd>{{ persona.carrera || 'No indicada' }}</dd>
+          <dt>Distrito</dt>
+          <dd>{{ persona.distrito || 'No indicado' }}</dd>
+          <dt>Gustos e intereses</dt>
+          <dd>{{ persona.gustos || 'No indicados' }}</dd>
+          <dt>Hobbies</dt>
+          <dd>{{ persona.hobbies || 'No indicados' }}</dd>
+        </dl>
+        @if (solicitud.mensaje) {
+          <p class="muted">{{ solicitud.mensaje }}</p>
+        }
+      </mat-card>
+      <mat-card class="application-card"
+        ><div class="card-title">
+          <h2>Solicitud de viaje</h2>
+          <span
+            class="status"
+            [class.warning]="solicitud.estado === 'PENDIENTE'"
+            [class.success]="solicitud.estado === 'ACEPTADA'"
+            [class.danger]="solicitud.estado === 'RECHAZADA' || solicitud.estado === 'CANCELADA'"
+            >{{ solicitud.estado }}</span
+          >
+        </div>
+        <dl>
+          <dt>Viaje solicitado</dt>
+          <dd>{{ viaje.origen }} → {{ viaje.destino }} · {{ salidaTexto(viaje.viaje) }}</dd>
+          <dt>Mensaje</dt>
+          <dd>{{ solicitud.mensajeSolicitud || 'Sin mensaje adicional.' }}</dd>
+          <dt>Preferencia de compensación</dt>
+          <dd>{{ solicitud.preferenciaCompensacion || 'No indicada' }}</dd>
+          @if (solicitud.motivoRechazo) {
+            <dt>Motivo del rechazo</dt>
+            <dd>{{ solicitud.motivoRechazo }}</dd>
+          }
+        </dl>
+        @if (solicitud.acuerdoTerminos) {
+          <div class="notice info">
+            <strong>Acuerdo de compensación · {{ solicitud.acuerdoEstado }}</strong>
+            <p>{{ solicitud.acuerdoTerminos }}</p>
+          </div>
+        }
+        @if (procesable()) {
+          <div class="actions">
+            <button
+              matButton="filled"
+              (click)="abrir('aceptar')"
+              [disabled]="!viaje.cuposDisponibles"
+            >
+              Aceptar solicitud</button
+            ><button matButton="outlined" (click)="abrir('rechazar')">Rechazar solicitud</button>
+          </div>
+        }
+      </mat-card>
+    </div>
+    @if (procesable()) {
+      <div
+        class="notice"
+        [class.success]="viaje.cuposDisponibles > 0"
+        [class.warning]="!viaje.cuposDisponibles"
+      >
+        <strong>{{ viaje.cuposDisponibles }} cupo(s) disponible(s)</strong>
+        <p>Los cupos se verificarán al aceptar la solicitud.</p>
+      </div>
+    }
+  }
+}
+@if (dialogo(); as datos) {
+  <app-solicitud-accion-dialog
+    [datos]="datos"
+    (cancelada)="dialogo.set(null)"
+    (terminada)="resuelta($event)"
+  />
+}

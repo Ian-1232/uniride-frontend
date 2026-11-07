@@ -1,0 +1,55 @@
+<article class="report-page">
+  <header class="page-heading">
+    <h1>Resumen de actividad</h1>
+    <p>Consulta tu actividad como conductor y pasajero en UniRide.</p>
+  </header>
+
+  @if (summary(); as summary) {
+    <section class="summary-grid" aria-label="Indicadores de actividad">
+      <mat-card class="total-card">
+        <mat-card-content>
+          <span>Viajes completados</span>
+          <strong>{{ summary.completedTrips }}</strong>
+          <small>
+            {{ summary.driverTrips }} como conductor +
+            {{ summary.passengerTrips }} como pasajero
+          </small>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card metric-card--driver" appearance="outlined">
+        <mat-card-content>
+          <span>Como conductor</span>
+          <strong>{{ summary.driverTrips }}</strong>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card metric-card--passenger" appearance="outlined">
+        <mat-card-content>
+          <span>Como pasajero</span>
+          <strong>{{ summary.passengerTrips }}</strong>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card metric-card--cancelled" appearance="outlined">
+        <mat-card-content>
+          <span>Viajes cancelados</span>
+          <strong>{{ summary.cancelledTrips }}</strong>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card metric-card--penalties" appearance="outlined">
+        <mat-card-content>
+          <span>Penalidades acumuladas</span>
+          <strong>{{ summary.penalties }}</strong>
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <app-reportes-state-panel title="Datos actualizados" message="El total completado suma tus viajes como conductor y pasajero; no incluye cancelaciones." tone="success" />
+  } @else if (report.state().status === 'cargando') {
+    <app-reportes-state-panel title="Cargando actividad" message="Estamos consultando tus estadísticas personales." [loading]="true" tone="neutral" />
+  } @else {
+    <app-reportes-state-panel title="No pudimos cargar el resumen" [message]="report.state().message" tone="danger" actionLabel="Reintentar" (action)="report.retry()" />
+  }
+</article>

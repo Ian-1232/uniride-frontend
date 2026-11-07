@@ -1,0 +1,46 @@
+<div class="dialog-icon" aria-hidden="true">
+  <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+</div>
+
+<h2 mat-dialog-title>Eliminar método</h2>
+
+<mat-dialog-content>
+  <p>¿Deseas eliminar este método de compensación?</p>
+  <p class="method-summary">
+    <strong>{{ typeLabel }}</strong>
+    <span>{{ method.descripcion }}</span>
+  </p>
+  <p class="ur-caption">
+    Esta acción eliminará el método. Si tiene solicitudes asociadas deberás desactivarlo para
+    conservar el historial.
+  </p>
+  @if (busy()) {
+    <p role="status" aria-live="polite">Eliminando método...</p>
+  }
+  @if (message()) {
+    <app-compensacion-state-panel
+      tone="warning"
+      title="No se pudo eliminar"
+      [message]="message()"
+    />
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancel()" [disabled]="busy()">Cancelar</button>
+  @if (outcome() === 'blocked') {
+    <button mat-flat-button type="button" (click)="resolve('deactivate')">Desactivar método</button>
+  } @else if (outcome() === 'missing') {
+    <button mat-flat-button type="button" (click)="resolve('refresh')">Actualizar listado</button>
+  } @else {
+    <button
+      class="destructive-button"
+      mat-flat-button
+      type="button"
+      (click)="confirm()"
+      [disabled]="busy()"
+    >
+      Eliminar método
+    </button>
+  }
+</mat-dialog-actions>

@@ -1,0 +1,106 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Editar ruta</h1>
+      <p class="page-subtitle">
+        @if (ruta(); as actual) {
+          {{ actual.origen }} → {{ actual.destino }} · Actualiza los datos de tu ruta
+        } @else {
+          Actualiza los datos de tu ruta
+        }
+      </p>
+    </div>
+  </header>
+
+  @if (error(); as mensaje) {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ mensaje }}</div>
+    </div>
+  }
+
+  @if (consulta.state().estado === 'cargando') {
+    <p class="state-note">Cargando la ruta…</p>
+  } @else if (consulta.state().estado === 'error') {
+    <div class="banner banner-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <div>{{ consulta.state().mensaje }}</div>
+    </div>
+    <button mat-stroked-button type="button" (click)="consulta.retry()">Reintentar</button>
+  } @else {
+  <mat-card class="uni-card">
+      <mat-card-content>
+        <div class="banner">
+          <mat-icon>info</mat-icon>
+          <div>
+            <strong>Destino automático</strong>
+            El destino se toma de la universidad registrada en tu perfil: UPC
+          </div>
+        </div>
+
+        <form class="route-form" [formGroup]="form" (ngSubmit)="guardar()">
+          <div class="form-row">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Origen *</mat-label>
+              <input matInput formControlName="origen" placeholder="Ej. San Borja" />
+              <mat-hint>Punto de salida del viaje</mat-hint>
+              <mat-error>El origen es obligatorio</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Capacidad máxima *</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="capacidad"
+                placeholder="Ej. 3"
+                min="1"
+              />
+              <mat-hint>Mínimo 1 pasajero</mat-hint>
+              @if (form.controls.capacidad.hasError('min')) {
+                <mat-error>Debe ser al menos 1 pasajero</mat-error>
+              } @else {
+                <mat-error>La capacidad es obligatoria</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Puntos de referencia *</mat-label>
+            <input
+              matInput
+              formControlName="puntos"
+              placeholder="Ej. Av. Arequipa 1234, Jr. Los Pinos"
+            />
+            <mat-hint>Paradas o referencias conocidas en tu ruta</mat-hint>
+            <mat-error>Los puntos de referencia son obligatorios</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Zonas sin parada</mat-label>
+            <input matInput formControlName="zonas" placeholder="Ej. Centro de Lima" />
+            <mat-hint>Opcional: zonas donde no harás paradas</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Nota de contribución</mat-label>
+            <input
+              matInput
+              formControlName="nota"
+              placeholder="Ej. S/ 10 sugeridos por pasajero"
+            />
+            <mat-hint>Opcional: referencia de contribución para los pasajeros</mat-hint>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <a mat-stroked-button routerLink="/conductor/rutas">Cancelar</a>
+            <button mat-flat-button type="submit" [disabled]="form.invalid || guardando()">
+              <mat-icon>save</mat-icon>
+              {{ guardando() ? 'Guardando…' : 'Guardar cambios' }}
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+</section>

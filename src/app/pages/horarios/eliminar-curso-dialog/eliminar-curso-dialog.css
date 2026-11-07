@@ -1,0 +1,20 @@
+.course-name {
+  font-weight: var(--ur-font-weight-bold);
+  overflow-wrap: anywhere;
+}
+.delete-action {
+  --mat-button-filled-container-color: var(--ur-color-danger);
+}
+mat-dialog-actions {
+  gap: var(--ur-space-8);
+}
+@media (max-width: 600px) {
+  mat-dialog-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  button {
+    width: 100%;
+    min-height: var(--ur-control-default);
+  }
+}

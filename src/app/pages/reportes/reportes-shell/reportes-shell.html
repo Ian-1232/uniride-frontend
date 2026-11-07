@@ -1,0 +1,26 @@
+<div class="reportes-container">
+  <nav class="reportes-tabs" aria-label="Secciones de reportes">
+    <a routerLink="/reportes/resumen" routerLinkActive="tab-active">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">dashboard</mat-icon>
+      <span>Resumen</span>
+    </a>
+    <a routerLink="/reportes/frecuencia" routerLinkActive="tab-active">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">bar_chart</mat-icon>
+      <span>Frecuencia semanal</span>
+    </a>
+    @if (auth.isConductor()) {
+      <a routerLink="/reportes/rutas" routerLinkActive="tab-active">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">route</mat-icon>
+        <span>Rutas frecuentes</span>
+      </a>
+    }
+    <a routerLink="/reportes/exportar" routerLinkActive="tab-active">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">picture_as_pdf</mat-icon>
+      <span>Exportar historial</span>
+    </a>
+  </nav>
+
+  <section class="reportes-body" aria-live="polite">
+    <router-outlet />
+  </section>
+</div>

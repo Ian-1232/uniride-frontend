@@ -1,0 +1,224 @@
+:host {
+  display: block;
+}
+
+.report-page {
+  display: grid;
+  gap: var(--ur-space-24);
+  width: min(100%, var(--ur-content-width));
+  margin-inline: auto;
+}
+
+.page-heading {
+  display: grid;
+  gap: var(--ur-space-8);
+}
+
+.page-heading p,
+.chart-card mat-card-subtitle {
+  color: var(--ur-color-muted);
+}
+
+.chart-card {
+  box-shadow: none;
+}
+
+.chart-card mat-card-header {
+  padding: var(--ur-space-24) var(--ur-space-24) 0;
+}
+
+.chart-card mat-card-title {
+  font-size: var(--ur-type-card-title-size);
+  font-weight: var(--ur-font-weight-bold);
+}
+
+.chart-card mat-card-content {
+  padding: var(--ur-space-24);
+}
+
+.chart {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: var(--ur-space-8);
+  min-width: 0;
+}
+
+.chart-scale {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 12rem;
+  padding-block: 0.25rem 1.75rem;
+  color: var(--ur-color-muted);
+  font-size: 0.6875rem;
+}
+
+.chart-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(2.25rem, 1fr));
+  gap: var(--ur-space-12);
+  min-width: 0;
+  background: repeating-linear-gradient(
+    to top,
+    var(--ur-color-border) 0 1px,
+    transparent 1px 1.75rem
+  );
+  background-position: 0 -1.75rem;
+}
+
+.bar-column {
+  display: grid;
+  grid-template-rows: 1.25rem 8.75rem 1.75rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.bar-value {
+  align-self: end;
+  font-size: var(--ur-type-label-size);
+  font-weight: var(--ur-font-weight-medium);
+}
+
+.bar-area {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: 2px solid var(--ur-color-border);
+}
+
+.bar {
+  display: block;
+  width: min(2.25rem, 64%);
+  height: 0;
+  border-radius: var(--ur-radius-6) var(--ur-radius-6) 0 0;
+  background: var(--ur-color-primary);
+}
+
+.day-label {
+  align-self: end;
+  overflow: hidden;
+  color: var(--ur-color-muted);
+  font-size: var(--ur-type-label-size);
+  font-weight: var(--ur-font-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-label-short {
+  display: none;
+}
+
+.cancellations {
+  display: grid;
+  gap: var(--ur-space-12);
+}
+
+.cancellations h2 {
+  font-size: var(--ur-type-card-title-size);
+  line-height: var(--ur-type-card-title-line-height);
+}
+
+.cancellation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ur-space-16);
+}
+
+.cancellation-card {
+  box-shadow: none;
+}
+
+.cancellation-card mat-card-content {
+  display: grid;
+  gap: var(--ur-space-8);
+  padding: var(--ur-space-20);
+}
+
+.cancellation-card span {
+  color: var(--ur-color-muted);
+  font-weight: var(--ur-font-weight-medium);
+}
+
+.cancellation-card strong {
+  font-size: 2rem;
+  line-height: 2.5rem;
+}
+
+.cancellation-card--mine {
+  background: var(--ur-color-warning-soft);
+}
+
+.cancellation-card--mine strong {
+  color: var(--ur-color-warning-text);
+}
+
+.cancellation-card--others {
+  background: var(--ur-color-primary-soft);
+}
+
+.cancellation-card--others strong {
+  color: var(--ur-color-primary);
+}
+
+@media (max-width: 767px) {
+  .report-page {
+    gap: var(--ur-space-16);
+  }
+
+  .page-heading h1 {
+    font-size: 1.625rem;
+    line-height: 2rem;
+  }
+
+  .chart-card mat-card-header {
+    padding: var(--ur-space-16) var(--ur-space-16) 0;
+  }
+
+  .chart-card mat-card-content {
+    padding: var(--ur-space-16);
+  }
+
+  .chart {
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    gap: var(--ur-space-4);
+  }
+
+  .chart-bars {
+    grid-template-columns: repeat(7, minmax(1.5rem, 1fr));
+    gap: var(--ur-space-4);
+  }
+
+  .bar {
+    width: min(1.375rem, 72%);
+  }
+
+  .day-label-long {
+    display: none;
+  }
+
+  .day-label-short {
+    display: inline;
+  }
+
+  .cancellation-grid {
+    gap: var(--ur-space-12);
+  }
+
+  .cancellation-card mat-card-content {
+    padding: var(--ur-space-16);
+  }
+}
+
+@media (max-width: 359px) {
+  .chart-card mat-card-content {
+    padding-inline: var(--ur-space-12);
+  }
+
+  .chart-bars {
+    gap: 2px;
+  }
+
+  .cancellation-grid {
+    grid-template-columns: 1fr;
+  }
+}

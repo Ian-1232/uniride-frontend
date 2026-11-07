@@ -1,0 +1,206 @@
+<div class="info-page-wrapper">
+  <!-- HEADER CONTEXTUAL -->
+  <header class="info-header-card">
+    <div class="header-tag-pill">
+      <mat-icon>favorite</mat-icon>
+      <span>CONVIVENCIA & AFINIDAD</span>
+    </div>
+    <h1 class="info-h1">Cuéntanos sobre ti y tu estilo de viaje</h1>
+    <p class="info-desc">
+      Compartir tus aficiones y preferencias ayuda a que conductores y pasajeros viajen con mayor
+      afinidad, comodidad y confianza mutua.
+    </p>
+  </header>
+
+  @if (loading()) {
+    <app-reportes-state-panel
+      role="status"
+      title="Cargando información adicional"
+      message="Estamos consultando tu perfil."
+      [loading]="true"
+    />
+  }
+  @if (loadError()) {
+    <app-reportes-state-panel
+      role="alert"
+      title="No se pudo consultar"
+      [message]="loadError()"
+      actionLabel="Reintentar"
+      (action)="load(true)"
+    />
+  }
+  @if (missing()) {
+    <p role="status">Primero completa tu perfil personal.</p>
+    <a routerLink="/configuracion/perfil">Completar mi perfil</a>
+  }
+  @if (!loading() && !loadError() && !missing()) {
+    @if (error()) {
+      <app-reportes-state-panel
+        role="alert"
+        title="No se pudo guardar"
+        [message]="error()"
+        tone="danger"
+      />
+    }
+    @if (success()) {
+      <p role="status">{{ success() }}</p>
+    }
+    <form id="info-form" [formGroup]="infoForm" class="info-grid-layout" (ngSubmit)="guardar()">
+      <!-- COLUMNA 1: MÚSICA E INTERESES -->
+      <div class="info-column">
+        <!-- BOX 1: AMBIENTE Y MÚSICA -->
+        <mat-card class="section-box-card">
+          <div class="box-header">
+            <div class="box-icon music">
+              <mat-icon>headphones</mat-icon>
+            </div>
+            <div class="box-title-wrap">
+              <h2 class="box-title">Ambiente y Música en Ruta</h2>
+              <span class="box-subtitle">¿Qué te gusta escuchar durante el trayecto?</span>
+            </div>
+          </div>
+
+          <mat-form-field appearance="outline" class="uniride-textarea">
+            <mat-label>Gustos musicales</mat-label
+            ><textarea
+              matInput
+              rows="3"
+              formControlName="gustos"
+              placeholder="Ej: Rock, Indie, Podcasts de ciencia..."
+            ></textarea
+            ><mat-error>Completa este campo para guardar tu información adicional.</mat-error>
+          </mat-form-field>
+
+          <div class="quick-chips-block">
+            <span class="chips-label">Sugerencias rápidas:</span>
+            <div class="chips-list">
+              @for (chip of musicaChips; track chip) {
+                <button
+                  type="button"
+                  class="tag-button"
+                  [disabled]="saving()"
+                  (click)="addMusicTag(chip)"
+                >
+                  + {{ chip }}
+                </button>
+              }
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- BOX 2: HOBBIES E INTERESES -->
+        <mat-card class="section-box-card">
+          <div class="box-header">
+            <div class="box-icon hobbies">
+              <mat-icon>sports_esports</mat-icon>
+            </div>
+            <div class="box-title-wrap">
+              <h2 class="box-title">Hobbies e Intereses</h2>
+              <span class="box-subtitle">Temas de conversación comunes con tus compañeros</span>
+            </div>
+          </div>
+
+          <mat-form-field appearance="outline" class="uniride-textarea">
+            <mat-label>Hobbies</mat-label
+            ><textarea
+              matInput
+              rows="3"
+              formControlName="hobbies"
+              placeholder="Ej: Videojuegos, gimnasio, fútbol..."
+            ></textarea
+            ><mat-error>Completa este campo para guardar tu información adicional.</mat-error>
+          </mat-form-field>
+
+          <div class="quick-chips-block">
+            <span class="chips-label">Sugerencias rápidas:</span>
+            <div class="chips-list">
+              @for (chip of hobbiesChips; track chip) {
+                <button
+                  type="button"
+                  class="tag-button"
+                  [disabled]="saving()"
+                  (click)="addHobbyTag(chip)"
+                >
+                  + {{ chip }}
+                </button>
+              }
+            </div>
+          </div>
+        </mat-card>
+      </div>
+
+      <!-- COLUMNA 2: CONVIVENCIA Y PAUTAS DE CABINA -->
+      <div class="info-column">
+        <!-- BOX 3: DATO CURIOSO & PAUTAS -->
+        <mat-card class="section-box-card">
+          <div class="box-header">
+            <div class="box-icon rules">
+              <mat-icon>lightbulb</mat-icon>
+            </div>
+            <div class="box-title-wrap">
+              <h2 class="box-title">Dato Curioso o Pautas de Viaje</h2>
+              <span class="box-subtitle">Información útil antes de coordinar</span>
+            </div>
+          </div>
+
+          <mat-form-field appearance="outline" class="uniride-textarea">
+            <mat-label>Datos curiosos o pautas de viaje</mat-label
+            ><textarea
+              matInput
+              rows="3"
+              formControlName="datosCuriosos"
+              placeholder="Ej: Hice intercambio estudiantil / Prefiero no comer alimentos fuertes en el auto..."
+            ></textarea
+            ><mat-error>Completa este campo para guardar tu información adicional.</mat-error>
+          </mat-form-field>
+
+          <p class="box-subtitle">
+            Puedes describir tus preferencias de convivencia en Datos curiosos o pautas de viaje.
+          </p>
+        </mat-card>
+
+        <!-- BOX 4: COMUNIDAD 100% UNIVERSITARIA SHOWCASE -->
+        <mat-card class="community-showcase-card">
+          <div class="community-header">
+            <div class="community-badge-icon">
+              <mat-icon>groups</mat-icon>
+            </div>
+          </div>
+
+          <h3 class="community-title">Comunidad 100% Universitaria</h3>
+          <p class="community-p">
+            En UniRide solo viajan estudiantes con correo institucional verificado. La puntualidad y
+            el respeto mutuo son nuestros pilares de convivencia.
+          </p>
+
+          <div class="verified-footer-tag">
+            <mat-icon>verified</mat-icon>
+            <span>Cuenta institucional verificada</span>
+          </div>
+        </mat-card>
+      </div>
+    </form>
+
+    <!-- BARRA INFERIOR DE ACCIÓN -->
+    <footer class="bottom-action-bar">
+      <a mat-stroked-button routerLink="/configuracion/perfil"
+        ><mat-icon>arrow_back</mat-icon><span>Volver a Mi perfil</span></a
+      >
+      <a
+        mat-stroked-button
+        [routerLink]="authService.isConductor() ? '/conductor/dashboard' : '/pasajero/dashboard'"
+        >Continuar al dashboard (guardar después)</a
+      >
+      <button
+        type="submit"
+        form="info-form"
+        mat-flat-button
+        class="btn-primary btn-complete-onboarding"
+        [disabled]="infoForm.invalid || saving()"
+      >
+        {{ saving() ? 'Guardando...' : 'Guardar información adicional'
+        }}<mat-icon>check_circle</mat-icon>
+      </button>
+    </footer>
+  }
+</div>
