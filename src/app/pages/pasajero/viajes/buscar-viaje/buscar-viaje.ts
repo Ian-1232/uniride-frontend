@@ -18,8 +18,8 @@ import {
   desdeBusqueda,
   DIAS_SEMANA,
   FiltroBusqueda,
-  Viaje,
-} from '../viajes.models';
+  ViajeVista,
+} from '../../../../core/models/viajes.models';
 interface SearchQuery {
   filtros: FiltroBusqueda;
   page: number;
@@ -83,7 +83,7 @@ export class BuscarViaje {
   protected page(event: PageEvent): void {
     this.search(event.pageIndex, event.pageSize);
   }
-  protected verDetalle(viaje: Viaje): void {
+  protected verDetalle(viaje: ViajeVista): void {
     this.navigation.seleccionar({ viaje });
     void this.router.navigate(['/pasajero/viajes', viaje.id]);
   }

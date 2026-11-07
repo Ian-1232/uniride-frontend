@@ -1,6 +1,6 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { RoleType } from './auth.models';
-import { TipoCompensacion } from '../../pages/compensaciones/compensaciones.models';
+import { TipoCompensacion } from './compensaciones.models';
 
 export interface PerfilRequest {
   nombre: string;

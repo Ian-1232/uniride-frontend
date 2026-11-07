@@ -3,7 +3,7 @@ import type {
   Pagina,
   SolicitudRespuesta,
   SolicitudHistorialRespuesta,
-} from './viajes.models';
+} from '../../../core/models/viajes.models';
 /** Fixtures used exclusively by unit/integration tests. */
 export const busquedaFixture: BusquedaRespuesta = {
   viajeId: 74,

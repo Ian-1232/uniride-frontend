@@ -1,7 +1,7 @@
-import { fechaLocalValida } from '../../core/models/perfil.models';
-import { instanteSalida } from '../../core/models/coordinacion.models';
-import { ViajeConRuta } from '../../core/models/ruta.model';
-import { ConsultaSolicitudes, SolicitudRespuesta } from '../pasajero/viajes/viajes.models';
+import { fechaLocalValida } from './perfil.models';
+import { instanteSalida } from './coordinacion.models';
+import { ViajeConRuta } from './ruta.models';
+import { ConsultaSolicitudes, SolicitudRespuesta } from './viajes.models';
 
 export interface SolicitudDashboard {
   readonly solicitud: SolicitudRespuesta;

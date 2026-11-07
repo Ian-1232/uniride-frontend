@@ -3,11 +3,7 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 export type HistoryTripType = 'todos' | 'conductor' | 'pasajero';
 
 export type HistoryExportState =
-  | 'disponible'
-  | 'sin-resultados'
-  | 'preparando'
-  | 'descargado'
-  | 'error';
+  'disponible' | 'sin-resultados' | 'preparando' | 'descargado' | 'error';
 
 export interface HistoryExportFilters {
   readonly desde: Date | null;
@@ -30,7 +26,7 @@ export const dateRangeValidator: ValidatorFn = (
   const from = control.get('desde')?.value as Date | null | undefined;
   const to = control.get('hasta')?.value as Date | null | undefined;
 
-  if ([from, to].some(date => date instanceof Date && !Number.isFinite(date.getTime()))) {
+  if ([from, to].some((date) => date instanceof Date && !Number.isFinite(date.getTime()))) {
     return { invalidDate: true };
   }
 

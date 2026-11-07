@@ -11,7 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ContribucionService } from '../../../core/services/contribucion.service';
 import { jwtInterceptor } from '../../../core/interceptors/jwt.interceptor';
 import { routes } from '../../../app.routes';
-import { MISSING_PASSENGERS } from '../contribucion.models';
+import { MISSING_PASSENGERS } from '../../../core/models/contribucion.models';
 import { SugerenciaContribucion } from './sugerencia-contribucion';
 
 // Contract fixtures exist only in tests; deliberately distinct amounts detect hardcoded calculations.
@@ -65,20 +65,18 @@ describe('US29 authenticated REST integration', () => {
       btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) +
       '.signature';
     auth.login({ correo: 'pasajera@upc.edu.pe', contrasena: 'Password1!' }).subscribe();
-    http
-      .expectOne('/api/auth/login')
-      .flush({
-        token,
-        mensaje: 'OK',
-        usuario: {
-          id: 18,
-          nombre: 'Lucia',
-          apellidos: 'Torres',
-          correo: 'pasajera@upc.edu.pe',
-          rol,
-          cuentaVerificada: true,
-        },
-      });
+    http.expectOne('/api/auth/login').flush({
+      token,
+      mensaje: 'OK',
+      usuario: {
+        id: 18,
+        nombre: 'Lucia',
+        apellidos: 'Torres',
+        correo: 'pasajera@upc.edu.pe',
+        rol,
+        cuentaVerificada: true,
+      },
+    });
     prepararPerfil();
   }
   async function render(path = '/contribucion/sugerencia/74') {

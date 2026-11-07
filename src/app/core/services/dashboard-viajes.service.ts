@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { defer, from, map, mergeMap, Observable, of, switchMap, toArray } from 'rxjs';
-import { Page, ViajeConRuta } from '../models/ruta.model';
+import { Page, ViajeConRuta } from '../models/ruta.models';
 import { instanteSalida } from '../models/coordinacion.models';
 import { todasLasPaginas } from './consulta';
 import { RutasService } from './rutas.service';
@@ -10,7 +10,7 @@ import {
   ProximaSolicitud,
   salidaValida,
   SolicitudDashboard,
-} from '../../pages/dashboard/dashboard.models';
+} from '../models/dashboard.models';
 
 /** Reuses the existing traversal with a stable, finite snapshot; never silently truncates a dashboard. */
 function paginas<T>(load: (page: number) => Observable<Page<T>>) {

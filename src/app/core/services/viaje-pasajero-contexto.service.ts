@@ -1,6 +1,6 @@
 import { effect, inject, Injectable, untracked } from '@angular/core';
 import { AuthService } from './auth.service';
-import { ContextoViaje } from '../../pages/pasajero/viajes/viajes.models';
+import { ContextoViaje } from '../models/viajes.models';
 
 /** Only the selected real response, in memory; not a source of availability or authorization. */
 @Injectable({ providedIn: 'root' })

@@ -1,4 +1,4 @@
-import { Ruta } from '../../../../core/models/ruta.model';
+import { Ruta } from '../../../../core/models/ruta.models';
 import { ViajeRespuesta } from '../../../../core/models/coordinacion.models';
 /** Fixtures imported only by tests. No requests are forwarded to Spring/Supabase. */
 export const AHORA_REPROGRAMAR = Date.parse('2026-11-06T10:00:00-05:00');

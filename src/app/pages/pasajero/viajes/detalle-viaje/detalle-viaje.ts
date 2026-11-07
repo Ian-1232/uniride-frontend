@@ -13,8 +13,8 @@ import {
   salidaTexto,
   SolicitudHistorialRespuesta,
   SolicitudRespuesta,
-  Viaje,
-} from '../viajes.models';
+  ViajeVista,
+} from '../../../../core/models/viajes.models';
 import { pasajeroError } from '../shared/pasajero-query';
 import { segundosParaSalida } from '../../../../core/models/coordinacion.models';
 import {
@@ -49,7 +49,7 @@ export class DetalleViaje {
   private readonly context = signal<ContextoViaje | undefined>(undefined);
   private confirmedMutation?: SolicitudRespuesta;
   protected readonly id = signal<number | null>(null);
-  protected readonly viaje = signal<Viaje | null>(null);
+  protected readonly viaje = signal<ViajeVista | null>(null);
   protected readonly solicitud = signal<SolicitudRespuesta | null>(null);
   protected readonly historico = signal<SolicitudHistorialRespuesta | null>(null);
   protected readonly status = signal<'loading' | 'ready' | 'missing' | 'error'>('loading');
@@ -175,7 +175,7 @@ export class DetalleViaje {
   }
   protected join(): void {
     if (!this.canJoin() || this.dialogOpen()) return;
-    const ref = this.dialog.open<UnirseViajeDialog, { viaje: Viaje }, SolicitudRespuesta>(
+    const ref = this.dialog.open<UnirseViajeDialog, { viaje: ViajeVista }, SolicitudRespuesta>(
       UnirseViajeDialog,
       { width: '608px', maxWidth: '96vw', panelClass: 'ur-dialog', data: { viaje: this.viaje()! } },
     );
@@ -207,7 +207,7 @@ export class DetalleViaje {
     if (!this.canCancelTrip() || this.dialogOpen()) return;
     const solicitud = this.solicitud()!;
     const trip = this.viaje()!;
-    const ref = this.dialog.open<CancelarViajeDialog, Viaje, CancelacionViajeResultado>(
+    const ref = this.dialog.open<CancelarViajeDialog, ViajeVista, CancelacionViajeResultado>(
       CancelarViajeDialog,
       { width: '608px', maxWidth: '96vw', data: trip },
     );

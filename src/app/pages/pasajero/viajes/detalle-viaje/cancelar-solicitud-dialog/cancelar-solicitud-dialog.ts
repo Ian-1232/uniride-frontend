@@ -5,7 +5,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { finalize } from 'rxjs';
 import { SolicitudesPasajeroService } from '../../../../../core/services/solicitudes-pasajero.service';
 import { ReportesStatePanel } from '../../../../reportes/shared/reportes-state-panel/reportes-state-panel';
-import { SolicitudRespuesta } from '../../viajes.models';
+import { SolicitudRespuesta } from '../../../../../core/models/viajes.models';
 import { pasajeroError } from '../../shared/pasajero-query';
 export interface CancelacionResultado {
   readonly solicitud?: SolicitudRespuesta;

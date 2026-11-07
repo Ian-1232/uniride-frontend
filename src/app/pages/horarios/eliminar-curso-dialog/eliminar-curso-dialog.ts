@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { finalize } from 'rxjs';
 import { HorariosService } from '../../../core/services/horarios.service';
-import { CursoRespuesta, diaCurso, horaCurso } from '../horarios.models';
+import { CursoRespuesta, diaCurso, horaCurso } from '../../../core/models/horarios.models';
 import { horariosError } from '../horarios-error';
 import { ReportesStatePanel } from '../../reportes/shared/reportes-state-panel/reportes-state-panel';
 

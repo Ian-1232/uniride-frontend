@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { EstadoViaje } from './ruta.model';
-import { EstadoSolicitud, SolicitudRespuesta } from '../../pages/pasajero/viajes/viajes.models';
+import { EstadoViaje } from './ruta.models';
+import { EstadoSolicitud, SolicitudRespuesta } from './viajes.models';
 
-export type { EstadoSolicitud } from '../../pages/pasajero/viajes/viajes.models';
+export type { EstadoSolicitud } from './viajes.models';
 export type SolicitudRecibida = SolicitudRespuesta;
 
 /** Contrato ViajeRespuesta del backend recibido al listar o actualizar un viaje. */

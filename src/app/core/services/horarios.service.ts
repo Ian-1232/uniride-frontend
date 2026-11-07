@@ -26,7 +26,7 @@ import {
   CursoRequest,
   CursoRespuesta,
   CursosPagina,
-} from '../../pages/horarios/horarios.models';
+} from '../models/horarios.models';
 
 @Injectable({ providedIn: 'root' })
 export class HorariosService {

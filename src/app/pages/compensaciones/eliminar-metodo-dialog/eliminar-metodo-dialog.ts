@@ -6,7 +6,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { finalize } from 'rxjs';
 import { MetodosCompensacionService } from '../../../core/services/metodos-compensacion.service';
-import { MetodoCompensacionResponse, TIPO_COMPENSACION_LABELS } from '../compensaciones.models';
+import {
+  MetodoCompensacionResponse,
+  TIPO_COMPENSACION_LABELS,
+} from '../../../core/models/compensaciones.models';
 import { BLOCKED_DELETE, compensationError } from '../shared/compensacion-error';
 import { CompensacionStatePanel } from '../shared/compensacion-state-panel/compensacion-state-panel';
 

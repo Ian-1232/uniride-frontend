@@ -18,7 +18,7 @@ import {
   TIPO_COMPENSACION_LABELS,
   TIPOS_COMPENSACION,
   TipoCompensacion,
-} from '../compensaciones.models';
+} from '../../../core/models/compensaciones.models';
 import { CompensacionStatePanel } from '../shared/compensacion-state-panel/compensacion-state-panel';
 
 interface MetodoForm {

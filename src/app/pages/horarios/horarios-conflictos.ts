@@ -6,7 +6,7 @@ import {
   diaCurso,
   HORA_CURSO,
   segundosHora,
-} from './horarios.models';
+} from '../../core/models/horarios.models';
 
 export type CursoHorario = Pick<CursoRespuesta, 'nombre' | 'dia' | 'horaInicio' | 'horaFin'>;
 export interface ConflictoHorario {

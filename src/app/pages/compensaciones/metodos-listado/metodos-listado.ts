@@ -8,7 +8,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { finalize, take } from 'rxjs';
 import { MetodosCompensacionService } from '../../../core/services/metodos-compensacion.service';
-import { MetodoCompensacionResponse, TIPO_COMPENSACION_LABELS } from '../compensaciones.models';
+import {
+  MetodoCompensacionResponse,
+  TIPO_COMPENSACION_LABELS,
+} from '../../../core/models/compensaciones.models';
 import {
   DeleteMethodResult,
   EliminarMetodoDialog,

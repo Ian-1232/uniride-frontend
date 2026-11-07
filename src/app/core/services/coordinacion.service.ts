@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { map, switchMap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Page } from '../models/ruta.model';
+import { Page } from '../models/ruta.models';
 import {
   CoordinacionViaje,
   DetalleSolicitud,
