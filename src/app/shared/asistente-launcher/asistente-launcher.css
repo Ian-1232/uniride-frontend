@@ -1,0 +1,50 @@
+:host {
+  display: contents;
+}
+
+.asistente-fab {
+  position: fixed;
+  z-index: 30;
+  inset-block-end: var(--ur-space-24);
+  inset-inline-end: var(--ur-space-24);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--ur-radius-pill);
+  background: var(--ur-color-primary);
+  box-shadow: var(--ur-shadow-card);
+  color: var(--ur-color-surface);
+  text-decoration: none;
+  transition:
+    filter var(--ur-transition-fast),
+    transform var(--ur-transition-fast);
+}
+
+.asistente-fab span {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: 26px;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.asistente-fab:hover {
+  filter: brightness(0.92);
+}
+
+.asistente-fab:active {
+  transform: scale(0.96);
+}
+
+.asistente-fab:focus-visible {
+  outline: 2px solid var(--ur-color-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .asistente-fab {
+    inset-block-end: var(--ur-space-16);
+    inset-inline-end: var(--ur-space-16);
+  }
+}
