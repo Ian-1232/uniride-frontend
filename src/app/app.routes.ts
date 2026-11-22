@@ -237,6 +237,19 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'asistente',
+    canActivate: [authGuard, perfilGuard],
+    loadComponent: () =>
+      import('./layouts/shared-layout/shared-layout').then((m) => m.SharedLayout),
+    children: [
+      {
+        path: '',
+        title: 'Asistente · UniRide',
+        loadComponent: () => import('./pages/asistente/asistente').then((m) => m.Asistente),
+      },
+    ],
+  },
+  {
     path: 'conductor',
     canActivate: [conductorGuard, perfilGuard],
     canActivateChild: [conductorGuard, perfilGuard],

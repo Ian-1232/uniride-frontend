@@ -1,0 +1,286 @@
+<article class="asistente-page">
+  <header class="asistente-heading">
+    <p class="breadcrumb">Ayuda / Asistente IA</p>
+    <h1>Asistente UniRide</h1>
+    <p>Resuelve dudas sobre rutas, viajes, compensaciones y el uso de la plataforma.</p>
+  </header>
+
+  <section class="chat-card" aria-labelledby="asistente-titulo">
+    <header class="chat-header">
+      <span class="avatar" aria-hidden="true">IA</span>
+      <div class="chat-identidad">
+        <h2 id="asistente-titulo">Asistente UniRide</h2>
+        <div class="chat-estado">
+          <span class="ur-status ur-status--success">En línea</span>
+          <span class="ur-caption">Responde al instante</span>
+        </div>
+      </div>
+      @if (mensajes().length) {
+        <button
+          type="button"
+          class="ur-button ur-button--secondary ur-button--compact"
+          [disabled]="enviando()"
+          (click)="nuevaConversacion()"
+        >
+          Nueva conversación
+        </button>
+      }
+    </header>
+
+    <div
+      class="mensajes"
+      #lista
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+      [attr.aria-busy]="enviando()"
+    >
+      @if (!mensajes().length && !enviando()) {
+        <div class="estado-vacio">
+          <span class="avatar avatar--grande" aria-hidden="true">IA</span>
+          <h2>¿En qué puedo ayudarte{{ nombre() ? ', ' + nombre() : '' }}?</h2>
+          <p>Pregúntame sobre rutas, viajes, compensaciones o cómo usar UniRide.</p>
+          <div class="sugerencias" aria-label="Sugerencias">
+            @for (sugerencia of sugerencias(); track sugerencia) {
+              <button type="button" class="sugerencia" (click)="sugerir(sugerencia)">
+                {{ sugerencia }}
+              </button>
+            }
+          </div>
+          <p class="ur-caption">También puedes escribir tu consulta en el campo inferior.</p>
+        </div>
+      }
+
+      @for (chat of mensajes(); track chat.id) {
+        <div
+          class="mensaje"
+          [class.mensaje--usuario]="chat.autor === 'usuario'"
+          [class.mensaje--asistente]="chat.autor === 'asistente'"
+        >
+          @if (chat.autor === 'asistente') {
+            <span class="avatar" aria-hidden="true">IA</span>
+          }
+          <div class="burbuja">
+            <span class="sr-only">{{ chat.autor === 'usuario' ? 'Tú' : 'Asistente' }}:</span>
+            <p>{{ chat.texto }}</p>
+
+            @if (chat.advertencia; as aviso) {
+              <p class="ur-message ur-message--warning">{{ aviso.mensaje }}</p>
+            }
+
+            @if (chat.detalleOperacion) {
+              <p
+                class="ur-message"
+                [class.ur-message--success]="chat.tonoOperacion === 'success'"
+                [class.ur-message--warning]="chat.tonoOperacion === 'warning'"
+                [class.ur-message--danger]="chat.tonoOperacion === 'danger'"
+              >
+                {{ chat.detalleOperacion }}
+              </p>
+            }
+
+            @if (chat.confirmacion; as confirmacion) {
+              <div class="confirmacion">
+                <p class="ur-label">
+                  {{ chat.resolucion ? 'Confirmación' : 'Confirmación pendiente' }}
+                </p>
+                <p>{{ confirmacion.resumen }}</p>
+                <p class="ur-caption">Caduca a las {{ horaCaduca(confirmacion.expira) }}</p>
+                @if (chat.resolucion) {
+                  <p class="ur-caption">Estado: {{ etiquetaResolucion(chat.resolucion) }}</p>
+                  @if (
+                    chat.resolucion === 'RECHAZADA' ||
+                    chat.resolucion === 'RESULTADO_INCIERTO' ||
+                    chat.resolucion === 'ACLARACION_REQUERIDA'
+                  ) {
+                    <button
+                      type="button"
+                      class="ur-button ur-button--secondary ur-button--compact"
+                      [disabled]="consultando() === confirmacion.id"
+                      (click)="consultarEstado(confirmacion.id)"
+                    >
+                      {{ consultando() === confirmacion.id ? 'Consultando…' : 'Consultar estado' }}
+                    </button>
+                  }
+                } @else if (chat.decisionEnviada) {
+                  <p class="ur-caption">Decisión enviada.</p>
+                } @else {
+                  <div class="confirmacion-acciones">
+                    <button
+                      type="button"
+                      class="ur-button ur-button--compact"
+                      [disabled]="enviando()"
+                      (click)="decidir(chat, true)"
+                    >
+                      Confirmar
+                    </button>
+                    <button
+                      type="button"
+                      class="ur-button ur-button--secondary ur-button--compact"
+                      [disabled]="enviando()"
+                      (click)="decidir(chat, false)"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (chat.viajes.length) {
+              <section class="resultado-grupo" aria-label="Viajes encontrados">
+                <p class="ur-label">Viajes</p>
+                <ul class="resultados">
+                  @for (viaje of chat.viajes; track viaje.viajeId) {
+                    <li class="tarjeta">
+                      <div class="tarjeta-cabecera">
+                        <strong>{{ viaje.origen }} → {{ viaje.destino }}</strong>
+                        @if (estadoVisible(viaje); as estado) {
+                          <span
+                            class="ur-status"
+                            [class.ur-status--success]="tonoViaje(estado) === 'success'"
+                            [class.ur-status--warning]="tonoViaje(estado) === 'warning'"
+                            [class.ur-status--danger]="tonoViaje(estado) === 'danger'"
+                            [class.ur-status--info]="tonoViaje(estado) === 'info'"
+                          >
+                            {{ etiquetaViaje(estado) }}
+                          </span>
+                        }
+                      </div>
+                      @if (metaViaje(viaje); as meta) {
+                        <p class="ur-caption">{{ meta }}</p>
+                      }
+                      @if (viaje.conductorNombre) {
+                        <p class="ur-caption">Conductor: {{ viaje.conductorNombre }}</p>
+                      }
+                      @if (viaje.capacidadMaxima != null) {
+                        <p class="ur-caption">Capacidad: {{ viaje.capacidadMaxima }}</p>
+                      }
+                      @if (viaje.puntosReferencia) {
+                        <p class="ur-caption">Referencias: {{ viaje.puntosReferencia }}</p>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+
+            @if (chat.rutas.length) {
+              <section class="resultado-grupo" aria-label="Rutas encontradas">
+                <p class="ur-label">Rutas</p>
+                <ul class="resultados">
+                  @for (ruta of chat.rutas; track ruta.rutaId) {
+                    <li class="tarjeta">
+                      <div class="tarjeta-cabecera">
+                        <strong>{{ ruta.origen }} → {{ ruta.destino }}</strong>
+                        <span
+                          class="ur-status"
+                          [class.ur-status--success]="tonoRuta(ruta.estado) === 'success'"
+                          [class.ur-status--warning]="tonoRuta(ruta.estado) === 'warning'"
+                          [class.ur-status--danger]="tonoRuta(ruta.estado) === 'danger'"
+                          [class.ur-status--info]="tonoRuta(ruta.estado) === 'info'"
+                        >
+                          {{ etiquetaRuta(ruta.estado) }}
+                        </span>
+                      </div>
+                      <p class="ur-caption">
+                        Capacidad: {{ ruta.capacidadMaxima ?? '—' }} ·
+                        {{ ruta.puntosReferencia || 'Sin puntos de referencia' }}
+                      </p>
+                      @if (ruta.zonasSinParada) {
+                        <p class="ur-caption">Sin parada: {{ ruta.zonasSinParada }}</p>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+
+            @if (chat.metodos.length) {
+              <section class="resultado-grupo" aria-label="Métodos de compensación">
+                <p class="ur-label">Métodos de compensación</p>
+                <ul class="resultados">
+                  @for (metodo of chat.metodos; track metodo.id) {
+                    <li class="tarjeta">
+                      <div class="tarjeta-cabecera">
+                        <strong>{{ etiquetaTipo(metodo.tipo) }}</strong>
+                        <span class="ur-status" [class.ur-status--success]="metodo.activo">
+                          {{ metodo.activo ? 'Activo' : 'Inactivo' }}
+                        </span>
+                      </div>
+                      <p class="ur-caption">{{ metodo.descripcion }}</p>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+
+            @if (chat.paginacion; as paginacion) {
+              <div class="paginacion">
+                <span class="ur-caption">
+                  Página {{ paginacion.pagina + 1 }} · {{ paginacion.mostrados }} de
+                  {{ paginacion.total }} resultados
+                </span>
+                @if (paginacion.hayMas) {
+                  <button
+                    type="button"
+                    class="ur-button ur-button--secondary ur-button--compact"
+                    [disabled]="enviando()"
+                    (click)="siguientePagina()"
+                  >
+                    Ver más
+                  </button>
+                }
+              </div>
+            }
+
+            <span class="hora">{{ chat.hora }}</span>
+          </div>
+        </div>
+      }
+
+      @if (enviando()) {
+        <div class="mensaje mensaje--asistente">
+          <span class="avatar" aria-hidden="true">IA</span>
+          <div class="burbuja escribiendo" role="status">Escribiendo…</div>
+        </div>
+      }
+    </div>
+
+    @if (error(); as errorEnvio) {
+      <div class="error-envio" role="alert">
+        <p>{{ errorEnvio }}</p>
+        @if (pendiente()) {
+          <button
+            type="button"
+            class="ur-button ur-button--secondary ur-button--compact"
+            (click)="reintentar()"
+          >
+            Reintentar
+          </button>
+        }
+      </div>
+    }
+
+    <form class="composer" (submit)="enviarDesdeFormulario($event)">
+      <div class="composer-row">
+        <textarea
+          #entrada
+          [formControl]="mensaje"
+          rows="1"
+          maxlength="1000"
+          aria-label="Escribe tu consulta"
+          placeholder="Escribe tu consulta…"
+          (keydown)="alPresionarEnter($event)"
+        ></textarea>
+        <button type="submit" class="ur-button" [disabled]="enviando() || !mensaje.value.trim()">
+          Enviar
+        </button>
+      </div>
+      <div class="composer-ayuda">
+        <span>El asistente puede cometer errores. Verifica la información antes de actuar.</span>
+        <span class="atajo">Enter para enviar · Shift + Enter para salto de línea</span>
+      </div>
+    </form>
+  </section>
+</article>

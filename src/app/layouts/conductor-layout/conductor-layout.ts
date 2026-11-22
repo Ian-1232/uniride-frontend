@@ -1,4 +1,5 @@
 import { RoleSelector } from '../../shared/role-selector/role-selector';
+import { AsistenteLauncher } from '../../shared/asistente-launcher/asistente-launcher';
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
@@ -18,6 +19,7 @@ import { AuthService } from '../../core/services/auth.service';
     MatToolbarModule,
     MatButtonModule,
     MatMenuModule,
+    AsistenteLauncher,
   ],
   templateUrl: './conductor-layout.html',
   styleUrl: './conductor-layout.css',
