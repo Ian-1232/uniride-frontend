@@ -19,7 +19,7 @@
         <button
           type="button"
           class="ur-button ur-button--secondary ur-button--compact"
-          [disabled]="enviando()"
+          [disabled]="ocupado()"
           (click)="nuevaConversacion()"
         >
           Nueva conversación
@@ -33,7 +33,7 @@
       role="log"
       aria-live="polite"
       aria-relevant="additions"
-      [attr.aria-busy]="enviando()"
+      [attr.aria-busy]="ocupado()"
     >
       @if (!mensajes().length && !enviando()) {
         <div class="estado-vacio">
@@ -47,7 +47,9 @@
               </button>
             }
           </div>
-          <p class="ur-caption">También puedes escribir tu consulta en el campo inferior.</p>
+          <p class="ur-caption">
+            Usa el micrófono para hablar o escribe tu consulta en el campo inferior.
+          </p>
         </div>
       }
 
@@ -86,6 +88,9 @@
                 </p>
                 <p>{{ confirmacion.resumen }}</p>
                 <p class="ur-caption">Caduca a las {{ horaCaduca(confirmacion.expira) }}</p>
+                @if (!chat.resolucion && !chat.decisionEnviada) {
+                  <p class="ur-caption">Di «sí» para confirmar o «no» para cancelar.</p>
+                }
                 @if (chat.resolucion) {
                   <p class="ur-caption">Estado: {{ etiquetaResolucion(chat.resolucion) }}</p>
                   @if (
@@ -109,7 +114,7 @@
                     <button
                       type="button"
                       class="ur-button ur-button--compact"
-                      [disabled]="enviando()"
+                      [disabled]="ocupado()"
                       (click)="decidir(chat, true)"
                     >
                       Confirmar
@@ -117,7 +122,7 @@
                     <button
                       type="button"
                       class="ur-button ur-button--secondary ur-button--compact"
-                      [disabled]="enviando()"
+                      [disabled]="ocupado()"
                       (click)="decidir(chat, false)"
                     >
                       Cancelar
@@ -225,7 +230,7 @@
                   <button
                     type="button"
                     class="ur-button ur-button--secondary ur-button--compact"
-                    [disabled]="enviando()"
+                    [disabled]="ocupado()"
                     (click)="siguientePagina()"
                   >
                     Ver más
@@ -263,6 +268,41 @@
     }
 
     <form class="composer" (submit)="enviarDesdeFormulario($event)">
+      @if (vozError(); as errorVoz) {
+        <p class="voz-aviso" role="alert">{{ errorVoz }}</p>
+      }
+
+      @if (grabando()) {
+        <div class="voz-estado" role="status">
+          <span class="voz-punto" aria-hidden="true"></span>
+          <span>Escuchando…</span>
+          <span aria-hidden="true">{{ duracionTexto() }}</span>
+          <span class="ur-caption">Máximo 30 segundos</span>
+          <button
+            type="button"
+            class="ur-button ur-button--secondary ur-button--compact"
+            (click)="cancelarVoz()"
+          >
+            Cancelar
+          </button>
+        </div>
+      } @else if (solicitandoPermiso()) {
+        <p class="voz-estado" role="status">Permite el micrófono para usar la voz.</p>
+      } @else if (transcribiendo()) {
+        <p class="voz-estado" role="status">Transcribiendo…</p>
+      } @else if (voz.hablando()) {
+        <div class="voz-estado" role="status">
+          <span>Leyendo la respuesta…</span>
+          <button
+            type="button"
+            class="ur-button ur-button--secondary ur-button--compact"
+            (click)="voz.detenerVoz()"
+          >
+            Detener voz
+          </button>
+        </div>
+      }
+
       <div class="composer-row">
         <textarea
           #entrada
@@ -273,12 +313,45 @@
           placeholder="Escribe tu consulta…"
           (keydown)="alPresionarEnter($event)"
         ></textarea>
-        <button type="submit" class="ur-button" [disabled]="enviando() || !mensaje.value.trim()">
+        <button
+          type="button"
+          class="composer-mic"
+          [class.composer-mic--grabando]="grabando()"
+          [attr.aria-pressed]="grabando()"
+          [attr.aria-label]="grabando() ? 'Detener grabación y enviar' : 'Grabar mensaje de voz'"
+          [disabled]="enviando() || transcribiendo() || solicitandoPermiso()"
+          (click)="alternarMicrofono()"
+        >
+          @if (grabando()) {
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" />
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm-7-3a7 7 0 0 0 14 0M12 18v4M8 22h8"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          }
+          <span class="composer-mic-texto">{{ grabando() ? 'Detener' : 'Hablar' }}</span>
+        </button>
+        <button type="submit" class="ur-button" [disabled]="ocupado() || !mensaje.value.trim()">
           Enviar
         </button>
       </div>
       <div class="composer-ayuda">
-        <span>El asistente puede cometer errores. Verifica la información antes de actuar.</span>
+        <span>
+          El asistente puede cometer errores. El audio se envía a Groq para transcribirse.
+        </span>
+        <label class="voz-preferencia">
+          <input type="checkbox" [checked]="voz.vozAlta()" (change)="alternarVozAlta()" />
+          Responder en voz alta
+        </label>
         <span class="atajo">Enter para enviar · Shift + Enter para salto de línea</span>
       </div>
     </form>
