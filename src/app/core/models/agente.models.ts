@@ -106,6 +106,12 @@ export interface ChatRespuesta {
   readonly resolucionConfirmacion?: ResolucionConfirmacion;
 }
 
+export interface VozChatRespuesta {
+  readonly transcripcion: string;
+  readonly textoHablado: string;
+  readonly respuesta: ChatRespuesta;
+}
+
 export interface ErrorRespuesta {
   readonly mensaje: string;
   readonly campos: Readonly<Record<string, string>> | null;

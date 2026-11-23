@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { AgenteVozService } from '../../core/services/agente-voz.service';
 import { Asistente } from './asistente';
 
 describe('Asistente', () => {
@@ -286,4 +287,75 @@ describe('Asistente', () => {
     const reintento = http.expectOne('/api/agent/chat');
     expect(reintento.request.body).toEqual({ message: 'Sigue la conversación' });
   });
+
+  it('envía la voz, muestra la transcripción y reproduce el texto hablado', async () => {
+    const fixture = crear();
+    const voz = TestBed.inject(AgenteVozService);
+    vi.spyOn(voz, 'iniciar').mockResolvedValue();
+    vi.spyOn(voz, 'detener').mockResolvedValue(
+      new Blob([new Uint8Array(2048)], { type: 'audio/webm' }),
+    );
+    const reproducir = vi.spyOn(voz, 'hablar').mockImplementation(() => undefined);
+    const micro = fixture.nativeElement.querySelector('.composer-mic') as HTMLButtonElement;
+
+    micro.click();
+    await esperar();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Escuchando');
+
+    micro.click();
+    await esperar();
+    const req = http.expectOne('/api/agent/voz');
+    const formulario = req.request.body as FormData;
+    expect(formulario.get('audio')).toBeTruthy();
+    expect(formulario.get('conversationId')).toBeNull();
+    req.flush({
+      transcripcion: '¿Cuáles son mis rutas?',
+      textoHablado: 'Tienes dos rutas.',
+      respuesta: {
+        message: 'Tienes 2 rutas.',
+        viajes: [],
+        rutas: [],
+        metodosCompensacion: [],
+        operacion: null,
+        resultados: [],
+        advertencia: null,
+        conversationId: 'conv-voz',
+      },
+    });
+    fixture.detectChanges();
+
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).toContain('¿Cuáles son mis rutas?');
+    expect(texto).toContain('Tienes 2 rutas.');
+    expect(reproducir).toHaveBeenCalledWith('Tienes dos rutas.');
+  });
+
+  it('muestra el error de voz cuando no se entiende el audio', async () => {
+    const fixture = crear();
+    const voz = TestBed.inject(AgenteVozService);
+    vi.spyOn(voz, 'iniciar').mockResolvedValue();
+    vi.spyOn(voz, 'detener').mockResolvedValue(
+      new Blob([new Uint8Array(2048)], { type: 'audio/webm' }),
+    );
+    const micro = fixture.nativeElement.querySelector('.composer-mic') as HTMLButtonElement;
+
+    micro.click();
+    await esperar();
+    micro.click();
+    await esperar();
+    http
+      .expectOne('/api/agent/voz')
+      .flush(
+        { mensaje: 'No se entendió el audio.', campos: { codigo: 'VOICE_NOT_UNDERSTOOD' } },
+        { status: 400, statusText: 'Bad Request' },
+      );
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('No te entendí');
+  });
+
+  async function esperar(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+  }
 });

@@ -23,7 +23,10 @@ import {
   ViajeResumen,
 } from '../../core/models/agente.models';
 import { AgenteService } from '../../core/services/agente.service';
+import { AgenteVozService } from '../../core/services/agente-voz.service';
 import { AuthService } from '../../core/services/auth.service';
+
+const MIN_AUDIO_BYTES = 1024;
 
 interface Paginacion {
   readonly pagina: number;
@@ -89,6 +92,7 @@ function leerPaginacion(resultados: readonly ResultadoAgente[]): Paginacion | nu
 })
 export class Asistente {
   private readonly agente = inject(AgenteService);
+  protected readonly voz = inject(AgenteVozService);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -102,6 +106,12 @@ export class Asistente {
   protected readonly consultando = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly pendiente = signal<string | null>(null);
+  protected readonly grabando = signal(false);
+  protected readonly solicitandoPermiso = signal(false);
+  protected readonly transcribiendo = signal(false);
+  protected readonly duracion = signal(0);
+  protected readonly vozError = signal<string | null>(null);
+  protected readonly ocupado = computed(() => this.enviando() || this.transcribiendo());
   protected readonly nombre = computed(() => this.auth.currentUser()?.nombre ?? '');
   protected readonly sugerencias = computed(() =>
     this.auth.isConductor()
@@ -122,10 +132,15 @@ export class Asistente {
   private readonly lista = viewChild<ElementRef<HTMLElement>>('lista');
   private readonly entrada = viewChild<ElementRef<HTMLTextAreaElement>>('entrada');
   private secuencia = 0;
+  private cronometro: ReturnType<typeof setInterval> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => this.detenerCronometro());
+  }
 
   protected enviar(): void {
     const texto = this.mensaje.value.trim();
-    if (!texto || this.enviando() || this.mensaje.invalid) return;
+    if (!texto || this.ocupado() || this.mensaje.invalid) return;
     this.mensaje.setValue('');
     this.intentar(texto, true);
   }
@@ -136,22 +151,25 @@ export class Asistente {
   }
 
   protected sugerir(texto: string): void {
-    if (this.enviando()) return;
+    if (this.ocupado()) return;
     this.intentar(texto, true);
     this.entrada()?.nativeElement.focus();
   }
 
   protected reintentar(): void {
     const texto = this.pendiente();
-    if (texto && !this.enviando()) this.intentar(texto, false);
+    if (texto && !this.ocupado()) this.intentar(texto, false);
   }
 
   protected nuevaConversacion(): void {
-    if (this.enviando()) return;
+    if (this.ocupado()) return;
+    this.cancelarVoz();
+    this.voz.detenerVoz();
     this.mensajes.set([]);
     this.conversacionId.set(null);
     this.error.set(null);
     this.pendiente.set(null);
+    this.vozError.set(null);
     this.mensaje.setValue('');
     this.entrada()?.nativeElement.focus();
   }
@@ -164,8 +182,102 @@ export class Asistente {
   }
 
   protected decidir(mensaje: MensajeChat, confirmar: boolean): void {
-    if (this.enviando() || mensaje.decisionEnviada) return;
+    if (this.ocupado() || mensaje.decisionEnviada) return;
     this.intentar(confirmar ? 'Sí, confirmo' : 'No, gracias', true);
+  }
+
+  protected alternarMicrofono(): void {
+    if (this.ocupado() || this.solicitandoPermiso()) return;
+    if (this.grabando()) {
+      void this.detenerYEnviarVoz();
+      return;
+    }
+    void this.empezarGrabacion();
+  }
+
+  protected cancelarVoz(): void {
+    this.voz.cancelar();
+    this.grabando.set(false);
+    this.duracion.set(0);
+    this.detenerCronometro();
+  }
+
+  protected alternarVozAlta(): void {
+    this.voz.alternarVozAlta();
+  }
+
+  protected duracionTexto(): string {
+    const segundos = this.duracion();
+    return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`;
+  }
+
+  private async empezarGrabacion(): Promise<void> {
+    this.voz.detenerVoz();
+    this.error.set(null);
+    this.vozError.set(null);
+    this.solicitandoPermiso.set(true);
+    try {
+      await this.voz.iniciar(() => void this.detenerYEnviarVoz());
+      this.grabando.set(true);
+      this.duracion.set(0);
+      this.iniciarCronometro();
+    } catch (error) {
+      this.vozError.set(this.mensajeErrorMicrofono(error));
+    } finally {
+      this.solicitandoPermiso.set(false);
+    }
+  }
+
+  private async detenerYEnviarVoz(): Promise<void> {
+    if (!this.grabando()) return;
+    this.grabando.set(false);
+    this.detenerCronometro();
+    const audio = await this.voz.detener();
+    if (!audio || audio.size < MIN_AUDIO_BYTES) {
+      this.vozError.set('No se grabó nada. Intenta de nuevo.');
+      return;
+    }
+    this.enviarVoz(audio);
+  }
+
+  private enviarVoz(audio: Blob): void {
+    this.transcribiendo.set(true);
+    this.error.set(null);
+    this.vozError.set(null);
+    this.pendiente.set(null);
+    this.voz
+      .enviar(audio, this.conversacionId())
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.transcribiendo.set(false)),
+      )
+      .subscribe({
+        next: (voz) => {
+          this.agregar('usuario', voz.transcripcion?.trim() || 'Mensaje de voz');
+          this.mostrarRespuesta(voz.respuesta);
+          this.voz.hablar(voz.textoHablado?.trim() || voz.respuesta.message);
+        },
+        error: (error: unknown) => {
+          if (
+            error instanceof HttpErrorResponse &&
+            (error.status === 404 || this.codigoError(error) === 'CONVERSATION_ROLE_CHANGED')
+          ) {
+            this.conversacionId.set(null);
+          }
+          this.vozError.set(this.mensajeErrorVoz(error));
+          this.scroll();
+        },
+      });
+  }
+
+  private iniciarCronometro(): void {
+    this.detenerCronometro();
+    this.cronometro = setInterval(() => this.duracion.update((segundos) => segundos + 1), 1000);
+  }
+
+  private detenerCronometro(): void {
+    if (this.cronometro) clearInterval(this.cronometro);
+    this.cronometro = null;
   }
 
   protected consultarEstado(id: string): void {
@@ -194,7 +306,7 @@ export class Asistente {
   }
 
   protected siguientePagina(): void {
-    if (!this.enviando()) this.intentar('Muéstrame la página siguiente', true);
+    if (!this.ocupado()) this.intentar('Muéstrame la página siguiente', true);
   }
 
   protected horaCaduca(expira: string): string {
@@ -346,8 +458,10 @@ export class Asistente {
   }
 
   private intentar(texto: string, mostrarUsuario: boolean): void {
+    this.voz.detenerVoz();
     this.enviando.set(true);
     this.error.set(null);
+    this.vozError.set(null);
     this.pendiente.set(null);
     if (mostrarUsuario) this.agregar('usuario', texto);
 
@@ -358,36 +472,7 @@ export class Asistente {
         finalize(() => this.enviando.set(false)),
       )
       .subscribe({
-        next: (respuesta) => {
-          if (respuesta.conversationId) this.conversacionId.set(respuesta.conversationId);
-          this.aplicarResolucion(respuesta);
-          const operacion = respuesta.operacion;
-          const confirmacion =
-            operacion?.estado === 'CONFIRMACION_REQUERIDA' &&
-            operacion.confirmacion?.estado === 'PENDIENTE'
-              ? operacion.confirmacion
-              : null;
-          const detalleOperacion =
-            operacion?.detalle && !confirmacion && operacion.detalle !== respuesta.message
-              ? operacion.detalle
-              : null;
-          const tonoOperacion =
-            detalleOperacion && operacion ? this.tonoEstadoOperacion(operacion.estado) : null;
-          this.agregar(
-            'asistente',
-            respuesta.message?.trim() || 'El asistente no devolvió una respuesta.',
-            {
-              advertencia: respuesta.advertencia ?? null,
-              confirmacion,
-              viajes: respuesta.viajes ?? [],
-              rutas: respuesta.rutas ?? [],
-              metodos: respuesta.metodosCompensacion ?? [],
-              detalleOperacion,
-              tonoOperacion,
-              paginacion: leerPaginacion(respuesta.resultados ?? []),
-            },
-          );
-        },
+        next: (respuesta) => this.mostrarRespuesta(respuesta),
         error: (error: unknown) => {
           if (
             error instanceof HttpErrorResponse &&
@@ -400,6 +485,37 @@ export class Asistente {
           this.scroll();
         },
       });
+  }
+
+  private mostrarRespuesta(respuesta: ChatRespuesta): void {
+    if (respuesta.conversationId) this.conversacionId.set(respuesta.conversationId);
+    this.aplicarResolucion(respuesta);
+    const operacion = respuesta.operacion;
+    const confirmacion =
+      operacion?.estado === 'CONFIRMACION_REQUERIDA' &&
+      operacion.confirmacion?.estado === 'PENDIENTE'
+        ? operacion.confirmacion
+        : null;
+    const detalleOperacion =
+      operacion?.detalle && !confirmacion && operacion.detalle !== respuesta.message
+        ? operacion.detalle
+        : null;
+    const tonoOperacion =
+      detalleOperacion && operacion ? this.tonoEstadoOperacion(operacion.estado) : null;
+    this.agregar(
+      'asistente',
+      respuesta.message?.trim() || 'El asistente no devolvió una respuesta.',
+      {
+        advertencia: respuesta.advertencia ?? null,
+        confirmacion,
+        viajes: respuesta.viajes ?? [],
+        rutas: respuesta.rutas ?? [],
+        metodos: respuesta.metodosCompensacion ?? [],
+        detalleOperacion,
+        tonoOperacion,
+        paginacion: leerPaginacion(respuesta.resultados ?? []),
+      },
+    );
   }
 
   private agregar(
@@ -480,16 +596,83 @@ export class Asistente {
     return cuerpo?.campos?.['codigo'] ?? null;
   }
 
+  private detalleError(error: HttpErrorResponse): string | null {
+    if (!error.error || typeof error.error !== 'object') return null;
+    const cuerpo = error.error as Partial<ErrorRespuesta>;
+    return typeof cuerpo.mensaje === 'string' ? cuerpo.mensaje : null;
+  }
+
+  private mensajeErrorMicrofono(error: unknown): string {
+    if (error instanceof DOMException) {
+      switch (error.name) {
+        case 'NotAllowedError':
+        case 'SecurityError':
+          return 'Permiso de micrófono denegado. Puedes escribir tu consulta.';
+        case 'NotFoundError':
+        case 'DevicesNotFoundError':
+          return 'No se encontró un micrófono. Usa el chat de texto.';
+      }
+    }
+    if (
+      error instanceof Error &&
+      (error.message === 'sin-soporte' || error.message === 'formato')
+    ) {
+      return 'Este navegador no permite grabar audio. Usa el chat de texto.';
+    }
+    return 'No se pudo iniciar la grabación. Revisa tu micrófono o escribe tu consulta.';
+  }
+
+  private mensajeErrorVoz(error: unknown): string {
+    if (!(error instanceof HttpErrorResponse)) {
+      return 'No se pudo procesar la voz. Intenta de nuevo o escribe tu consulta.';
+    }
+    const detalle = this.detalleError(error);
+    switch (this.codigoError(error)) {
+      case 'VOICE_INVALID_AUDIO':
+        return 'No se grabó nada. Intenta de nuevo.';
+      case 'VOICE_NOT_UNDERSTOOD':
+        return 'No te entendí. Repite la pregunta.';
+      case 'SENSITIVE_MESSAGE':
+        return 'Retira contraseñas o claves de tu consulta.';
+      case 'INVALID_MESSAGE':
+        return 'Tu pregunta es demasiado larga. Intenta con algo más corto.';
+      case 'VOICE_TOO_LARGE':
+        return 'La grabación es demasiado larga. Intenta con menos de 30 segundos.';
+      case 'VOICE_UNSUPPORTED_FORMAT':
+        return 'Este navegador no puede enviar audio válido. Usa el chat de texto.';
+      case 'PROVIDER_RATE_LIMIT':
+        return 'El servicio de voz recibió demasiadas solicitudes. Espera un momento o escribe.';
+      case 'PROVIDER_REJECTED':
+        return 'No se pudo transcribir el audio. Intenta de nuevo.';
+      case 'PROVIDER_TIMEOUT':
+      case 'PROVIDER_UNAVAILABLE':
+      case 'VOICE_UNAVAILABLE':
+        return 'El servicio de voz no está disponible. Intenta de nuevo o usa el chat de texto.';
+      case 'CONVERSATION_NOT_FOUND':
+        return 'La conversación expiró. Tu próximo mensaje inicia una nueva.';
+      case 'CONVERSATION_BUSY':
+        return 'La conversación está procesando otro mensaje. Intenta de nuevo en unos segundos.';
+      case 'CONVERSATION_ROLE_CHANGED':
+        return 'Cambió tu rol activo. Inicia una nueva conversación.';
+      case 'CONVERSATION_LIMIT':
+        return 'Alcanzaste el límite de conversaciones. Espera un momento o inicia otra.';
+      case 'CONFIRMATION_RESULT_UNCERTAIN':
+        return 'No se pudo verificar el resultado. Consulta el estado de la confirmación antes de reintentar.';
+    }
+    if (error.status === 401) return 'Tu sesión expiró. Vuelve a iniciar sesión.';
+    if (error.status === 403) {
+      return detalle ?? 'Tu sesión no permite usar la voz. Escribe tu consulta.';
+    }
+    if (error.status === 0) return 'No se pudo conectar con el asistente. Revisa tu conexión.';
+    return detalle ?? 'No se pudo procesar la voz. Intenta de nuevo o escribe tu consulta.';
+  }
+
   private mensajeError(error: unknown): string {
     if (!(error instanceof HttpErrorResponse)) {
       return 'El asistente tardó demasiado en responder. Intenta de nuevo.';
     }
-    const cuerpo =
-      error.error && typeof error.error === 'object'
-        ? (error.error as Partial<ErrorRespuesta>)
-        : null;
+    const detalle = this.detalleError(error);
     const codigo = this.codigoError(error);
-    const detalle = typeof cuerpo?.mensaje === 'string' ? cuerpo.mensaje : null;
     switch (codigo) {
       case 'CONVERSATION_NOT_FOUND':
         return 'La conversación expiró. Escribe de nuevo para iniciar otra.';
