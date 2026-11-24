@@ -1,0 +1,66 @@
+:host {
+  display: block;
+  max-width: 100%;
+  padding-block-start: var(--ur-space-12);
+  border-top: var(--ur-border);
+}
+
+fieldset {
+  display: grid;
+  gap: var(--ur-space-12);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  padding: 0;
+  margin-block-end: var(--ur-space-4);
+}
+
+.progreso {
+  color: var(--ur-color-muted);
+}
+
+.ur-field {
+  gap: var(--ur-space-4);
+}
+
+.ur-field :where(input, select, textarea) {
+  min-inline-size: 0;
+  font-size: max(1rem, var(--ur-type-body-size));
+}
+
+.ur-field textarea {
+  resize: vertical;
+}
+
+.ur-field__error:empty {
+  margin-block-start: calc(-1 * var(--ur-space-4));
+}
+
+.solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ur-button {
+  justify-self: start;
+}
+
+.opciones,
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ur-space-8);
+}
+
+.opcion {
+  border-radius: var(--ur-radius-pill);
+  min-height: 2.75rem;
+}

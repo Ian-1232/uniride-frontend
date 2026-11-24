@@ -275,6 +275,15 @@
   color: var(--ur-color-muted);
 }
 
+.datos-enviados {
+  color: var(--ur-color-success-text);
+}
+
+.alternar-aclaracion {
+  justify-self: start;
+  min-height: 2.75rem;
+}
+
 .error-envio {
   display: flex;
   align-items: center;

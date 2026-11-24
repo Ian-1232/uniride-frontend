@@ -18,6 +18,7 @@ export class AgenteVozService {
   readonly vozAlta = signal(this.leerPreferencia());
 
   private grabador: MediaRecorder | null = null;
+  private turnoGrabacion = 0;
   private trozos: Blob[] = [];
   private flujo: MediaStream | null = null;
   private temporizador: ReturnType<typeof setTimeout> | null = null;
@@ -44,19 +45,22 @@ export class AgenteVozService {
     const mime = FORMATOS.find((tipo) => MediaRecorder.isTypeSupported(tipo));
     if (!mime) throw new Error('formato');
 
+    const turno = ++this.turnoGrabacion;
     const flujo = await navigator.mediaDevices.getUserMedia({ audio: true });
     try {
+      if (turno !== this.turnoGrabacion) throw new Error('grabacion-cancelada');
       const grabador = new MediaRecorder(flujo, { mimeType: mime, audioBitsPerSecond: 32000 });
-      this.trozos = [];
-      grabador.ondataavailable = (evento) => {
-        if (evento.data.size > 0) this.trozos.push(evento.data);
-      };
-      grabador.start();
       this.grabador = grabador;
       this.flujo = flujo;
+      this.trozos = [];
+      grabador.ondataavailable = (evento) => {
+        if (this.grabador === grabador && evento.data.size > 0) this.trozos.push(evento.data);
+      };
+      grabador.start();
       this.temporizador = setTimeout(alCortar, LIMITE_GRABACION_MS);
     } catch (error) {
-      flujo.getTracks().forEach((pista) => pista.stop());
+      if (this.flujo === flujo) this.limpiar();
+      else flujo.getTracks().forEach((pista) => pista.stop());
       throw error;
     }
   }
@@ -70,6 +74,10 @@ export class AgenteVozService {
     }
     return new Promise((resolve) => {
       grabador.onstop = () => {
+        if (this.grabador !== grabador) {
+          resolve(null);
+          return;
+        }
         const audio = new Blob(this.trozos, { type: grabador.mimeType || 'audio/webm' });
         this.limpiar();
         resolve(audio);
@@ -84,6 +92,7 @@ export class AgenteVozService {
   }
 
   cancelar(): void {
+    this.turnoGrabacion++;
     this.limpiarTemporizador();
     if (this.grabador && this.grabador.state !== 'inactive') {
       this.grabador.onstop = null;

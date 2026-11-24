@@ -10,16 +10,20 @@
       <span class="avatar" aria-hidden="true">IA</span>
       <div class="chat-identidad">
         <h2 id="asistente-titulo">Asistente UniRide</h2>
-        <div class="chat-estado">
-          <span class="ur-status ur-status--success">En línea</span>
-          <span class="ur-caption">Responde al instante</span>
+        <div class="chat-estado" role="status">
+          <span
+            class="ur-status"
+            [class.ur-status--success]="estadoAsistente() === 'En línea'"
+            [class.ur-status--warning]="estadoAsistente() === 'Necesita atención'"
+            >{{ estadoAsistente() }}</span
+          >
         </div>
       </div>
       @if (mensajes().length) {
         <button
           type="button"
           class="ur-button ur-button--secondary ur-button--compact"
-          [disabled]="ocupado()"
+          [disabled]="solicitandoPermiso()"
           (click)="nuevaConversacion()"
         >
           Nueva conversación
@@ -82,54 +86,59 @@
             }
 
             @if (chat.confirmacion; as confirmacion) {
-              <div class="confirmacion">
-                <p class="ur-label">
-                  {{ chat.resolucion ? 'Confirmación' : 'Confirmación pendiente' }}
-                </p>
-                <p>{{ confirmacion.resumen }}</p>
-                <p class="ur-caption">Caduca a las {{ horaCaduca(confirmacion.expira) }}</p>
-                @if (!chat.resolucion && !chat.decisionEnviada) {
-                  <p class="ur-caption">Di «sí» para confirmar o «no» para cancelar.</p>
-                }
-                @if (chat.resolucion) {
-                  <p class="ur-caption">Estado: {{ etiquetaResolucion(chat.resolucion) }}</p>
-                  @if (
-                    chat.resolucion === 'RECHAZADA' ||
-                    chat.resolucion === 'RESULTADO_INCIERTO' ||
-                    chat.resolucion === 'ACLARACION_REQUERIDA'
-                  ) {
-                    <button
-                      type="button"
-                      class="ur-button ur-button--secondary ur-button--compact"
-                      [disabled]="consultando() === confirmacion.id"
-                      (click)="consultarEstado(confirmacion.id)"
-                    >
-                      {{ consultando() === confirmacion.id ? 'Consultando…' : 'Consultar estado' }}
-                    </button>
+              @if (estadoTarjeta(chat); as estado) {
+                <div class="confirmacion">
+                  <p class="ur-label">
+                    {{ estado === 'PENDIENTE' ? 'Confirmación pendiente' : 'Confirmación' }}
+                  </p>
+                  <p>{{ confirmacion.resumen }}</p>
+                  @if (estado === 'PENDIENTE') {
+                    <p class="ur-caption">Caduca a las {{ horaCaduca(confirmacion.expira) }}</p>
+                    <p class="ur-caption">Di «sí» para confirmar o «no» para cancelar.</p>
+                    <div class="confirmacion-acciones">
+                      <button
+                        type="button"
+                        class="ur-button ur-button--compact"
+                        [disabled]="ocupado()"
+                        (click)="decidir(chat, true)"
+                      >
+                        Confirmar
+                      </button>
+                      <button
+                        type="button"
+                        class="ur-button ur-button--secondary ur-button--compact"
+                        [disabled]="ocupado()"
+                        (click)="decidir(chat, false)"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  } @else {
+                    <p class="ur-caption">Estado: {{ etiquetaResolucion(estado) }}</p>
+                    @if (confirmacion.resultado?.detalle; as detalle) {
+                      <p>{{ detalle }}</p>
+                    }
+                    @if (
+                      estado === 'ANTERIOR' ||
+                      estado === 'PENDIENTE_ANTERIOR' ||
+                      estado === 'RECHAZADA' ||
+                      estado === 'RESULTADO_INCIERTO' ||
+                      estado === 'ACLARACION_REQUERIDA'
+                    ) {
+                      <button
+                        type="button"
+                        class="ur-button ur-button--secondary ur-button--compact"
+                        [disabled]="ocupado()"
+                        (click)="consultarEstado(confirmacion.id)"
+                      >
+                        {{
+                          consultando() === confirmacion.id ? 'Consultando…' : 'Consultar estado'
+                        }}
+                      </button>
+                    }
                   }
-                } @else if (chat.decisionEnviada) {
-                  <p class="ur-caption">Decisión enviada.</p>
-                } @else {
-                  <div class="confirmacion-acciones">
-                    <button
-                      type="button"
-                      class="ur-button ur-button--compact"
-                      [disabled]="ocupado()"
-                      (click)="decidir(chat, true)"
-                    >
-                      Confirmar
-                    </button>
-                    <button
-                      type="button"
-                      class="ur-button ur-button--secondary ur-button--compact"
-                      [disabled]="ocupado()"
-                      (click)="decidir(chat, false)"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                }
-              </div>
+                </div>
+              }
             }
 
             @if (chat.viajes.length) {
@@ -239,6 +248,38 @@
               </div>
             }
 
+            @if (aclaracionActiva(); as aclaracion) {
+              @if (aclaracion.mensajeId === chat.id) {
+                @if (aclaracion.incierta) {
+                  <p class="ur-message ur-message--warning">
+                    Resultado incierto. Revisa la solicitud antes de repetirla.
+                  </p>
+                }
+                <div [hidden]="aclaracion.oculta" [id]="'formulario-' + chat.id">
+                  <app-formulario-aclaracion
+                    [especificacion]="aclaracion.especificacion"
+                    [prefijo]="'aclaracion-' + chat.id"
+                    [ocupado]="ocupado() || !!aclaracion.incierta"
+                    [enviando]="enviandoDatos()"
+                    [reintento]="!!aclaracion.corregir"
+                    (enviarDatos)="enviarAclaracion(chat.id, $event)"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="ur-button ur-button--secondary ur-button--compact alternar-aclaracion"
+                  [attr.aria-expanded]="!aclaracion.oculta"
+                  [attr.aria-controls]="'formulario-' + chat.id"
+                  [disabled]="ocupado()"
+                  (click)="alternarAclaracion(chat.id)"
+                >
+                  {{ aclaracion.oculta ? 'Mostrar formulario' : 'Ocultar formulario' }}
+                </button>
+              }
+            }
+            @if (chat.datosEnviados) {
+              <p class="ur-caption datos-enviados">Datos enviados</p>
+            }
             <span class="hora">{{ chat.hora }}</span>
           </div>
         </div>
@@ -247,7 +288,7 @@
       @if (enviando()) {
         <div class="mensaje mensaje--asistente">
           <span class="avatar" aria-hidden="true">IA</span>
-          <div class="burbuja escribiendo" role="status">Escribiendo…</div>
+          <div class="burbuja escribiendo" aria-hidden="true">{{ estadoAsistente() }}</div>
         </div>
       }
     </div>
@@ -259,6 +300,7 @@
           <button
             type="button"
             class="ur-button ur-button--secondary ur-button--compact"
+            [disabled]="ocupado()"
             (click)="reintentar()"
           >
             Reintentar
@@ -267,7 +309,7 @@
       </div>
     }
 
-    <form class="composer" (submit)="enviarDesdeFormulario($event)">
+    <form class="composer" aria-label="Chat de texto" (submit)="enviarDesdeFormulario($event)">
       @if (vozError(); as errorVoz) {
         <p class="voz-aviso" role="alert">{{ errorVoz }}</p>
       }
@@ -319,7 +361,7 @@
           [class.composer-mic--grabando]="grabando()"
           [attr.aria-pressed]="grabando()"
           [attr.aria-label]="grabando() ? 'Detener grabación y enviar' : 'Grabar mensaje de voz'"
-          [disabled]="enviando() || transcribiendo() || solicitandoPermiso()"
+          [disabled]="chatProcesando() || solicitandoPermiso()"
           (click)="alternarMicrofono()"
         >
           @if (grabando()) {
