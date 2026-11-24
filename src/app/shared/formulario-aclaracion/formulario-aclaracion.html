@@ -1,0 +1,103 @@
+@if (campoRapido(); as campo) {
+  <div class="opciones" role="group" [attr.aria-label]="campo.etiqueta">
+    @for (opcion of campo.opciones; track opcion.valor) {
+      <button
+        type="button"
+        class="ur-button ur-button--secondary opcion"
+        [disabled]="ocupado()"
+        (click)="elegir(campo, opcion.valor)"
+      >
+        {{ opcion.etiqueta }}
+      </button>
+    }
+  </div>
+} @else {
+  <form
+    [formGroup]="formulario()"
+    (ngSubmit)="enviar()"
+    (input)="sinDatos.set(false)"
+    (change)="sinDatos.set(false)"
+    [attr.aria-labelledby]="prefijo() + '-titulo'"
+  >
+    <fieldset [disabled]="ocupado()">
+      <legend [id]="prefijo() + '-titulo'" class="ur-label">Completa los datos</legend>
+      <span class="solo-lector" aria-live="polite" aria-atomic="true">{{ anuncioError() }}</span>
+      <p class="ur-caption progreso">{{ progreso() }}</p>
+      @for (campo of especificacion().campos; track campo.id) {
+        <div
+          class="ur-field"
+          [class.ur-field--error]="error(campo)"
+          (focusout)="anunciarError(campo)"
+        >
+          <label class="ur-label" [for]="id(campo)">
+            {{ campo.etiqueta }}{{ campo.obligatorio ? '' : ' (opcional)' }}
+          </label>
+          @switch (campo.tipo) {
+            @case ('select') {
+              <select
+                [id]="id(campo)"
+                [formControlName]="campo.id"
+                [attr.required]="campo.obligatorio ? '' : null"
+                [attr.aria-invalid]="!!error(campo)"
+                [attr.aria-describedby]="descritoPor(campo)"
+              >
+                <option [ngValue]="null">Selecciona una opción</option>
+                @for (opcion of campo.opciones; track opcion.valor) {
+                  <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+                }
+              </select>
+            }
+            @case ('textarea') {
+              <textarea
+                rows="2"
+                [id]="id(campo)"
+                [formControlName]="campo.id"
+                [attr.required]="campo.obligatorio ? '' : null"
+                [attr.maxlength]="campo.longitudMaxima ?? null"
+                [attr.aria-invalid]="!!error(campo)"
+                [attr.aria-describedby]="descritoPor(campo)"
+              ></textarea>
+            }
+            @case ('number') {
+              <input
+                type="number"
+                inputmode="numeric"
+                step="1"
+                [id]="id(campo)"
+                [formControlName]="campo.id"
+                [attr.required]="campo.obligatorio ? '' : null"
+                [attr.min]="campo.minimo ?? null"
+                [attr.max]="campo.maximo ?? null"
+                [attr.aria-invalid]="!!error(campo)"
+                [attr.aria-describedby]="descritoPor(campo)"
+              />
+            }
+            @default {
+              <input
+                [type]="campo.tipo"
+                [id]="id(campo)"
+                [formControlName]="campo.id"
+                [attr.required]="campo.obligatorio ? '' : null"
+                [attr.maxlength]="campo.longitudMaxima ?? null"
+                [attr.aria-invalid]="!!error(campo)"
+                [attr.aria-describedby]="descritoPor(campo)"
+              />
+            }
+          }
+          @if (campo.ayuda) {
+            <p class="ur-caption" [id]="id(campo) + '-ayuda'">{{ campo.ayuda }}</p>
+          }
+          <p class="ur-field__error" [id]="id(campo) + '-error'">
+            {{ error(campo) }}
+          </p>
+        </div>
+      }
+      @if (sinDatos()) {
+        <p class="ur-field__error" role="alert">Completa al menos un campo.</p>
+      }
+      <button type="submit" class="ur-button" [disabled]="ocupado()">
+        {{ enviando() ? 'Enviando datos…' : reintento() ? 'Reintentar envío' : 'Enviar datos' }}
+      </button>
+    </fieldset>
+  </form>
+}

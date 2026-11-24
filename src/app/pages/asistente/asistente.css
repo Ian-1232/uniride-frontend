@@ -275,6 +275,10 @@
   color: var(--ur-color-muted);
 }
 
+.datos-enviados {
+  color: var(--ur-color-success-text);
+}
+
 .error-envio {
   display: flex;
   align-items: center;

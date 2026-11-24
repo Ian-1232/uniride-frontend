@@ -352,18 +352,23 @@ describe('Módulo 2 HTTP integration', () => {
     h.detectChanges();
 
     const componente = instancia(h, GenerarViaje);
-    componente.form.patchValue({ fecha: new Date(2026, 10, 20), hora: '07:30' });
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + 1);
+    const fechaLocal = new Intl.DateTimeFormat('sv-SE', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(fecha);
+    componente.form.patchValue({ fecha, hora: '07:30' });
     h.detectChanges();
     await pulsar(h, 'Generar viaje');
 
     const req = http.expectOne('/api/rutas/5/viajes');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ fecha: '2026-11-20', hora: '07:30' });
+    expect(req.request.body).toEqual({ fecha: fechaLocal, hora: '07:30' });
     req.flush(
       {
         id: 21,
         rutaId: 5,
-        fecha: '2026-11-20',
+        fecha: fechaLocal,
         hora: '07:30:00',
         dia: 'Viernes',
         confirmado: false,

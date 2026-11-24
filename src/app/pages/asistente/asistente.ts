@@ -4,13 +4,16 @@ import {
   DestroyRef,
   ElementRef,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { Subject, finalize, takeUntil } from 'rxjs';
+import { EspecificacionAclaracion, ValoresAclaracion } from '../../core/models/aclaracion.models';
 import {
   AdvertenciaAgente,
   ChatRespuesta,
@@ -25,6 +28,11 @@ import {
 import { AgenteService } from '../../core/services/agente.service';
 import { AgenteVozService } from '../../core/services/agente-voz.service';
 import { AuthService } from '../../core/services/auth.service';
+import {
+  AclaracionFormularioService,
+  LIMITE_MENSAJE_AGENTE,
+} from '../../core/services/aclaracion-formulario.service';
+import { FormularioAclaracionComponent } from '../../shared/formulario-aclaracion/formulario-aclaracion';
 
 const MIN_AUDIO_BYTES = 1024;
 
@@ -50,6 +58,14 @@ interface MensajeChat {
   readonly paginacion: Paginacion | null;
   readonly resolucion: EstadoResolucion | null;
   readonly decisionEnviada: boolean;
+  readonly datosEnviados: boolean;
+}
+
+interface AclaracionActiva {
+  readonly mensajeId: number;
+  readonly conversacionId: string;
+  readonly especificacion: EspecificacionAclaracion;
+  readonly usuarioId?: number;
 }
 
 interface OpcionesMensaje {
@@ -86,7 +102,7 @@ function leerPaginacion(resultados: readonly ResultadoAgente[]): Paginacion | nu
 
 @Component({
   selector: 'app-asistente',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, FormularioAclaracionComponent],
   templateUrl: './asistente.html',
   styleUrl: './asistente.css',
 })
@@ -94,15 +110,18 @@ export class Asistente {
   private readonly agente = inject(AgenteService);
   protected readonly voz = inject(AgenteVozService);
   private readonly auth = inject(AuthService);
+  private readonly formularios = inject(AclaracionFormularioService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly mensaje = new FormControl('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(1000)],
+    validators: [Validators.required, Validators.maxLength(LIMITE_MENSAJE_AGENTE)],
   });
   protected readonly mensajes = signal<readonly MensajeChat[]>([]);
   protected readonly conversacionId = signal<string | null>(null);
   protected readonly enviando = signal(false);
+  protected readonly enviandoDatos = signal(false);
+  protected readonly aclaracionActiva = signal<AclaracionActiva | null>(null);
   protected readonly consultando = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly pendiente = signal<string | null>(null);
@@ -111,7 +130,28 @@ export class Asistente {
   protected readonly transcribiendo = signal(false);
   protected readonly duracion = signal(0);
   protected readonly vozError = signal<string | null>(null);
-  protected readonly ocupado = computed(() => this.enviando() || this.transcribiendo());
+  protected readonly chatProcesando = computed(() => this.enviando() || this.transcribiendo());
+  protected readonly ocupado = computed(
+    () =>
+      this.chatProcesando() ||
+      this.auth.changingRole() ||
+      this.solicitandoPermiso() ||
+      this.grabando(),
+  );
+  protected readonly estadoAsistente = computed(() => {
+    if (this.enviandoDatos()) return 'Enviando datos…';
+    if (this.transcribiendo()) return 'Procesando mensaje de voz…';
+    if (this.enviando()) return 'Preparando respuesta…';
+    if (this.error() || this.vozError()) return 'Necesita atención';
+    const ultimo = this.mensajes()
+      .filter(({ autor }) => autor === 'asistente')
+      .at(-1);
+    if (ultimo?.confirmacion && !ultimo.decisionEnviada) {
+      return 'Esperando confirmación';
+    }
+    if (ultimo?.advertencia || ultimo?.tonoOperacion === 'danger') return 'Necesita atención';
+    return 'En línea';
+  });
   protected readonly nombre = computed(() => this.auth.currentUser()?.nombre ?? '');
   protected readonly sugerencias = computed(() =>
     this.auth.isConductor()
@@ -131,16 +171,30 @@ export class Asistente {
 
   private readonly lista = viewChild<ElementRef<HTMLElement>>('lista');
   private readonly entrada = viewChild<ElementRef<HTMLTextAreaElement>>('entrada');
+  private readonly contextoSesion = computed(
+    () =>
+      `${this.auth.sessionVersion()}:${this.auth.currentUser()?.id ?? ''}:${this.auth.currentRole() ?? ''}`,
+  );
+  private contextoActual = this.contextoSesion();
+  private readonly cambioContexto = new Subject<void>();
   private secuencia = 0;
   private cronometro: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.detenerCronometro());
+    this.destroyRef.onDestroy(() => {
+      this.cancelarVoz();
+      this.voz.detenerVoz();
+    });
+    effect(() => {
+      const actual = this.contextoSesion();
+      untracked(() => this.actualizarContexto(actual));
+    });
   }
 
   protected enviar(): void {
+    if (!this.puedeEnviar()) return;
     const texto = this.mensaje.value.trim();
-    if (!texto || this.ocupado() || this.mensaje.invalid) return;
+    if (!texto || this.mensaje.invalid) return;
     this.mensaje.setValue('');
     this.intentar(texto, true);
   }
@@ -151,27 +205,62 @@ export class Asistente {
   }
 
   protected sugerir(texto: string): void {
-    if (this.ocupado()) return;
+    if (!this.puedeEnviar()) return;
     this.intentar(texto, true);
     this.entrada()?.nativeElement.focus();
   }
 
   protected reintentar(): void {
+    if (!this.puedeEnviar()) return;
     const texto = this.pendiente();
-    if (texto && !this.ocupado()) this.intentar(texto, false);
+    if (texto) this.intentar(texto, false);
+  }
+
+  protected enviarAclaracion(mensajeId: number, valores: ValoresAclaracion): void {
+    if (!this.puedeEnviar()) return;
+    const aclaracion = this.aclaracionActiva();
+    if (aclaracion?.mensajeId !== mensajeId || aclaracion.conversacionId !== this.conversacionId())
+      return;
+    const texto = this.formularios.construirMensaje(aclaracion.especificacion, valores);
+    if (!texto) return;
+    if (texto.length > LIMITE_MENSAJE_AGENTE) {
+      this.error.set(
+        'Los datos superan el límite del mensaje. Acorta algún campo o escribe en el chat.',
+      );
+      return;
+    }
+    this.intentar(texto, true, aclaracion);
   }
 
   protected nuevaConversacion(): void {
-    if (this.ocupado()) return;
+    if (this.chatProcesando() || this.solicitandoPermiso()) return;
+    this.reiniciarChat();
+    this.entrada()?.nativeElement.focus();
+  }
+
+  private puedeEnviar(): boolean {
+    return this.actualizarContexto(this.contextoSesion()) && !this.ocupado();
+  }
+
+  private actualizarContexto(actual: string): boolean {
+    if (actual === this.contextoActual) return true;
+    this.contextoActual = actual;
+    this.cambioContexto.next();
+    this.reiniciarChat();
+    return false;
+  }
+
+  private reiniciarChat(): void {
     this.cancelarVoz();
     this.voz.detenerVoz();
+    this.transcribiendo.set(false);
+    this.aclaracionActiva.set(null);
     this.mensajes.set([]);
     this.conversacionId.set(null);
     this.error.set(null);
     this.pendiente.set(null);
     this.vozError.set(null);
     this.mensaje.setValue('');
-    this.entrada()?.nativeElement.focus();
   }
 
   protected alPresionarEnter(event: KeyboardEvent): void {
@@ -182,12 +271,18 @@ export class Asistente {
   }
 
   protected decidir(mensaje: MensajeChat, confirmar: boolean): void {
-    if (this.ocupado() || mensaje.decisionEnviada) return;
+    if (!this.puedeEnviar() || mensaje.decisionEnviada) return;
     this.intentar(confirmar ? 'Sí, confirmo' : 'No, gracias', true);
   }
 
   protected alternarMicrofono(): void {
-    if (this.ocupado() || this.solicitandoPermiso()) return;
+    if (
+      !this.actualizarContexto(this.contextoSesion()) ||
+      this.auth.changingRole() ||
+      this.chatProcesando() ||
+      this.solicitandoPermiso()
+    )
+      return;
     if (this.grabando()) {
       void this.detenerYEnviarVoz();
       return;
@@ -212,17 +307,24 @@ export class Asistente {
   }
 
   private async empezarGrabacion(): Promise<void> {
+    const contexto = this.contextoActual;
     this.voz.detenerVoz();
     this.error.set(null);
     this.vozError.set(null);
     this.solicitandoPermiso.set(true);
     try {
       await this.voz.iniciar(() => void this.detenerYEnviarVoz());
+      if (this.destroyRef.destroyed || contexto !== this.contextoSesion()) {
+        this.voz.cancelar();
+        return;
+      }
       this.grabando.set(true);
       this.duracion.set(0);
       this.iniciarCronometro();
     } catch (error) {
-      this.vozError.set(this.mensajeErrorMicrofono(error));
+      if (!this.destroyRef.destroyed && contexto === this.contextoSesion()) {
+        this.vozError.set(this.mensajeErrorMicrofono(error));
+      }
     } finally {
       this.solicitandoPermiso.set(false);
     }
@@ -230,10 +332,14 @@ export class Asistente {
 
   private async detenerYEnviarVoz(): Promise<void> {
     if (!this.grabando()) return;
+    const contexto = this.contextoActual;
+    this.transcribiendo.set(true);
     this.grabando.set(false);
     this.detenerCronometro();
     const audio = await this.voz.detener();
+    if (this.destroyRef.destroyed || contexto !== this.contextoSesion()) return;
     if (!audio || audio.size < MIN_AUDIO_BYTES) {
+      this.transcribiendo.set(false);
       this.vozError.set('No se grabó nada. Intenta de nuevo.');
       return;
     }
@@ -241,23 +347,31 @@ export class Asistente {
   }
 
   private enviarVoz(audio: Blob): void {
-    this.transcribiendo.set(true);
+    if (!this.actualizarContexto(this.contextoSesion()) || this.auth.changingRole()) {
+      this.transcribiendo.set(false);
+      return;
+    }
+    this.aclaracionActiva.set(null);
     this.error.set(null);
     this.vozError.set(null);
     this.pendiente.set(null);
     this.voz
       .enviar(audio, this.conversacionId())
       .pipe(
+        takeUntil(this.cambioContexto),
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.transcribiendo.set(false)),
       )
       .subscribe({
         next: (voz) => {
-          this.agregar('usuario', voz.transcripcion?.trim() || 'Mensaje de voz');
-          this.mostrarRespuesta(voz.respuesta);
+          if (!this.actualizarContexto(this.contextoSesion())) return;
+          const transcripcion = voz.transcripcion?.trim() ?? '';
+          this.agregar('usuario', transcripcion || 'Mensaje de voz');
+          this.mostrarRespuesta(voz.respuesta, transcripcion);
           this.voz.hablar(voz.textoHablado?.trim() || voz.respuesta.message);
         },
         error: (error: unknown) => {
+          if (!this.actualizarContexto(this.contextoSesion())) return;
           if (
             error instanceof HttpErrorResponse &&
             (error.status === 404 || this.codigoError(error) === 'CONVERSATION_ROLE_CHANGED')
@@ -281,21 +395,30 @@ export class Asistente {
   }
 
   protected consultarEstado(id: string): void {
-    if (this.consultando()) return;
+    if (
+      !this.actualizarContexto(this.contextoSesion()) ||
+      this.auth.changingRole() ||
+      this.consultando()
+    )
+      return;
     this.consultando.set(id);
     this.agente
       .confirmacion(id)
       .pipe(
+        takeUntil(this.cambioContexto),
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.consultando.set(null)),
       )
       .subscribe({
-        next: (confirmacion) =>
+        next: (confirmacion) => {
+          if (!this.actualizarContexto(this.contextoSesion())) return;
           this.agregar(
             'asistente',
             `Estado de la confirmación: ${this.etiquetaResolucion(confirmacion.estado)}. ${confirmacion.resumen}`,
-          ),
+          );
+        },
         error: (error: unknown) => {
+          if (!this.actualizarContexto(this.contextoSesion())) return;
           if (error instanceof HttpErrorResponse && error.status === 410) {
             this.agregar('asistente', 'La confirmación expiró y no se ejecutó.');
             return;
@@ -306,7 +429,7 @@ export class Asistente {
   }
 
   protected siguientePagina(): void {
-    if (!this.ocupado()) this.intentar('Muéstrame la página siguiente', true);
+    if (this.puedeEnviar()) this.intentar('Muéstrame la página siguiente', true);
   }
 
   protected horaCaduca(expira: string): string {
@@ -457,37 +580,91 @@ export class Asistente {
     }
   }
 
-  private intentar(texto: string, mostrarUsuario: boolean): void {
+  private intentar(texto: string, mostrarUsuario: boolean, aclaracion?: AclaracionActiva): void {
     this.voz.detenerVoz();
     this.enviando.set(true);
+    this.enviandoDatos.set(!!aclaracion);
     this.error.set(null);
     this.vozError.set(null);
     this.pendiente.set(null);
-    if (mostrarUsuario) this.agregar('usuario', texto);
+    if (!aclaracion) this.aclaracionActiva.set(null);
+    if (aclaracion?.usuarioId) {
+      this.mensajes.update((lista) =>
+        lista.map((mensaje) =>
+          mensaje.id === aclaracion.usuarioId ? { ...mensaje, texto } : mensaje,
+        ),
+      );
+    } else if (mostrarUsuario) {
+      this.agregar('usuario', texto);
+      if (aclaracion) this.aclaracionActiva.set({ ...aclaracion, usuarioId: this.secuencia });
+    }
+    this.scroll();
 
     this.agente
       .chat(texto, this.conversacionId())
       .pipe(
+        takeUntil(this.cambioContexto),
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.enviando.set(false)),
+        finalize(() => {
+          this.enviando.set(false);
+          this.enviandoDatos.set(false);
+        }),
       )
       .subscribe({
-        next: (respuesta) => this.mostrarRespuesta(respuesta),
+        next: (respuesta) => {
+          if (!this.actualizarContexto(this.contextoSesion())) return;
+          const fallo = respuesta.operacion?.estado === 'ERROR' || !!respuesta.advertencia;
+          if (aclaracion) {
+            if (
+              fallo &&
+              respuesta.advertencia?.codigo !== 'CONFIRMATION_RESULT_UNCERTAIN' &&
+              !respuesta.resolucionConfirmacion &&
+              !respuesta.operacion?.confirmacion &&
+              aclaracion.conversacionId === respuesta.conversationId
+            ) {
+              this.error.set(
+                respuesta.advertencia?.mensaje ??
+                  respuesta.operacion?.detalle ??
+                  'No se pudieron enviar los datos. Intenta de nuevo.',
+              );
+            } else {
+              this.aclaracionActiva.set(null);
+              if (!fallo) this.marcarDatosEnviados(aclaracion.mensajeId);
+            }
+          }
+          this.mostrarRespuesta(respuesta, texto);
+        },
         error: (error: unknown) => {
+          if (!this.actualizarContexto(this.contextoSesion())) return;
           if (
             error instanceof HttpErrorResponse &&
             (error.status === 404 || this.codigoError(error) === 'CONVERSATION_ROLE_CHANGED')
           ) {
             this.conversacionId.set(null);
+            this.aclaracionActiva.set(null);
+          }
+          if (
+            error instanceof HttpErrorResponse &&
+            (error.status === 401 ||
+              error.status === 403 ||
+              this.codigoError(error) === 'CONFIRMATION_RESULT_UNCERTAIN')
+          ) {
+            this.aclaracionActiva.set(null);
           }
           this.error.set(this.mensajeError(error));
-          this.pendiente.set(texto);
+          if (!aclaracion) this.pendiente.set(texto);
           this.scroll();
         },
       });
   }
 
-  private mostrarRespuesta(respuesta: ChatRespuesta): void {
+  private marcarDatosEnviados(id: number): void {
+    this.mensajes.update((lista) =>
+      lista.map((mensaje) => (mensaje.id === id ? { ...mensaje, datosEnviados: true } : mensaje)),
+    );
+  }
+
+  private mostrarRespuesta(respuesta: ChatRespuesta, solicitud: string): void {
     if (respuesta.conversationId) this.conversacionId.set(respuesta.conversationId);
     this.aplicarResolucion(respuesta);
     const operacion = respuesta.operacion;
@@ -516,6 +693,14 @@ export class Asistente {
         paginacion: leerPaginacion(respuesta.resultados ?? []),
       },
     );
+    const especificacion = this.formularios.crear(respuesta, solicitud);
+    if (especificacion) {
+      this.aclaracionActiva.set({
+        mensajeId: this.secuencia,
+        conversacionId: respuesta.conversationId,
+        especificacion,
+      });
+    }
   }
 
   private agregar(
@@ -544,6 +729,7 @@ export class Asistente {
         paginacion: opciones.paginacion ?? null,
         resolucion: null,
         decisionEnviada: false,
+        datosEnviados: false,
       },
     ]);
     this.scroll();
@@ -584,7 +770,16 @@ export class Asistente {
   private scroll(): void {
     setTimeout(() => {
       const lista = this.lista()?.nativeElement;
-      if (lista) lista.scrollTop = lista.scrollHeight;
+      if (!lista) return;
+      if (this.aclaracionActiva()?.mensajeId === this.mensajes().at(-1)?.id) {
+        const mensaje = lista.querySelector('app-formulario-aclaracion')?.closest('.mensaje');
+        if (mensaje && mensaje.getBoundingClientRect().height > lista.clientHeight) {
+          lista.scrollTop +=
+            mensaje.getBoundingClientRect().top - lista.getBoundingClientRect().top;
+          return;
+        }
+      }
+      lista.scrollTop = lista.scrollHeight;
     });
   }
 

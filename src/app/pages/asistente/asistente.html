@@ -10,16 +10,20 @@
       <span class="avatar" aria-hidden="true">IA</span>
       <div class="chat-identidad">
         <h2 id="asistente-titulo">Asistente UniRide</h2>
-        <div class="chat-estado">
-          <span class="ur-status ur-status--success">En línea</span>
-          <span class="ur-caption">Responde al instante</span>
+        <div class="chat-estado" role="status">
+          <span
+            class="ur-status"
+            [class.ur-status--success]="estadoAsistente() === 'En línea'"
+            [class.ur-status--warning]="estadoAsistente() === 'Necesita atención'"
+            >{{ estadoAsistente() }}</span
+          >
         </div>
       </div>
       @if (mensajes().length) {
         <button
           type="button"
           class="ur-button ur-button--secondary ur-button--compact"
-          [disabled]="ocupado()"
+          [disabled]="chatProcesando() || solicitandoPermiso()"
           (click)="nuevaConversacion()"
         >
           Nueva conversación
@@ -239,6 +243,21 @@
               </div>
             }
 
+            @if (aclaracionActiva(); as aclaracion) {
+              @if (aclaracion.mensajeId === chat.id) {
+                <app-formulario-aclaracion
+                  [especificacion]="aclaracion.especificacion"
+                  [prefijo]="'aclaracion-' + chat.id"
+                  [ocupado]="ocupado()"
+                  [enviando]="enviandoDatos()"
+                  [reintento]="!!aclaracion.usuarioId && !!error()"
+                  (enviarDatos)="enviarAclaracion(chat.id, $event)"
+                />
+              }
+            }
+            @if (chat.datosEnviados) {
+              <p class="ur-caption datos-enviados">Datos enviados</p>
+            }
             <span class="hora">{{ chat.hora }}</span>
           </div>
         </div>
@@ -247,7 +266,7 @@
       @if (enviando()) {
         <div class="mensaje mensaje--asistente">
           <span class="avatar" aria-hidden="true">IA</span>
-          <div class="burbuja escribiendo" role="status">Escribiendo…</div>
+          <div class="burbuja escribiendo" aria-hidden="true">{{ estadoAsistente() }}</div>
         </div>
       }
     </div>
@@ -259,6 +278,7 @@
           <button
             type="button"
             class="ur-button ur-button--secondary ur-button--compact"
+            [disabled]="ocupado()"
             (click)="reintentar()"
           >
             Reintentar
@@ -267,7 +287,7 @@
       </div>
     }
 
-    <form class="composer" (submit)="enviarDesdeFormulario($event)">
+    <form class="composer" aria-label="Chat de texto" (submit)="enviarDesdeFormulario($event)">
       @if (vozError(); as errorVoz) {
         <p class="voz-aviso" role="alert">{{ errorVoz }}</p>
       }
@@ -319,7 +339,7 @@
           [class.composer-mic--grabando]="grabando()"
           [attr.aria-pressed]="grabando()"
           [attr.aria-label]="grabando() ? 'Detener grabación y enviar' : 'Grabar mensaje de voz'"
-          [disabled]="enviando() || transcribiendo() || solicitandoPermiso()"
+          [disabled]="chatProcesando() || solicitandoPermiso()"
           (click)="alternarMicrofono()"
         >
           @if (grabando()) {
