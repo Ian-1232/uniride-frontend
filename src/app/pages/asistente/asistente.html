@@ -119,6 +119,8 @@
                       <p>{{ detalle }}</p>
                     }
                     @if (
+                      estado === 'ANTERIOR' ||
+                      estado === 'PENDIENTE_ANTERIOR' ||
                       estado === 'RECHAZADA' ||
                       estado === 'RESULTADO_INCIERTO' ||
                       estado === 'ACLARACION_REQUERIDA'

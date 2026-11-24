@@ -5,11 +5,16 @@ import { provideRouter } from '@angular/router';
 import { TimeoutError, throwError } from 'rxjs';
 import { CampoAclaracion } from '../../core/models/aclaracion.models';
 import {
+  ACLARACION_CORREGIR_RUTA,
   ACLARACION_CUPO,
   ACLARACION_ELIMINAR,
+  ACLARACION_HORA_VIAJE,
   ACLARACION_REFERENCIAS,
   ACLARACION_RUTA,
+  ACLARACION_RUTAS_SIMILARES,
+  ACLARACION_VIAJE,
   CONVERSACION,
+  CONVERSACION_VIAJE,
   respuestaV1,
 } from '../../core/models/aclaracion.testing';
 import {
@@ -841,9 +846,12 @@ describe('Asistente', () => {
     };
   }
 
-  function confirmarPropuesta(confirmacion: ConfirmacionResumen): ChatRespuesta {
+  function confirmarPropuesta(
+    confirmacion: ConfirmacionResumen,
+    conversationId = CONVERSACION,
+  ): ChatRespuesta {
     return respuesta({
-      conversationId: CONVERSACION,
+      conversationId,
       message: 'Revisa la propuesta.',
       operacion: { estado: 'CONFIRMACION_REQUERIDA', detalle: '', id: null, confirmacion },
     });
@@ -864,6 +872,165 @@ describe('Asistente', () => {
     await esperar();
     fixture.detectChanges();
   }
+
+  const propuestaViaje = (): ConfirmacionResumen => ({
+    ...propuesta('c886e9b6-b416-4676-9f77-34fec2c238d0'),
+    tipo: 'CREAR_VIAJE',
+    resumen:
+      'Programar un viaje desde Surco hacia UPC Monterrico el 2026-12-10 a las 07:00, capacidad 3. Referencias: Parque central.',
+    parametros: { fecha: '2026-12-10', hora: '07:00:00' },
+  });
+
+  it('envía la referencia exacta y la fecha en el parcial de crear viaje, y luego pide solo la hora', () => {
+    const fixture = crear();
+    preguntar(fixture, 'Quiero crear un viaje', {
+      ...respuestaV1(
+        ACLARACION_VIAJE,
+        'Selecciona una de tus rutas registradas. Indica la fecha de salida. Indica la hora de salida.',
+      ),
+      conversationId: CONVERSACION_VIAJE,
+    });
+    const form = formulario(fixture);
+    const opciones = ACLARACION_VIAJE.campos[0].opciones!;
+    expect(
+      Array.from(form.querySelectorAll('label'), (label) => label.textContent?.trim()),
+    ).toEqual(['Ruta registrada', 'Fecha', 'Hora']);
+    expect(
+      Array.from(form.querySelectorAll('option'), (opcion) => opcion.textContent?.trim()).slice(1),
+    ).toEqual(opciones.map(({ etiqueta }) => etiqueta));
+    campo(form, 'ruta', opciones[0].valor);
+    campo(form, 'fecha', '2026-12-10');
+    fixture.detectChanges();
+    boton(fixture, 'Enviar datos disponibles')!.click();
+    const parcial = http.expectOne('/api/agent/chat');
+    expect(parcial.request.body).toEqual({
+      conversationId: CONVERSACION_VIAJE,
+      message:
+        'Datos de aclaración ' +
+        ACLARACION_VIAJE.id +
+        ': {"ruta":"22e75375-0978-45ea-8535-bb459262cf32","fecha":"2026-12-10"}',
+    });
+    parcial.flush({
+      ...respuestaV1(ACLARACION_HORA_VIAJE, 'Indica hora.'),
+      conversationId: CONVERSACION_VIAJE,
+    });
+    fixture.detectChanges();
+    expect(formulario(fixture)).not.toBe(form);
+    expect(
+      Array.from(formulario(fixture).querySelectorAll('label'), (label) =>
+        label.textContent?.trim(),
+      ),
+    ).toEqual(['Hora']);
+    expect(fixture.nativeElement.textContent).toContain('Ruta registrada: ' + opciones[0].etiqueta);
+    expect(fixture.nativeElement.textContent).toContain('Fecha: 2026-12-10');
+    expect(fixture.nativeElement.textContent).not.toContain(opciones[0].valor);
+    expect(fixture.nativeElement.textContent).not.toContain(ACLARACION_VIAJE.id);
+
+    campo(formulario(fixture), 'hora', '07:00');
+    enviarDatos(formulario(fixture));
+    const hora = http.expectOne('/api/agent/chat');
+    expect(hora.request.body).toEqual({
+      conversationId: CONVERSACION_VIAJE,
+      message: 'Datos de aclaración ' + ACLARACION_HORA_VIAJE.id + ': {"hora":"07:00"}',
+    });
+    const recibo = propuestaViaje();
+    hora.flush(confirmarPropuesta(recibo, CONVERSACION_VIAJE));
+    fixture.detectChanges();
+    expect(formulario(fixture)).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain(recibo.resumen);
+    expect(boton(fixture, 'Confirmar')).toBeDefined();
+    http.expectNone(
+      (req) => req.url.startsWith('/api/rutas') || req.url.includes('/confirmaciones/'),
+    );
+  });
+
+  it('reemplaza el descriptor al corregir un origen inexistente con fecha y hora ya conocidas', () => {
+    const fixture = crear();
+    const conversationId = 'b0d0c397-2f78-4814-af53-7ac0cb9e6b19';
+    preguntar(fixture, 'Quiero crear un viaje', {
+      ...respuestaV1(ACLARACION_VIAJE),
+      conversationId,
+    });
+    const anterior = formulario(fixture);
+    escribir(fixture, 'Desde Lurín el 10 de diciembre de 2026 a las 7 de la mañana');
+    enviar(fixture);
+    const correccion = http.expectOne('/api/agent/chat');
+    expect(correccion.request.body.conversationId).toBe(conversationId);
+    correccion.flush({
+      ...respuestaV1(
+        ACLARACION_CORREGIR_RUTA,
+        'No encontré una ruta propia con esos datos. Selecciona una de tus rutas registradas.',
+      ),
+      conversationId,
+      operacion: {
+        estado: 'NO_ENCONTRADO',
+        detalle: 'No encontré una ruta propia.',
+        id: null,
+        confirmacion: null,
+      },
+    });
+    fixture.detectChanges();
+    expect(anterior.isConnected).toBe(false);
+    expect(formulario(fixture)).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('app-formulario-aclaracion input')).toHaveLength(
+      0,
+    );
+    const opcion = ACLARACION_CORREGIR_RUTA.campos[0].opciones![0];
+    boton(fixture, opcion.etiqueta)!.click();
+    const ruta = http.expectOne('/api/agent/chat');
+    expect(ruta.request.body).toEqual({
+      conversationId,
+      message:
+        'Datos de aclaración 728a3aad-033c-4c94-ba9b-58538be4d3ed: {"ruta":"19252154-3384-46d4-abce-0d35ef31e4c5"}',
+    });
+    ruta.flush(confirmarPropuesta(propuestaViaje(), conversationId));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('2026-12-10 a las 07:00');
+    expect(fixture.nativeElement.textContent).not.toContain(opcion.valor);
+    expect(boton(fixture, 'Confirmar')).toBeDefined();
+  });
+
+  it('distingue rutas del mismo origen, destino y capacidad mediante las etiquetas de Java', () => {
+    const fixture = crear();
+    const conversationId = 'acf33180-8e74-4eed-ab8e-0317eb17d2fd';
+    preguntar(
+      fixture,
+      'Crea un viaje desde Surco el 10 de diciembre de 2026 a las 7 de la mañana',
+      {
+        ...respuestaV1(
+          ACLARACION_RUTAS_SIMILARES,
+          'Coinciden varias de tus rutas. Selecciona una de tus rutas registradas.',
+        ),
+        conversationId,
+      },
+    );
+    const opciones = ACLARACION_RUTAS_SIMILARES.campos[0].opciones!;
+    const botones = fixture.nativeElement.querySelectorAll(
+      'app-formulario-aclaracion button',
+    ) as NodeListOf<HTMLButtonElement>;
+    expect(Array.from(botones, (boton) => boton.textContent?.trim())).toEqual(
+      opciones.map(({ etiqueta }) => etiqueta),
+    );
+    botones[1].click();
+    const req = http.expectOne('/api/agent/chat');
+    expect(req.request.body).toEqual({
+      conversationId,
+      message:
+        'Datos de aclaración 658ff969-eddf-4083-9acc-39626ed499ad: {"ruta":"944c514d-1969-431b-a286-225abaf9e363"}',
+    });
+    req.flush(
+      confirmarPropuesta(
+        {
+          ...propuestaViaje(),
+          resumen: propuestaViaje().resumen.replace('Parque central', 'Óvalo Higuereta'),
+        },
+        conversationId,
+      ),
+    );
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Ruta registrada: ' + opciones[1].etiqueta);
+    expect(fixture.nativeElement.textContent).not.toContain(opciones[1].valor);
+  });
 
   it('envía un parcial, reemplaza el UUID y presenta los datos sin el formato interno', () => {
     const fixture = crear();
@@ -1127,6 +1294,126 @@ describe('Asistente', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Estado: Cancelada');
   });
+
+  it('retira la decisión anterior tras HTTP 429 y permite consultar el recibo sin reactivarla', () => {
+    const fixture = crear();
+    const recibo = propuesta('58b6621e-a7e6-4de6-8ebf-4a320b87142e');
+    preguntar(fixture, 'Prepara una ruta', confirmarPropuesta(recibo));
+    const confirmar = boton(fixture, 'Confirmar')!;
+    escribir(fixture, '¿Cuántos viajes he completado?');
+    enviar(fixture);
+    expect(confirmar.disabled).toBe(true);
+    const turno = http.expectOne('/api/agent/chat');
+    expect(turno.request.body.conversationId).toBe(CONVERSACION);
+    turno.flush(
+      { mensaje: 'Límite del proveedor.', campos: { codigo: 'PROVIDER_RATE_LIMIT' } },
+      { status: 429, statusText: 'Too Many Requests' },
+    );
+    fixture.detectChanges();
+    expect(boton(fixture, 'Confirmar')).toBeUndefined();
+    expect(boton(fixture, 'Cancelar')).toBeUndefined();
+    expect(boton(fixture, 'Reintentar')).toBeUndefined();
+    expect(fixture.nativeElement.textContent).toContain('Propuesta anterior');
+    confirmar.click();
+    boton(fixture, 'Consultar estado')!.click();
+    const consulta = http.expectOne('/api/agent/confirmaciones/' + recibo.id);
+    expect(consulta.request.method).toBe('GET');
+    consulta.flush(recibo);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Pendiente en el servidor (propuesta anterior)',
+    );
+    expect(boton(fixture, 'Confirmar')).toBeUndefined();
+    expect(boton(fixture, 'Cancelar')).toBeUndefined();
+    http.expectNone((req) => req.method === 'POST');
+  });
+
+  it.each([
+    [429, 'PROVIDER_RATE_LIMIT'],
+    [503, 'PROVIDER_UNAVAILABLE'],
+  ])('retira las acciones de la propuesta ante un fallo de voz %s (%s)', async (status, codigo) => {
+    const fixture = crear();
+    const recibo = propuesta('89b870c2-f869-4b32-9c83-b38a91099a5c');
+    preguntar(fixture, 'Prepara una ruta', confirmarPropuesta(recibo));
+    await enviarGrabacion(fixture);
+    expect(boton(fixture, 'Confirmar')?.disabled).toBe(true);
+    const voz = http.expectOne('/api/agent/voz');
+    expect((voz.request.body as FormData).get('conversationId')).toBe(CONVERSACION);
+    voz.flush({ campos: { codigo } }, { status, statusText: 'Provider Error' });
+    fixture.detectChanges();
+    expect(boton(fixture, 'Confirmar')).toBeUndefined();
+    expect(boton(fixture, 'Cancelar')).toBeUndefined();
+    boton(fixture, 'Consultar estado')!.click();
+    http.expectOne({ method: 'GET', url: '/api/agent/confirmaciones/' + recibo.id }).flush(recibo);
+    fixture.detectChanges();
+    expect(boton(fixture, 'Confirmar')).toBeUndefined();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Pendiente en el servidor (propuesta anterior)',
+    );
+  });
+
+  it('conserva la propuesta cuando la transcripción falla antes de abrir un turno', async () => {
+    const fixture = crear();
+    const recibo = propuesta('370db1cf-76ae-4fdb-bda3-0b69a6b9559b');
+    preguntar(fixture, 'Prepara una ruta', confirmarPropuesta(recibo));
+    await enviarGrabacion(fixture);
+    http
+      .expectOne('/api/agent/voz')
+      .flush(
+        { campos: { codigo: 'VOICE_NOT_UNDERSTOOD' } },
+        { status: 400, statusText: 'Bad Request' },
+      );
+    fixture.detectChanges();
+    expect(boton(fixture, 'Confirmar')?.disabled).toBe(false);
+    boton(fixture, 'Cancelar')!.click();
+    http
+      .expectOne({ method: 'POST', url: '/api/agent/confirmaciones/' + recibo.id + '/cancelar' })
+      .flush({ ...recibo, estado: 'CANCELADA' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Estado: Cancelada');
+  });
+
+  it.each(['rol', 'conversación'])(
+    'descarta una consulta pendiente de confirmación al cambiar de %s',
+    (cambio) => {
+      const auth = TestBed.inject(AuthService);
+      const usuario = {
+        id: 7,
+        nombre: 'Ana',
+        correo: 'ana@upc.edu.pe',
+        rol: 'CONDUCTOR',
+        cuentaVerificada: true,
+      };
+      const token =
+        'eyJhbGciOiJIUzI1NiJ9.' +
+        btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 60 })) +
+        '.fixture';
+      auth
+        .login({ correo: usuario.correo, contrasena: 'fixture', recordarDispositivo: false })
+        .subscribe();
+      http.expectOne('/api/auth/login').flush({ usuario, token });
+      const fixture = crear();
+      const recibo = propuesta('6282694a-9254-4d65-91ac-ea3e20aabe78');
+      preguntar(fixture, 'Prepara una ruta', confirmarPropuesta(recibo));
+      preguntar(fixture, 'Consulta mi historial', respuesta());
+      boton(fixture, 'Consultar estado')!.click();
+      const consulta = http.expectOne({
+        method: 'GET',
+        url: '/api/agent/confirmaciones/' + recibo.id,
+      });
+      fixture.detectChanges();
+      if (cambio === 'rol') {
+        auth.cambiarRol('PASAJERO').subscribe();
+        http.expectOne('/api/usuarios/rol').flush({ ...usuario, rol: 'PASAJERO' });
+      } else {
+        boton(fixture, 'Nueva conversación')!.click();
+      }
+      fixture.detectChanges();
+      expect(consulta.cancelled).toBe(true);
+      expect(fixture.nativeElement.querySelectorAll('.confirmacion')).toHaveLength(0);
+      auth.clearSession();
+    },
+  );
 
   it('reconcilia una confirmación mediante voz con el UUID de su recibo', async () => {
     const fixture = crear();

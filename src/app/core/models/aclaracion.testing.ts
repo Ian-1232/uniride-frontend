@@ -68,6 +68,79 @@ export const ACLARACION_CUPO: AclaracionAgenteV1 = {
   respuestaBreve: 'campo',
 };
 
+export const CONVERSACION_VIAJE = 'ff4291eb-85b3-4e85-93a4-f9b745340452';
+export const ACLARACION_VIAJE: AclaracionAgenteV1 = {
+  version: 1,
+  id: '6c9bace5-d0b3-4d34-a1cb-5d45b0ea57a3',
+  operacion: 'crearViaje',
+  contexto: 'Crear un viaje',
+  campos: [
+    {
+      id: 'ruta',
+      etiqueta: 'Ruta registrada',
+      tipo: 'select',
+      obligatorio: true,
+      opciones: [
+        {
+          valor: '22e75375-0978-45ea-8535-bb459262cf32',
+          etiqueta: '1. Surco → UPC Monterrico · Capacidad 3 · Parque central',
+        },
+        {
+          valor: '0c262523-1dd1-42dd-9bb0-a48fe4a6d4bc',
+          etiqueta: '2. Barranco → UPC Villa · Capacidad 4 · Plaza de Barranco',
+        },
+      ],
+    },
+    { id: 'fecha', etiqueta: 'Fecha', tipo: 'date', obligatorio: true },
+    { id: 'hora', etiqueta: 'Hora', tipo: 'time', obligatorio: true },
+  ],
+  respuestaBreve: 'campo',
+};
+
+export const ACLARACION_HORA_VIAJE: AclaracionAgenteV1 = {
+  ...ACLARACION_VIAJE,
+  id: 'ee009b7e-63ee-46fd-95be-282778f935cb',
+  campos: [ACLARACION_VIAJE.campos[2]],
+};
+
+export const ACLARACION_CORREGIR_RUTA: AclaracionAgenteV1 = {
+  ...ACLARACION_VIAJE,
+  id: '728a3aad-033c-4c94-ba9b-58538be4d3ed',
+  campos: [
+    {
+      ...ACLARACION_VIAJE.campos[0],
+      opciones: [
+        {
+          valor: '19252154-3384-46d4-abce-0d35ef31e4c5',
+          etiqueta: '1. Surco → UPC Monterrico · Capacidad 3 · Parque central',
+        },
+      ],
+    },
+  ],
+  opcionesRapidas: true,
+  respuestaBreve: 'valor',
+};
+
+export const ACLARACION_RUTAS_SIMILARES: AclaracionAgenteV1 = {
+  ...ACLARACION_CORREGIR_RUTA,
+  id: '658ff969-eddf-4083-9acc-39626ed499ad',
+  campos: [
+    {
+      ...ACLARACION_VIAJE.campos[0],
+      opciones: [
+        {
+          valor: 'e1fdc837-3e2b-4838-8776-3c34980e17bd',
+          etiqueta: '1. Surco → UPC Monterrico · Capacidad 3 · Parque central',
+        },
+        {
+          valor: '944c514d-1969-431b-a286-225abaf9e363',
+          etiqueta: '2. Surco → UPC Monterrico · Capacidad 3 · Óvalo Higuereta',
+        },
+      ],
+    },
+  ],
+};
+
 export function respuestaV1(
   aclaracion: AclaracionAgenteV1,
   message = 'Completa los datos solicitados.',

@@ -42,6 +42,8 @@ import { FormularioAclaracionComponent } from '../../shared/formulario-aclaracio
 
 const MIN_AUDIO_BYTES = 1024;
 
+type ResolucionTarjeta = EstadoResolucion | 'PENDIENTE_ANTERIOR';
+
 interface Paginacion {
   readonly pagina: number;
   readonly total: number;
@@ -62,7 +64,7 @@ interface MensajeChat {
   readonly detalleOperacion: string | null;
   readonly tonoOperacion: string | null;
   readonly paginacion: Paginacion | null;
-  readonly resolucion: EstadoResolucion | null;
+  readonly resolucion: ResolucionTarjeta | null;
   readonly datosEnviados: boolean;
 }
 
@@ -360,7 +362,7 @@ export class Asistente {
       });
   }
 
-  protected estadoTarjeta(chat: MensajeChat): EstadoResolucion | 'PENDIENTE' | 'ANTERIOR' | null {
+  protected estadoTarjeta(chat: MensajeChat): ResolucionTarjeta | 'PENDIENTE' | 'ANTERIOR' | null {
     if (!chat.confirmacion) return null;
     if (chat.resolucion) return chat.resolucion;
     const activa = this.confirmacionActiva();
@@ -475,7 +477,7 @@ export class Asistente {
         },
         error: (error: unknown) => {
           if (!this.actualizarContexto(this.contextoSesion())) return;
-          this.reconciliarFallo(error);
+          this.reconciliarFallo(error, 'voz');
           this.vozError.set(
             this.esIncierto(error)
               ? 'El mensaje de voz pudo llegar al asistente. Revisa el resultado antes de repetirlo.'
@@ -541,16 +543,17 @@ export class Asistente {
       this.error.set('No se pudo verificar el recibo. Consulta el estado de la confirmación.');
       return;
     }
-    if (recibo.estado !== 'PENDIENTE' && this.confirmacionActiva()?.id === id) {
-      this.confirmacionActiva.set(null);
-    }
+    const esActiva = this.confirmacionActiva()?.id === id;
+    if (recibo.estado !== 'PENDIENTE' && esActiva) this.confirmacionActiva.set(null);
     this.error.set(null);
-    this.marcarConfirmacion(id, recibo.estado === 'PENDIENTE' ? null : recibo.estado, recibo);
+    const estado =
+      recibo.estado === 'PENDIENTE' ? (esActiva ? null : 'PENDIENTE_ANTERIOR') : recibo.estado;
+    this.marcarConfirmacion(id, estado, recibo);
   }
 
   private marcarConfirmacion(
     id: string,
-    estado: EstadoResolucion | null,
+    estado: ResolucionTarjeta | null,
     recibo?: ConfirmacionResumen,
   ): void {
     this.mensajes.update((lista) =>
@@ -691,6 +694,8 @@ export class Asistente {
     switch (estado) {
       case 'ANTERIOR':
         return 'Propuesta anterior';
+      case 'PENDIENTE_ANTERIOR':
+        return 'Pendiente en el servidor (propuesta anterior)';
       case 'EJECUTADA':
         return 'Ejecutada';
       case 'CANCELADA':
@@ -803,9 +808,21 @@ export class Asistente {
     );
   }
 
-  private reconciliarFallo(error: unknown): void {
+  private reconciliarFallo(error: unknown, canal: 'texto' | 'voz' = 'texto'): void {
     if (error instanceof HttpErrorResponse) {
       const codigo = this.codigoError(error);
+      // Estos errores de transcripción se producen antes de abrir la conversación.
+      if (
+        canal === 'voz' &&
+        [
+          'VOICE_INVALID_AUDIO',
+          'VOICE_NOT_UNDERSTOOD',
+          'VOICE_TOO_LARGE',
+          'VOICE_UNSUPPORTED_FORMAT',
+          'VOICE_UNAVAILABLE',
+        ].includes(codigo ?? '')
+      )
+        return;
       if (
         [401, 403, 404].includes(error.status) ||
         codigo === 'CONVERSATION_ROLE_CHANGED' ||
@@ -819,18 +836,17 @@ export class Asistente {
       }
       if (codigo === 'CLARIFICATION_EXPIRED') {
         this.aclaracionActiva.set(null);
-        return;
       }
     }
     if (this.esIncierto(error)) {
       this.aclaracionActiva.update((actual) => actual && { ...actual, incierta: true });
       const confirmacion = this.confirmacionActiva();
       if (confirmacion) {
-        // El turno pudo reemplazar el contexto. El recibo permite consultar esa propuesta por UUID.
         this.marcarConfirmacion(confirmacion.id, 'RESULTADO_INCIERTO');
-        this.confirmacionActiva.set(null);
       }
     }
+    // Un error controlado del proveedor tampoco garantiza que el turno conservó la propuesta anterior.
+    this.confirmacionActiva.set(null);
   }
 
   private marcarDatosEnviados(id: number): void {
