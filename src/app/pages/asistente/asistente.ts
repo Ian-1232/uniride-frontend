@@ -13,7 +13,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, finalize, takeUntil } from 'rxjs';
-import { EspecificacionAclaracion, ValoresAclaracion } from '../../core/models/aclaracion.models';
+import {
+  EnvioAclaracion,
+  EspecificacionAclaracion,
+  ValoresAclaracion,
+  esEstructurada,
+} from '../../core/models/aclaracion.models';
+import { esUuidAgente } from '../../core/models/aclaracion-validacion';
 import {
   AdvertenciaAgente,
   ChatRespuesta,
@@ -57,7 +63,6 @@ interface MensajeChat {
   readonly tonoOperacion: string | null;
   readonly paginacion: Paginacion | null;
   readonly resolucion: EstadoResolucion | null;
-  readonly decisionEnviada: boolean;
   readonly datosEnviados: boolean;
 }
 
@@ -65,7 +70,17 @@ interface AclaracionActiva {
   readonly mensajeId: number;
   readonly conversacionId: string;
   readonly especificacion: EspecificacionAclaracion;
-  readonly usuarioId?: number;
+  readonly sesion: string;
+  readonly incierta?: boolean;
+  readonly oculta?: boolean;
+  readonly corregir?: boolean;
+}
+
+interface ConfirmacionActiva {
+  readonly id: string;
+  readonly mensajeId: number;
+  readonly conversacionId: string;
+  readonly expira: string;
 }
 
 interface OpcionesMensaje {
@@ -124,13 +139,18 @@ export class Asistente {
   protected readonly aclaracionActiva = signal<AclaracionActiva | null>(null);
   protected readonly consultando = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
-  protected readonly pendiente = signal<string | null>(null);
+  protected readonly pendiente = signal<EnvioAclaracion | null>(null);
+  private readonly confirmacionActiva = signal<ConfirmacionActiva | null>(null);
+  private readonly caducadaLocalmente = signal<string | null>(null);
+  protected readonly decidiendo = signal(false);
   protected readonly grabando = signal(false);
   protected readonly solicitandoPermiso = signal(false);
   protected readonly transcribiendo = signal(false);
   protected readonly duracion = signal(0);
   protected readonly vozError = signal<string | null>(null);
-  protected readonly chatProcesando = computed(() => this.enviando() || this.transcribiendo());
+  protected readonly chatProcesando = computed(
+    () => this.enviando() || this.transcribiendo() || this.decidiendo() || !!this.consultando(),
+  );
   protected readonly ocupado = computed(
     () =>
       this.chatProcesando() ||
@@ -140,15 +160,16 @@ export class Asistente {
   );
   protected readonly estadoAsistente = computed(() => {
     if (this.enviandoDatos()) return 'Enviando datos…';
+    if (this.decidiendo()) return 'Resolviendo confirmación…';
+    if (this.consultando()) return 'Consultando confirmación…';
     if (this.transcribiendo()) return 'Procesando mensaje de voz…';
     if (this.enviando()) return 'Preparando respuesta…';
     if (this.error() || this.vozError()) return 'Necesita atención';
     const ultimo = this.mensajes()
       .filter(({ autor }) => autor === 'asistente')
       .at(-1);
-    if (ultimo?.confirmacion && !ultimo.decisionEnviada) {
-      return 'Esperando confirmación';
-    }
+    if (ultimo && this.estadoTarjeta(ultimo) === 'PENDIENTE') return 'Esperando confirmación';
+    if (this.aclaracionActiva() && !this.aclaracionActiva()?.incierta) return 'Esperando datos';
     if (ultimo?.advertencia || ultimo?.tonoOperacion === 'danger') return 'Necesita atención';
     return 'En línea';
   });
@@ -178,6 +199,8 @@ export class Asistente {
   private contextoActual = this.contextoSesion();
   private readonly cambioContexto = new Subject<void>();
   private secuencia = 0;
+  private generacion = 0;
+  private usaAclaracionesV1 = false;
   private cronometro: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
@@ -188,6 +211,18 @@ export class Asistente {
     effect(() => {
       const actual = this.contextoSesion();
       untracked(() => this.actualizarContexto(actual));
+    });
+    effect((limpiar) => {
+      const activa = this.confirmacionActiva();
+      this.caducadaLocalmente.set(null);
+      if (!activa) return;
+      const restante = Date.parse(activa.expira) - Date.now();
+      if (!Number.isFinite(restante) || restante <= 0) {
+        this.caducadaLocalmente.set(activa.id);
+        return;
+      }
+      const reloj = setTimeout(() => this.caducadaLocalmente.set(activa.id), restante);
+      limpiar(() => clearTimeout(reloj));
     });
   }
 
@@ -212,28 +247,42 @@ export class Asistente {
 
   protected reintentar(): void {
     if (!this.puedeEnviar()) return;
-    const texto = this.pendiente();
-    if (texto) this.intentar(texto, false);
+    const envio = this.pendiente();
+    if (envio) this.intentar(envio, false);
   }
 
   protected enviarAclaracion(mensajeId: number, valores: ValoresAclaracion): void {
     if (!this.puedeEnviar()) return;
     const aclaracion = this.aclaracionActiva();
-    if (aclaracion?.mensajeId !== mensajeId || aclaracion.conversacionId !== this.conversacionId())
+    if (
+      aclaracion?.mensajeId !== mensajeId ||
+      aclaracion.conversacionId !== this.conversacionId() ||
+      aclaracion.sesion !== this.contextoActual ||
+      aclaracion.incierta ||
+      aclaracion.oculta
+    )
       return;
-    const texto = this.formularios.construirMensaje(aclaracion.especificacion, valores);
-    if (!texto) return;
-    if (texto.length > LIMITE_MENSAJE_AGENTE) {
+    const envio = this.formularios.prepararEnvio(aclaracion.especificacion, valores);
+    if (!envio) return;
+    if (envio.tecnico.length > LIMITE_MENSAJE_AGENTE) {
       this.error.set(
-        'Los datos superan el límite del mensaje. Acorta algún campo o escribe en el chat.',
+        'El mensaje supera los 1000 caracteres. Acorta algún valor o deja un campo vacío para enviar los datos disponibles.',
       );
       return;
     }
-    this.intentar(texto, true, aclaracion);
+    this.intentar(envio, false, aclaracion);
+  }
+
+  protected alternarAclaracion(mensajeId: number): void {
+    const aclaracion = this.aclaracionActiva();
+    if (this.puedeEnviar() && aclaracion?.mensajeId === mensajeId) {
+      this.aclaracionActiva.set({ ...aclaracion, oculta: !aclaracion.oculta });
+      if (aclaracion.oculta) this.scroll(true);
+    }
   }
 
   protected nuevaConversacion(): void {
-    if (this.chatProcesando() || this.solicitandoPermiso()) return;
+    if (this.solicitandoPermiso()) return;
     this.reiniciarChat();
     this.entrada()?.nativeElement.focus();
   }
@@ -245,16 +294,19 @@ export class Asistente {
   private actualizarContexto(actual: string): boolean {
     if (actual === this.contextoActual) return true;
     this.contextoActual = actual;
-    this.cambioContexto.next();
     this.reiniciarChat();
     return false;
   }
 
   private reiniciarChat(): void {
+    this.generacion++;
+    this.usaAclaracionesV1 = false;
+    this.cambioContexto.next();
     this.cancelarVoz();
     this.voz.detenerVoz();
     this.transcribiendo.set(false);
     this.aclaracionActiva.set(null);
+    this.confirmacionActiva.set(null);
     this.mensajes.set([]);
     this.conversacionId.set(null);
     this.error.set(null);
@@ -271,8 +323,54 @@ export class Asistente {
   }
 
   protected decidir(mensaje: MensajeChat, confirmar: boolean): void {
-    if (!this.puedeEnviar() || mensaje.decisionEnviada) return;
-    this.intentar(confirmar ? 'Sí, confirmo' : 'No, gracias', true);
+    if (!this.puedeEnviar()) return;
+    const actual = this.mensajes().find(({ id }) => id === mensaje.id);
+    if (!actual || this.estadoTarjeta(actual) !== 'PENDIENTE') return;
+    const activa = this.confirmacionActiva();
+    if (!activa || !(Date.parse(activa.expira) > Date.now())) return;
+    this.error.set(null);
+    this.pendiente.set(null);
+    this.decidiendo.set(true);
+    this.agente
+      .decidir(activa.id, confirmar)
+      .pipe(
+        takeUntil(this.cambioContexto),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.decidiendo.set(false)),
+      )
+      .subscribe({
+        next: (recibo) => {
+          if (this.actualizarContexto(this.contextoSesion()))
+            this.actualizarRecibo(activa.id, recibo);
+        },
+        error: (error: unknown) => {
+          if (!this.actualizarContexto(this.contextoSesion())) return;
+          if (error instanceof HttpErrorResponse && error.status === 410) {
+            this.marcarConfirmacion(activa.id, 'EXPIRADA');
+            this.confirmacionActiva.set(null);
+          } else if (this.esIncierto(error)) {
+            this.marcarConfirmacion(activa.id, 'RESULTADO_INCIERTO');
+            this.error.set('Consulta el estado de esta confirmación antes de volver a decidir.');
+          } else {
+            this.marcarConfirmacion(activa.id, 'RECHAZADA');
+            this.confirmacionActiva.set(null);
+            this.error.set(this.mensajeError(error));
+          }
+        },
+      });
+  }
+
+  protected estadoTarjeta(chat: MensajeChat): EstadoResolucion | 'PENDIENTE' | 'ANTERIOR' | null {
+    if (!chat.confirmacion) return null;
+    if (chat.resolucion) return chat.resolucion;
+    const activa = this.confirmacionActiva();
+    if (
+      activa?.mensajeId !== chat.id ||
+      activa.id !== chat.confirmacion.id ||
+      activa.conversacionId !== this.conversacionId()
+    )
+      return 'ANTERIOR';
+    return this.caducadaLocalmente() === activa.id ? 'EXPIRADA' : 'PENDIENTE';
   }
 
   protected alternarMicrofono(): void {
@@ -333,11 +431,17 @@ export class Asistente {
   private async detenerYEnviarVoz(): Promise<void> {
     if (!this.grabando()) return;
     const contexto = this.contextoActual;
+    const generacion = this.generacion;
     this.transcribiendo.set(true);
     this.grabando.set(false);
     this.detenerCronometro();
     const audio = await this.voz.detener();
-    if (this.destroyRef.destroyed || contexto !== this.contextoSesion()) return;
+    if (
+      this.destroyRef.destroyed ||
+      contexto !== this.contextoSesion() ||
+      generacion !== this.generacion
+    )
+      return;
     if (!audio || audio.size < MIN_AUDIO_BYTES) {
       this.transcribiendo.set(false);
       this.vozError.set('No se grabó nada. Intenta de nuevo.');
@@ -351,7 +455,6 @@ export class Asistente {
       this.transcribiendo.set(false);
       return;
     }
-    this.aclaracionActiva.set(null);
     this.error.set(null);
     this.vozError.set(null);
     this.pendiente.set(null);
@@ -372,13 +475,12 @@ export class Asistente {
         },
         error: (error: unknown) => {
           if (!this.actualizarContexto(this.contextoSesion())) return;
-          if (
-            error instanceof HttpErrorResponse &&
-            (error.status === 404 || this.codigoError(error) === 'CONVERSATION_ROLE_CHANGED')
-          ) {
-            this.conversacionId.set(null);
-          }
-          this.vozError.set(this.mensajeErrorVoz(error));
+          this.reconciliarFallo(error);
+          this.vozError.set(
+            this.esIncierto(error)
+              ? 'El mensaje de voz pudo llegar al asistente. Revisa el resultado antes de repetirlo.'
+              : this.mensajeErrorVoz(error),
+          );
           this.scroll();
         },
       });
@@ -398,7 +500,10 @@ export class Asistente {
     if (
       !this.actualizarContexto(this.contextoSesion()) ||
       this.auth.changingRole() ||
-      this.consultando()
+      this.consultando() ||
+      this.chatProcesando() ||
+      !esUuidAgente(id) ||
+      !this.mensajes().some((mensaje) => mensaje.confirmacion?.id === id)
     )
       return;
     this.consultando.set(id);
@@ -412,20 +517,49 @@ export class Asistente {
       .subscribe({
         next: (confirmacion) => {
           if (!this.actualizarContexto(this.contextoSesion())) return;
-          this.agregar(
-            'asistente',
-            `Estado de la confirmación: ${this.etiquetaResolucion(confirmacion.estado)}. ${confirmacion.resumen}`,
-          );
+          this.actualizarRecibo(id, confirmacion);
         },
         error: (error: unknown) => {
           if (!this.actualizarContexto(this.contextoSesion())) return;
           if (error instanceof HttpErrorResponse && error.status === 410) {
-            this.agregar('asistente', 'La confirmación expiró y no se ejecutó.');
+            this.marcarConfirmacion(id, 'EXPIRADA');
+            if (this.confirmacionActiva()?.id === id) this.confirmacionActiva.set(null);
             return;
           }
           this.error.set(this.mensajeError(error));
         },
       });
+  }
+
+  private actualizarRecibo(id: string, recibo: ConfirmacionResumen): void {
+    if (
+      !recibo ||
+      recibo.id !== id ||
+      !['PENDIENTE', 'EJECUTADA', 'CANCELADA', 'EXPIRADA'].includes(recibo.estado)
+    ) {
+      this.marcarConfirmacion(id, 'RESULTADO_INCIERTO');
+      this.error.set('No se pudo verificar el recibo. Consulta el estado de la confirmación.');
+      return;
+    }
+    if (recibo.estado !== 'PENDIENTE' && this.confirmacionActiva()?.id === id) {
+      this.confirmacionActiva.set(null);
+    }
+    this.error.set(null);
+    this.marcarConfirmacion(id, recibo.estado === 'PENDIENTE' ? null : recibo.estado, recibo);
+  }
+
+  private marcarConfirmacion(
+    id: string,
+    estado: EstadoResolucion | null,
+    recibo?: ConfirmacionResumen,
+  ): void {
+    this.mensajes.update((lista) =>
+      lista.map((mensaje) =>
+        mensaje.confirmacion?.id === id
+          ? { ...mensaje, resolucion: estado, confirmacion: recibo ?? mensaje.confirmacion }
+          : mensaje,
+      ),
+    );
   }
 
   protected siguientePagina(): void {
@@ -555,6 +689,8 @@ export class Asistente {
 
   protected etiquetaResolucion(estado: string): string {
     switch (estado) {
+      case 'ANTERIOR':
+        return 'Propuesta anterior';
       case 'EJECUTADA':
         return 'Ejecutada';
       case 'CANCELADA':
@@ -580,28 +716,25 @@ export class Asistente {
     }
   }
 
-  private intentar(texto: string, mostrarUsuario: boolean, aclaracion?: AclaracionActiva): void {
+  private intentar(
+    solicitud: string | EnvioAclaracion,
+    mostrarUsuario: boolean,
+    aclaracion?: AclaracionActiva,
+  ): void {
+    const envio =
+      typeof solicitud === 'string' ? { visible: solicitud, tecnico: solicitud } : solicitud;
+    const { visible, tecnico } = envio;
     this.voz.detenerVoz();
     this.enviando.set(true);
     this.enviandoDatos.set(!!aclaracion);
     this.error.set(null);
     this.vozError.set(null);
     this.pendiente.set(null);
-    if (!aclaracion) this.aclaracionActiva.set(null);
-    if (aclaracion?.usuarioId) {
-      this.mensajes.update((lista) =>
-        lista.map((mensaje) =>
-          mensaje.id === aclaracion.usuarioId ? { ...mensaje, texto } : mensaje,
-        ),
-      );
-    } else if (mostrarUsuario) {
-      this.agregar('usuario', texto);
-      if (aclaracion) this.aclaracionActiva.set({ ...aclaracion, usuarioId: this.secuencia });
-    }
+    if (mostrarUsuario) this.agregar('usuario', visible);
     this.scroll();
 
     this.agente
-      .chat(texto, this.conversacionId())
+      .chat(tecnico, this.conversacionId())
       .pipe(
         takeUntil(this.cambioContexto),
         takeUntilDestroyed(this.destroyRef),
@@ -613,49 +746,91 @@ export class Asistente {
       .subscribe({
         next: (respuesta) => {
           if (!this.actualizarContexto(this.contextoSesion())) return;
-          const fallo = respuesta.operacion?.estado === 'ERROR' || !!respuesta.advertencia;
-          if (aclaracion) {
-            if (
-              fallo &&
-              respuesta.advertencia?.codigo !== 'CONFIRMATION_RESULT_UNCERTAIN' &&
-              !respuesta.resolucionConfirmacion &&
-              !respuesta.operacion?.confirmacion &&
-              aclaracion.conversacionId === respuesta.conversationId
-            ) {
-              this.error.set(
-                respuesta.advertencia?.mensaje ??
-                  respuesta.operacion?.detalle ??
-                  'No se pudieron enviar los datos. Intenta de nuevo.',
-              );
-            } else {
-              this.aclaracionActiva.set(null);
-              if (!fallo) this.marcarDatosEnviados(aclaracion.mensajeId);
-            }
+          const siguiente = this.leerAclaracion(respuesta, visible);
+          if (
+            aclaracion &&
+            !this.mismaAclaracion(aclaracion, siguiente, respuesta.conversationId) &&
+            !this.esRespuestaIncierta(respuesta) &&
+            respuesta.operacion?.estado !== 'ERROR' &&
+            (!respuesta.advertencia || siguiente || respuesta.operacion?.confirmacion)
+          ) {
+            this.agregar('usuario', visible);
+            this.marcarDatosEnviados(aclaracion.mensajeId);
           }
-          this.mostrarRespuesta(respuesta, texto);
+          this.mostrarRespuesta(respuesta, visible, siguiente);
         },
         error: (error: unknown) => {
           if (!this.actualizarContexto(this.contextoSesion())) return;
-          if (
+          const incierto = this.esIncierto(error);
+          const aptoParaReintento =
+            !aclaracion &&
+            !this.aclaracionActiva() &&
+            !this.confirmacionActiva() &&
             error instanceof HttpErrorResponse &&
-            (error.status === 404 || this.codigoError(error) === 'CONVERSATION_ROLE_CHANGED')
-          ) {
-            this.conversacionId.set(null);
-            this.aclaracionActiva.set(null);
+            ['CONVERSATION_BUSY', 'PROVIDER_RATE_LIMIT'].includes(this.codigoError(error) ?? '');
+          this.reconciliarFallo(error);
+          if (aptoParaReintento) this.pendiente.set(envio);
+          if (aclaracion && !incierto) {
+            this.aclaracionActiva.update((actual) => actual && { ...actual, corregir: true });
           }
-          if (
-            error instanceof HttpErrorResponse &&
-            (error.status === 401 ||
-              error.status === 403 ||
-              this.codigoError(error) === 'CONFIRMATION_RESULT_UNCERTAIN')
-          ) {
-            this.aclaracionActiva.set(null);
-          }
-          this.error.set(this.mensajeError(error));
-          if (!aclaracion) this.pendiente.set(texto);
+          this.error.set(
+            incierto
+              ? 'El mensaje pudo llegar al asistente. Revisa el resultado antes de repetir la solicitud.'
+              : this.mensajeError(error),
+          );
           this.scroll();
         },
       });
+  }
+
+  private esIncierto(error: unknown): boolean {
+    if (!(error instanceof HttpErrorResponse)) return true;
+    const codigo = this.codigoError(error);
+    return (
+      codigo === 'CONFIRMATION_RESULT_UNCERTAIN' ||
+      codigo === 'PREPARATION_RESULT_UNCERTAIN' ||
+      error.status === 0 ||
+      (error.status >= 500 &&
+        !['PROVIDER_TIMEOUT', 'PROVIDER_UNAVAILABLE', 'VOICE_UNAVAILABLE'].includes(codigo ?? ''))
+    );
+  }
+
+  private esRespuestaIncierta(respuesta: ChatRespuesta): boolean {
+    return (
+      ['PREPARATION_RESULT_UNCERTAIN', 'CONFIRMATION_RESULT_UNCERTAIN'].includes(
+        respuesta.advertencia?.codigo ?? '',
+      ) || respuesta.resolucionConfirmacion?.estado === 'RESULTADO_INCIERTO'
+    );
+  }
+
+  private reconciliarFallo(error: unknown): void {
+    if (error instanceof HttpErrorResponse) {
+      const codigo = this.codigoError(error);
+      if (
+        [401, 403, 404].includes(error.status) ||
+        codigo === 'CONVERSATION_ROLE_CHANGED' ||
+        codigo === 'CONVERSATION_NOT_FOUND'
+      ) {
+        this.conversacionId.set(null);
+        this.aclaracionActiva.set(null);
+        this.confirmacionActiva.set(null);
+        this.usaAclaracionesV1 = false;
+        return;
+      }
+      if (codigo === 'CLARIFICATION_EXPIRED') {
+        this.aclaracionActiva.set(null);
+        return;
+      }
+    }
+    if (this.esIncierto(error)) {
+      this.aclaracionActiva.update((actual) => actual && { ...actual, incierta: true });
+      const confirmacion = this.confirmacionActiva();
+      if (confirmacion) {
+        // El turno pudo reemplazar el contexto. El recibo permite consultar esa propuesta por UUID.
+        this.marcarConfirmacion(confirmacion.id, 'RESULTADO_INCIERTO');
+        this.confirmacionActiva.set(null);
+      }
+    }
   }
 
   private marcarDatosEnviados(id: number): void {
@@ -664,13 +839,51 @@ export class Asistente {
     );
   }
 
-  private mostrarRespuesta(respuesta: ChatRespuesta, solicitud: string): void {
-    if (respuesta.conversationId) this.conversacionId.set(respuesta.conversationId);
+  private leerAclaracion(
+    respuesta: ChatRespuesta,
+    solicitud: string,
+  ): EspecificacionAclaracion | null {
+    const tieneDescriptor = Object.hasOwn(respuesta, 'aclaracion');
+    if (
+      this.usaAclaracionesV1 &&
+      !tieneDescriptor &&
+      respuesta.conversationId === this.conversacionId()
+    )
+      return null;
+    return this.formularios.crear(respuesta, solicitud);
+  }
+
+  private mismaAclaracion(
+    anterior: AclaracionActiva,
+    siguiente: EspecificacionAclaracion | null,
+    conversacionId: string,
+  ): boolean {
+    return (
+      !!siguiente &&
+      conversacionId === anterior.conversacionId &&
+      esEstructurada(anterior.especificacion) &&
+      esEstructurada(siguiente) &&
+      anterior.especificacion.id === siguiente.id
+    );
+  }
+
+  private mostrarRespuesta(
+    respuesta: ChatRespuesta,
+    solicitud: string,
+    especificacion = this.leerAclaracion(respuesta, solicitud),
+  ): void {
+    if (respuesta.conversationId && respuesta.conversationId !== this.conversacionId()) {
+      this.confirmacionActiva.set(null);
+      this.usaAclaracionesV1 = false;
+      this.conversacionId.set(respuesta.conversationId);
+    }
+    this.usaAclaracionesV1 ||= Object.hasOwn(respuesta, 'aclaracion');
     this.aplicarResolucion(respuesta);
     const operacion = respuesta.operacion;
     const confirmacion =
       operacion?.estado === 'CONFIRMACION_REQUERIDA' &&
-      operacion.confirmacion?.estado === 'PENDIENTE'
+      operacion.confirmacion?.estado === 'PENDIENTE' &&
+      esUuidAgente(operacion.confirmacion.id)
         ? operacion.confirmacion
         : null;
     const detalleOperacion =
@@ -679,11 +892,23 @@ export class Asistente {
         : null;
     const tonoOperacion =
       detalleOperacion && operacion ? this.tonoEstadoOperacion(operacion.estado) : null;
+    const advertencia =
+      respuesta.advertencia?.codigo === 'CONFIRMATION_RESULT_UNCERTAIN'
+        ? {
+            ...respuesta.advertencia,
+            mensaje: 'Consulta el estado de la propuesta antes de volver a decidir.',
+          }
+        : respuesta.advertencia;
     this.agregar(
       'asistente',
-      respuesta.message?.trim() || 'El asistente no devolvió una respuesta.',
+      (respuesta.advertencia?.codigo === 'CONFIRMATION_RESULT_UNCERTAIN'
+        ? advertencia?.mensaje
+        : respuesta.message
+      )?.trim() ||
+        advertencia?.mensaje ||
+        'El asistente no devolvió una respuesta.',
       {
-        advertencia: respuesta.advertencia ?? null,
+        advertencia: advertencia ?? null,
         confirmacion,
         viajes: respuesta.viajes ?? [],
         rutas: respuesta.rutas ?? [],
@@ -693,14 +918,44 @@ export class Asistente {
         paginacion: leerPaginacion(respuesta.resultados ?? []),
       },
     );
-    const especificacion = this.formularios.crear(respuesta, solicitud);
-    if (especificacion) {
-      this.aclaracionActiva.set({
+    if (confirmacion && respuesta.conversationId) {
+      this.confirmacionActiva.set({
+        id: confirmacion.id,
         mensajeId: this.secuencia,
         conversacionId: respuesta.conversationId,
-        especificacion,
+        expira: confirmacion.expira,
       });
+      if (this.esRespuestaIncierta(respuesta))
+        this.marcarConfirmacion(confirmacion.id, 'RESULTADO_INCIERTO');
+    } else if (respuesta.resolucionConfirmacion?.estado !== 'RESULTADO_INCIERTO') {
+      this.confirmacionActiva.set(null);
     }
+    const anterior = this.aclaracionActiva();
+    if (
+      especificacion &&
+      anterior &&
+      this.mismaAclaracion(anterior, especificacion, respuesta.conversationId)
+    ) {
+      const iguales = JSON.stringify(anterior.especificacion) === JSON.stringify(especificacion);
+      this.aclaracionActiva.set({
+        ...anterior,
+        especificacion: iguales ? anterior.especificacion : especificacion,
+        incierta: false,
+        corregir: false,
+      });
+    } else {
+      this.aclaracionActiva.set(
+        especificacion
+          ? {
+              mensajeId: this.secuencia,
+              conversacionId: respuesta.conversationId,
+              especificacion,
+              sesion: this.contextoActual,
+            }
+          : null,
+      );
+    }
+    if (especificacion) this.scroll(true);
   }
 
   private agregar(
@@ -728,7 +983,6 @@ export class Asistente {
         tonoOperacion: opciones.tonoOperacion ?? null,
         paginacion: opciones.paginacion ?? null,
         resolucion: null,
-        decisionEnviada: false,
         datosEnviados: false,
       },
     ]);
@@ -739,41 +993,17 @@ export class Asistente {
   private aplicarResolucion(respuesta: ChatRespuesta): void {
     const resolucion = respuesta.resolucionConfirmacion;
     if (!resolucion) return;
-    this.mensajes.update((lista) => {
-      const id = resolucion.confirmacion?.id;
-      let objetivo = -1;
-      if (id) {
-        for (let i = lista.length - 1; i >= 0; i--) {
-          if (lista[i].confirmacion?.id === id) {
-            objetivo = i;
-            break;
-          }
-        }
-      }
-      if (objetivo < 0) {
-        for (let i = lista.length - 1; i >= 0; i--) {
-          if (lista[i].confirmacion && !lista[i].resolucion) {
-            objetivo = i;
-            break;
-          }
-        }
-      }
-      if (objetivo < 0) return lista;
-      return lista.map((mensaje, indice) =>
-        indice === objetivo
-          ? { ...mensaje, decisionEnviada: true, resolucion: resolucion.estado }
-          : mensaje,
-      );
-    });
+    const id = resolucion.confirmacion?.id ?? this.confirmacionActiva()?.id;
+    if (id) this.marcarConfirmacion(id, resolucion.estado, resolucion.confirmacion ?? undefined);
   }
 
-  private scroll(): void {
+  private scroll(haciaFormulario = false): void {
     setTimeout(() => {
       const lista = this.lista()?.nativeElement;
       if (!lista) return;
-      if (this.aclaracionActiva()?.mensajeId === this.mensajes().at(-1)?.id) {
+      if (haciaFormulario && this.aclaracionActiva() && !this.aclaracionActiva()?.oculta) {
         const mensaje = lista.querySelector('app-formulario-aclaracion')?.closest('.mensaje');
-        if (mensaje && mensaje.getBoundingClientRect().height > lista.clientHeight) {
+        if (mensaje) {
           lista.scrollTop +=
             mensaje.getBoundingClientRect().top - lista.getBoundingClientRect().top;
           return;
@@ -869,6 +1099,8 @@ export class Asistente {
     const detalle = this.detalleError(error);
     const codigo = this.codigoError(error);
     switch (codigo) {
+      case 'CLARIFICATION_EXPIRED':
+        return 'Este formulario ya no está vigente. Vuelve a indicar qué deseas hacer.';
       case 'CONVERSATION_NOT_FOUND':
         return 'La conversación expiró. Escribe de nuevo para iniciar otra.';
       case 'CONVERSATION_BUSY':

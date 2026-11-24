@@ -53,7 +53,8 @@ legend {
   justify-self: start;
 }
 
-.opciones {
+.opciones,
+.acciones {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ur-space-8);
@@ -61,4 +62,5 @@ legend {
 
 .opcion {
   border-radius: var(--ur-radius-pill);
+  min-height: 2.75rem;
 }

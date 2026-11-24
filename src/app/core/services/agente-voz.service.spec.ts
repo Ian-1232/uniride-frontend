@@ -124,6 +124,26 @@ describe('AgenteVozService', () => {
     expect(detenerPista).toHaveBeenCalled();
   });
 
+  it('libera una autorización de micrófono que llega tras cancelar la grabación', async () => {
+    const detenerPista = vi.fn();
+    const flujo = { getTracks: () => [{ stop: detenerPista }] };
+    let conceder!: (valor: typeof flujo) => void;
+    const permiso = new Promise<typeof flujo>((resolve) => {
+      conceder = resolve;
+    });
+    vi.stubGlobal('MediaRecorder', { isTypeSupported: () => true });
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => permiso },
+    });
+    const servicio = TestBed.inject(AgenteVozService);
+    const iniciando = servicio.iniciar(vi.fn());
+    servicio.cancelar();
+    conceder(flujo);
+    await expect(iniciando).rejects.toThrow('grabacion-cancelada');
+    expect(detenerPista).toHaveBeenCalledOnce();
+  });
+
   it('lee con una voz en español y permite detenerla', () => {
     const servicio = TestBed.inject(AgenteVozService);
 

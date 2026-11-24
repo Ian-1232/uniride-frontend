@@ -1,10 +1,17 @@
 import { Injectable } from '@angular/core';
 import {
   CampoAclaracion,
+  EnvioAclaracion,
   EspecificacionAclaracion,
   OpcionAclaracion,
   ValoresAclaracion,
+  esEstructurada,
 } from '../models/aclaracion.models';
+import {
+  errorCampoAclaracion,
+  leerAclaracionV1,
+  tieneValor,
+} from '../models/aclaracion-validacion';
 import { ChatRespuesta, ResultadoAgente } from '../models/agente.models';
 
 export const LIMITE_MENSAJE_AGENTE = 1000;
@@ -233,10 +240,19 @@ export class AclaracionFormularioService {
     const operacion = respuesta.operacion;
     if (
       !respuesta.conversationId ||
-      !solicitud.trim() ||
-      respuesta.advertencia ||
       respuesta.resolucionConfirmacion ||
       operacion?.confirmacion ||
+      operacion?.estado === 'CONFIRMACION_REQUERIDA' ||
+      respuesta.advertencia?.codigo === 'PREPARATION_RESULT_UNCERTAIN' ||
+      respuesta.advertencia?.codigo === 'CONFIRMATION_RESULT_UNCERTAIN'
+    )
+      return null;
+
+    if (Object.hasOwn(respuesta, 'aclaracion')) return leerAclaracionV1(respuesta.aclaracion);
+
+    if (
+      !solicitud.trim() ||
+      respuesta.advertencia ||
       (operacion && !['DATOS_FALTANTES', 'AMBIGUO'].includes(operacion.estado))
     )
       return null;
@@ -276,7 +292,6 @@ export class AclaracionFormularioService {
     )
       return null;
 
-    // Un adaptador para un esquema explícito podría resolver los campos antes de interpretar estos textos.
     const fuentes = [operacion?.detalle, respuesta.message];
     for (const fuente of fuentes) {
       if (!fuente) continue;
@@ -291,7 +306,37 @@ export class AclaracionFormularioService {
     return null;
   }
 
-  construirMensaje(especificacion: EspecificacionAclaracion, valores: ValoresAclaracion): string {
+  prepararEnvio(
+    especificacion: EspecificacionAclaracion,
+    valores: ValoresAclaracion,
+  ): EnvioAclaracion | null {
+    const entradas: [string, string | number][] = [];
+    const etiquetas: string[] = [];
+    for (const campo of especificacion.campos) {
+      const valor = Object.hasOwn(valores, campo.id) ? valores[campo.id] : null;
+      if (valor == null || !tieneValor(valor)) continue;
+      if (errorCampoAclaracion(campo, valor)) return null;
+      const dato = typeof valor === 'string' ? valor.trim() : valor;
+      const etiqueta = campo.opciones?.find((opcion) => opcion.valor === dato)?.etiqueta ?? dato;
+      entradas.push([campo.id, dato]);
+      etiquetas.push(`${campo.etiqueta}: ${etiqueta}`);
+    }
+    if (!entradas.length) return null;
+    const seleccion = Object.fromEntries(entradas);
+    if (esEstructurada(especificacion)) {
+      return {
+        tecnico: `Datos de aclaración ${especificacion.id}: ${JSON.stringify(seleccion)}`,
+        visible: [especificacion.contexto, ...etiquetas].join('\n'),
+      };
+    }
+    const mensaje = this.construirMensaje(especificacion, seleccion);
+    return { tecnico: mensaje, visible: mensaje };
+  }
+
+  private construirMensaje(
+    especificacion: EspecificacionAclaracion,
+    valores: ValoresAclaracion,
+  ): string {
     const fragmentos = especificacion.campos.flatMap((campo) => {
       const valor = String(valores[campo.id] ?? '')
         .trim()

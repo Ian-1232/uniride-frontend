@@ -1,3 +1,5 @@
+import { AclaracionAgenteV1 } from './aclaracion.models';
+
 export interface ChatSolicitud {
   readonly message: string;
   readonly conversationId?: string;
@@ -104,6 +106,7 @@ export interface ChatRespuesta {
   readonly advertencia: AdvertenciaAgente | null;
   readonly conversationId: string;
   readonly resolucionConfirmacion?: ResolucionConfirmacion;
+  readonly aclaracion?: AclaracionAgenteV1;
 }
 
 export interface VozChatRespuesta {

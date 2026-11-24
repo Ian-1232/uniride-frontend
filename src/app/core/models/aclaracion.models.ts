@@ -24,6 +24,23 @@ export interface EspecificacionAclaracion {
   readonly campos: readonly CampoAclaracion[];
   readonly opcionesRapidas?: boolean;
   readonly contexto: string;
-  // Los borradores del backend pueden exigir una respuesta breve en la misma conversación.
+  readonly alMenosUno?: readonly string[];
   readonly respuestaBreve?: 'valor' | 'campo';
+}
+
+export interface AclaracionAgenteV1 extends EspecificacionAclaracion {
+  readonly version: 1;
+  readonly id: string;
+  readonly operacion: string;
+}
+
+export interface EnvioAclaracion {
+  readonly tecnico: string;
+  readonly visible: string;
+}
+
+export function esEstructurada(
+  especificacion: EspecificacionAclaracion,
+): especificacion is AclaracionAgenteV1 {
+  return 'version' in especificacion;
 }

@@ -22,4 +22,14 @@ export class AgenteService {
       )
       .pipe(timeout(15000));
   }
+
+  decidir(id: string, confirmar: boolean): Observable<ConfirmacionResumen> {
+    const accion = confirmar ? 'confirmar' : 'cancelar';
+    return this.http
+      .post<ConfirmacionResumen>(
+        `${environment.apiUrl}/agent/confirmaciones/${encodeURIComponent(id)}/${accion}`,
+        null,
+      )
+      .pipe(timeout(15000));
+  }
 }

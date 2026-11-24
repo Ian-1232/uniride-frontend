@@ -6,6 +6,7 @@ import {
   computed,
   inject,
   input,
+  linkedSignal,
   output,
   signal,
 } from '@angular/core';
@@ -15,37 +16,9 @@ import {
   EspecificacionAclaracion,
   ValorAclaracion,
   ValoresAclaracion,
+  esEstructurada,
 } from '../../core/models/aclaracion.models';
-import { fechaLocalValida } from '../../core/models/perfil.models';
-
-function validar(campo: CampoAclaracion, valor: ValorAclaracion): string | null {
-  const texto = String(valor ?? '').trim();
-  if (!texto) return campo.obligatorio ? 'Completa este campo.' : null;
-
-  switch (campo.tipo) {
-    case 'number':
-      if (typeof valor !== 'number' || !Number.isSafeInteger(valor))
-        return 'Ingresa un número entero.';
-      if (campo.minimo != null && valor < campo.minimo)
-        return `Ingresa un número desde ${campo.minimo}.`;
-      if (campo.maximo != null && valor > campo.maximo)
-        return `Ingresa un número hasta ${campo.maximo}.`;
-      return null;
-    case 'date':
-      return fechaLocalValida(texto) ? null : 'Ingresa una fecha válida.';
-    case 'time':
-      return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(texto) ? null : 'Ingresa una hora válida.';
-    case 'select':
-      return campo.opciones?.some((opcion) => opcion.valor === valor)
-        ? null
-        : 'Selecciona una opción de la lista.';
-    default:
-      return campo.longitudMaxima != null && texto.length > campo.longitudMaxima
-        ? `Usa hasta ${campo.longitudMaxima} caracteres.`
-        : null;
-  }
-}
-
+import { errorCampoAclaracion, tieneValor } from '../../core/models/aclaracion-validacion';
 @Component({
   selector: 'app-formulario-aclaracion',
   imports: [ReactiveFormsModule],
@@ -64,21 +37,53 @@ export class FormularioAclaracionComponent {
   private readonly injector = inject(Injector);
   protected readonly sinDatos = signal(false);
   protected readonly anuncioError = signal('');
+  protected readonly intentoCompleto = signal(false);
+  protected readonly titulo = computed(() => {
+    const esquema = this.especificacion();
+    return esEstructurada(esquema) ? esquema.contexto : 'Completa los datos';
+  });
 
-  protected readonly formulario = computed(
-    () =>
-      new FormRecord<FormControl<ValorAclaracion>>(
+  protected readonly formulario = linkedSignal({
+    source: this.especificacion,
+    computation: (esquema, previo): FormRecord<FormControl<ValorAclaracion>> => {
+      const mismo =
+        previo &&
+        esEstructurada(esquema) &&
+        esEstructurada(previo.source) &&
+        esquema.id === previo.source.id;
+      return new FormRecord(
         Object.fromEntries(
-          this.especificacion().campos.map((campo) => [
-            campo.id,
-            new FormControl<ValorAclaracion>(campo.inicial ?? null, (control) => {
-              const mensaje = validar(campo, control.value);
-              return mensaje ? { mensaje } : null;
-            }),
-          ]),
+          esquema.campos.map((campo) => {
+            const anterior = mismo ? previo.value.controls[campo.id]?.value : undefined;
+            const compatible =
+              mismo &&
+              previo.source.campos.some(({ id, tipo }) => id === campo.id && tipo === campo.tipo) &&
+              tieneValor(anterior) &&
+              !errorCampoAclaracion(campo, anterior);
+            const inicial = compatible ? anterior : campo.inicial;
+            return [
+              campo.id,
+              new FormControl<ValorAclaracion>(
+                typeof inicial === 'string' ? inicial.trim() : (inicial ?? null),
+                (control) => {
+                  const mensaje = errorCampoAclaracion(campo, control.value);
+                  return mensaje ? { mensaje } : null;
+                },
+              ),
+            ];
+          }),
         ),
-      ),
-  );
+        (formulario) =>
+          esquema.alMenosUno &&
+          !esquema.alMenosUno.some((id) => {
+            const control = formulario.get(id);
+            return control?.valid && tieneValor(control.value);
+          })
+            ? { alternativos: true }
+            : null,
+      );
+    },
+  });
 
   protected readonly campoRapido = computed(() => {
     const { campos, opcionesRapidas } = this.especificacion();
@@ -97,7 +102,13 @@ export class FormularioAclaracionComponent {
   protected descritoPor(campo: CampoAclaracion): string | null {
     const id = this.id(campo);
     return (
-      [campo.ayuda ? `${id}-ayuda` : '', this.error(campo) ? `${id}-error` : '']
+      [
+        campo.ayuda ? `${id}-ayuda` : '',
+        this.error(campo) ? `${id}-error` : '',
+        this.especificacion().alMenosUno?.includes(campo.id)
+          ? this.prefijo() + '-alternativos'
+          : '',
+      ]
         .filter(Boolean)
         .join(' ') || null
     );
@@ -109,12 +120,31 @@ export class FormularioAclaracionComponent {
   }
 
   protected progreso(): string {
-    const { campos } = this.especificacion();
+    const { campos, alMenosUno } = this.especificacion();
     const controles = this.formulario().controls;
-    const completos = campos.filter(
-      ({ id }) => controles[id].valid && String(controles[id].value ?? '').trim(),
+    const obligatorios = campos.filter(({ obligatorio }) => obligatorio);
+    const total = obligatorios.length + (alMenosUno ? 1 : 0);
+    const completos =
+      obligatorios.filter(({ id }) => controles[id].valid && tieneValor(controles[id].value))
+        .length + (alMenosUno && !this.formulario().hasError('alternativos') ? 1 : 0);
+    return total > 1
+      ? `${completos} de ${total} ${alMenosUno ? 'requisitos' : 'campos'} completados`
+      : '';
+  }
+
+  protected admiteParcial(): boolean {
+    const esquema = this.especificacion();
+    const formulario = this.formulario();
+    const controles = formulario.controls;
+    const faltanDatos =
+      formulario.hasError('alternativos') ||
+      esquema.campos.some(({ obligatorio, id }) => obligatorio && !tieneValor(controles[id].value));
+    return (
+      esEstructurada(esquema) &&
+      esquema.campos.length > 1 &&
+      faltanDatos &&
+      Object.values(controles).some((control) => control.valid && tieneValor(control.value))
     );
-    return `${completos.length} de ${campos.length} campos completados`;
   }
 
   protected elegir(campo: CampoAclaracion, valor: string): void {
@@ -123,12 +153,28 @@ export class FormularioAclaracionComponent {
     this.enviar();
   }
 
-  protected enviar(): void {
+  protected enviar(parcial = false): void {
     if (this.ocupado()) return;
+    if (parcial && !this.admiteParcial()) return;
     this.anuncioError.set('');
     const formulario = this.formulario();
-    formulario.markAllAsTouched();
-    if (formulario.invalid) {
+    this.intentoCompleto.set(!parcial);
+    if (parcial) {
+      for (const control of Object.values(formulario.controls)) {
+        if (tieneValor(control.value)) control.markAsTouched();
+      }
+    } else {
+      formulario.markAllAsTouched();
+    }
+    const invalidos = parcial
+      ? Object.values(formulario.controls).some(
+          (control) => tieneValor(control.value) && control.invalid,
+        )
+      : formulario.invalid;
+    if (invalidos) {
+      if (this.intentoCompleto() && formulario.hasError('alternativos')) {
+        this.anuncioError.set('Completa al menos uno de estos campos.');
+      }
       afterNextRender(
         () => {
           this.elemento.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
@@ -138,7 +184,7 @@ export class FormularioAclaracionComponent {
       return;
     }
     const valores = formulario.getRawValue();
-    this.sinDatos.set(!Object.values(valores).some((valor) => String(valor ?? '').trim()));
+    this.sinDatos.set(!Object.values(valores).some(tieneValor));
     if (!this.sinDatos()) this.enviarDatos.emit(valores);
   }
 }

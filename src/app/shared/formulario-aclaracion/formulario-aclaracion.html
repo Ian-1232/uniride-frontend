@@ -20,9 +20,20 @@
     [attr.aria-labelledby]="prefijo() + '-titulo'"
   >
     <fieldset [disabled]="ocupado()">
-      <legend [id]="prefijo() + '-titulo'" class="ur-label">Completa los datos</legend>
+      <legend [id]="prefijo() + '-titulo'" class="ur-label">{{ titulo() }}</legend>
       <span class="solo-lector" aria-live="polite" aria-atomic="true">{{ anuncioError() }}</span>
-      <p class="ur-caption progreso">{{ progreso() }}</p>
+      @if (progreso(); as avance) {
+        <p class="ur-caption progreso">{{ avance }}</p>
+      }
+      @if (especificacion().alMenosUno) {
+        <p
+          [id]="prefijo() + '-alternativos'"
+          class="ur-caption"
+          [class.ur-field__error]="intentoCompleto() && formulario().hasError('alternativos')"
+        >
+          Completa al menos uno de estos campos.
+        </p>
+      }
       @for (campo of especificacion().campos; track campo.id) {
         <div
           class="ur-field"
@@ -95,9 +106,21 @@
       @if (sinDatos()) {
         <p class="ur-field__error" role="alert">Completa al menos un campo.</p>
       }
-      <button type="submit" class="ur-button" [disabled]="ocupado()">
-        {{ enviando() ? 'Enviando datos…' : reintento() ? 'Reintentar envío' : 'Enviar datos' }}
-      </button>
+      <div class="acciones">
+        <button type="submit" class="ur-button" [disabled]="ocupado()">
+          {{ enviando() ? 'Enviando datos…' : reintento() ? 'Reintentar envío' : 'Enviar datos' }}
+        </button>
+        @if (admiteParcial()) {
+          <button
+            type="button"
+            class="ur-button ur-button--secondary"
+            [disabled]="ocupado()"
+            (click)="enviar(true)"
+          >
+            Enviar datos disponibles
+          </button>
+        }
+      </div>
     </fieldset>
   </form>
 }
